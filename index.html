@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
+<title>Track Push</title>
+<meta name="theme-color" content="#12151B" />
+<link rel="manifest" href="manifest.json" />
+<link rel="icon" type="image/png" href="icons/icon-192.png" />
+<link rel="apple-touch-icon" href="icons/icon-192.png" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+<div id="flash"></div>
+<div id="confetti-layer"></div>
+
+<header class="topbar">
+  <div class="wordmark">
+    <svg class="dumbbell-icon" viewBox="0 0 48 24" xmlns="http://www.w3.org/2000/svg">
+      <rect x="20" y="10" width="8" height="4" rx="1.5" fill="currentColor"/>
+      <rect x="4" y="4" width="6" height="16" rx="2" fill="currentColor"/>
+      <rect x="0" y="7" width="3" height="10" rx="1.5" fill="currentColor"/>
+      <rect x="38" y="4" width="6" height="16" rx="2" fill="currentColor"/>
+      <rect x="45" y="7" width="3" height="10" rx="1.5" fill="currentColor"/>
+    </svg>
+    Track<span class="accent">Push</span>
+  </div>
+  <button id="goal-pill" class="goal-pill" data-i18n-title="goal_pill_title" title="Voir dans Réglages">
+    <span data-i18n="goal_pill_obj">OBJ</span> <span id="goal-value">100</span>
+  </button>
+</header>
+
+<main id="view-today" class="view">
+
+  <div id="evening-banner" class="evening-banner" hidden>
+    ⏰ <span id="evening-banner-text" data-i18n="evening_banner_default">Il te reste du chemin pour atteindre ton objectif aujourd'hui!</span>
+  </div>
+
+  <section class="hero card">
+    <div class="ring-wrap" id="ring-wrap">
+      <svg viewBox="0 0 240 240" class="ring">
+        <circle cx="120" cy="120" r="104" class="ring-track" />
+        <circle cx="120" cy="120" r="104" class="ring-progress" id="ring-progress" />
+        <circle cx="120" cy="120" r="104" class="ring-ripple-circle" id="ring-ripple" />
+      </svg>
+      <div class="ring-center">
+        <div class="big-number" id="today-total">0</div>
+        <div class="ring-sub">/ <span id="goal-echo">100</span> <span data-i18n="pushups_word">push-ups</span></div>
+        <div class="trophy-chip" id="today-trophy" hidden></div>
+      </div>
+    </div>
+    <div class="today-date" id="today-date">—</div>
+  </section>
+
+  <section class="card xp-card">
+    <div class="xp-head">
+      <span class="xp-rank" id="xp-rank-name">DÉBUTANT</span>
+      <span class="xp-amount"><span id="xp-value">0</span> XP</span>
+    </div>
+    <div class="xp-bar-track">
+      <div class="xp-bar-fill" id="xp-bar-fill"></div>
+    </div>
+    <div class="xp-next" id="xp-next-label" data-i18n="xp_next_default">Prochain rang: —</div>
+  </section>
+
+  <section class="quickadd card compact">
+    <div class="quickadd-title" data-i18n="quickadd_title">AJOUTER DES PUSH-UPS</div>
+    <div class="quickadd-grid">
+      <button class="qbtn" data-add="10">+10</button>
+      <button class="qbtn" data-add="15">+15</button>
+      <button class="qbtn" data-add="20">+20</button>
+      <button class="qbtn" data-add="25">+25</button>
+    </div>
+    <form id="custom-form" class="custom-form">
+      <input type="number" id="custom-count" data-i18n-placeholder="custom_count_placeholder" placeholder="Autre nombre" min="1" inputmode="numeric" />
+      <button type="submit" class="qbtn qbtn-primary" data-i18n="add_button">Ajouter</button>
+    </form>
+    <button id="undo-btn" class="undo-link" hidden data-i18n="undo_btn">↺ Annuler le dernier ajout</button>
+  </section>
+
+  <section class="entries card">
+    <div class="section-title" data-i18n="entries_title">SÉRIES D'AUJOURD'HUI</div>
+    <ul id="entries-list" class="entries-list">
+      <li class="empty-state" id="entries-empty" data-i18n="entries_empty">Aucune série pour l'instant. Fais-en une! 💪</li>
+    </ul>
+    <button id="entries-toggle" class="undo-link" hidden></button>
+  </section>
+
+  <section class="card">
+    <div class="habits-header">
+      <div class="section-title" data-i18n="habits_title">HABITUDES D'AUJOURD'HUI</div>
+      <button type="button" id="habits-edit-toggle" class="habits-edit-btn" data-i18n="habits_edit_btn">Modifier</button>
+    </div>
+    <div id="habits-list"></div>
+  </section>
+
+  <section class="notes card">
+    <div class="section-title" data-i18n="notes_title">PENSÉES DU MOMENT</div>
+    <div class="mood-row" id="mood-row" hidden>
+      <button type="button" class="mood-chip" data-mood="motive"></button>
+      <button type="button" class="mood-chip" data-mood="energique"></button>
+      <button type="button" class="mood-chip" data-mood="concentre"></button>
+      <button type="button" class="mood-chip" data-mood="calme"></button>
+      <button type="button" class="mood-chip" data-mood="fatigue"></button>
+      <button type="button" class="mood-chip" data-mood="epuise"></button>
+      <button type="button" class="mood-chip" data-mood="stresse"></button>
+      <button type="button" class="mood-chip" data-mood="anxieux"></button>
+      <button type="button" class="mood-chip" data-mood="embrouille"></button>
+      <button type="button" class="mood-chip" data-mood="emotionnel"></button>
+      <button type="button" class="mood-chip" data-mood="colere"></button>
+    </div>
+    <form id="note-form" class="custom-form note-form">
+      <textarea id="note-input" data-i18n-placeholder="note_placeholder" placeholder="Comment tu te sens? Douleurs, énergie, forme..." maxlength="2000" rows="2"></textarea>
+      <button type="submit" class="qbtn qbtn-primary" data-i18n="save_button">Sauvegarder</button>
+    </form>
+    <ul id="notes-list" class="notes-list">
+      <li class="empty-state" id="notes-empty" data-i18n="notes_empty">Aucune note aujourd'hui.</li>
+    </ul>
+  </section>
+
+</main>
+
+<main id="view-calendar" class="view" hidden>
+  <section class="cal-header card">
+    <button id="cal-prev" class="cal-nav">‹</button>
+    <div class="cal-month-label" id="cal-month-label">—</div>
+    <button id="cal-next" class="cal-nav">›</button>
+  </section>
+  <section class="cal-grid-wrap card">
+    <div class="cal-weekdays" id="cal-weekdays">
+      <span>D</span><span>L</span><span>M</span><span>M</span><span>J</span><span>V</span><span>S</span>
+    </div>
+    <div class="cal-grid" id="cal-grid"></div>
+    <div class="legend">
+      <span class="legend-item"><i class="dot bronze"></i><span data-i18n="legend_bronze">Bronze 50%</span></span>
+      <span class="legend-item"><i class="dot argent"></i><span data-i18n="legend_argent">Argent 80%</span></span>
+      <span class="legend-item"><i class="dot or"></i><span data-i18n="legend_or">Or 100%</span></span>
+      <span class="legend-item"><i class="dot platine"></i><span data-i18n="legend_platine">Platine — semaine parfaite</span></span>
+    </div>
+  </section>
+  <section class="card trend-card">
+    <div class="section-title" data-i18n="trend_title">TENDANCE — 30 DERNIERS JOURS</div>
+    <div id="trend-chart-wrap"></div>
+    <div class="trend-legend">
+      <span class="legend-item"><i class="dot bronze"></i><span data-i18n="trend_legend_bronze">Bronze</span></span>
+      <span class="legend-item"><i class="dot argent"></i><span data-i18n="trend_legend_argent">Argent</span></span>
+      <span class="legend-item"><i class="dot or"></i><span data-i18n="trend_legend_or">Or</span></span>
+      <span class="legend-item"><i class="dot platine"></i><span data-i18n="trend_legend_platine">Platine</span></span>
+      <span class="legend-item"><i class="trend-goal-swatch"></i><span data-i18n="trend_legend_goal">Objectif</span></span>
+    </div>
+  </section>
+  <section class="card streaks-card">
+    <div class="streak-row">
+      <span class="streak-icon">🚭</span>
+      <span class="streak-text" id="streak-cannabis-text">Jour <span id="streak-cannabis">0</span> sans drogue</span>
+    </div>
+    <div class="streak-row">
+      <span class="streak-icon">☕</span>
+      <span class="streak-text" id="streak-cafe-text">Jour <span id="streak-cafe">0</span> sans caféine</span>
+    </div>
+  </section>
+</main>
+
+<main id="view-habits" class="view" hidden>
+  <section class="card stats-card">
+    <div class="section-title" data-i18n="stats_title">STATISTIQUES DEPUIS LE DÉBUT</div>
+    <div class="stat-row"><span class="stat-label" data-i18n="stat_start_date_label">Début du suivi</span><span class="stat-value" id="stat-start-date">—</span></div>
+    <div class="stat-row"><span class="stat-label" data-i18n="stat_total_pushups_label">Push-ups au total</span><span class="stat-value" id="stat-total-pushups">0</span></div>
+    <div class="stat-row"><span class="stat-label" data-i18n="stat_best_cannabis_label">Record — jours consécutifs sans drogue</span><span class="stat-value" id="stat-best-cannabis">0</span></div>
+    <div class="stat-row"><span class="stat-label" data-i18n="stat_best_cafe_label">Record — jours consécutifs sans caféine</span><span class="stat-value" id="stat-best-cafe">0</span></div>
+    <div class="stat-row"><span class="stat-label" data-i18n="stat_best_marche_label">Record — jours consécutifs de marche</span><span class="stat-value" id="stat-best-marche">0</span></div>
+    <div class="stat-row"><span class="stat-label" data-i18n="stat_disciplined_days_label">Jours disciplinés (Or+)</span><span class="stat-value" id="stat-disciplined-days">0</span></div>
+    <div class="stat-row"><span class="stat-label" data-i18n="stat_disciplined_weeks_label">Semaines disciplinées (Platine)</span><span class="stat-value" id="stat-disciplined-weeks">0</span></div>
+    <div class="stat-row"><span class="stat-label" data-i18n="stat_total_photos_label">Photos prises</span><span class="stat-value" id="stat-total-photos">0</span></div>
+    <div class="stat-row"><span class="stat-label" data-i18n="stat_total_notes_label">Notes écrites</span><span class="stat-value" id="stat-total-notes">0</span></div>
+  </section>
+
+  <section class="card">
+    <div class="section-title" data-i18n="monthly_summary_title">RÉSUMÉ MENSUEL</div>
+    <div id="monthly-summary-section-content"></div>
+  </section>
+</main>
+
+<main id="view-badges" class="view" hidden>
+  <section class="card">
+    <div class="section-title" data-i18n="badges_title">BADGES</div>
+    <div id="badges-grid" class="badges-grid"></div>
+  </section>
+</main>
+
+<main id="view-settings" class="view" hidden>
+  <section class="card">
+    <div class="section-title" data-i18n="goal_section_title">OBJECTIF QUOTIDIEN</div>
+    <div class="goal-mode-toggle">
+      <button type="button" class="mode-btn" id="goal-mode-auto" data-mode="auto" data-i18n="goal_mode_auto">Automatique (selon rang)</button>
+      <button type="button" class="mode-btn" id="goal-mode-manual" data-mode="manual" data-i18n="goal_mode_manual">Manuel</button>
+    </div>
+    <div id="goal-auto-info" class="goal-auto-info"></div>
+    <form id="settings-goal-form" class="custom-form" hidden>
+      <input type="number" id="settings-goal-input" min="1" inputmode="numeric" />
+      <button type="submit" class="qbtn qbtn-primary" data-i18n="save_button">Sauver</button>
+    </form>
+  </section>
+
+  <section class="card">
+    <div class="section-title" data-i18n="lang_title">LANGUE</div>
+    <div class="goal-mode-toggle">
+      <button type="button" class="mode-btn" id="lang-fr" data-lang="fr">Français</button>
+      <button type="button" class="mode-btn" id="lang-en" data-lang="en">English</button>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="section-title" data-i18n="time_format_title">FORMAT DE L'HEURE</div>
+    <div class="goal-mode-toggle">
+      <button type="button" class="mode-btn" id="time-format-24h" data-time-format="24h">24h</button>
+      <button type="button" class="mode-btn" id="time-format-12h" data-time-format="12h">12h (AM/PM)</button>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="section-title" data-i18n="color_section_title">COULEUR D'ACCENT</div>
+    <div class="swatch-row" id="swatch-row">
+      <button class="swatch" data-color="#FFC800" style="--sw:#FFC800" data-i18n-title="color_yellow" title="Jaune"></button>
+      <button class="swatch" data-color="#FF5A2E" style="--sw:#FF5A2E" data-i18n-title="color_orange" title="Orange"></button>
+      <button class="swatch" data-color="#FF3B3B" style="--sw:#FF3B3B" data-i18n-title="color_red" title="Rouge"></button>
+      <button class="swatch" data-color="#2ED573" style="--sw:#2ED573" data-i18n-title="color_green" title="Vert"></button>
+      <button class="swatch" data-color="#3FA9F5" style="--sw:#3FA9F5" data-i18n-title="color_blue" title="Bleu"></button>
+      <button class="swatch" data-color="#B26EFF" style="--sw:#B26EFF" data-i18n-title="color_purple" title="Violet"></button>
+    </div>
+    <div class="custom-color-row">
+      <input type="color" id="custom-color-input" value="#FFC800" />
+      <label for="custom-color-input" data-i18n="custom_color_label">Couleur personnalisée</label>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="section-title" data-i18n="ranks_title">RANGS</div>
+    <div id="ranks-list"></div>
+  </section>
+
+  <section class="card">
+    <div class="section-title" data-i18n="xp_source_title">COMMENT GAGNER DE L'XP</div>
+    <div class="xp-source-row"><span class="xp-source-label" data-i18n="xp_source_pushup">1 push-up</span><span class="xp-source-value">+1 XP</span></div>
+    <div class="xp-source-row"><span class="xp-source-label" data-i18n="xp_source_drug">1 jour sans drogue</span><span class="xp-source-value">+20 XP</span></div>
+    <div class="xp-source-row"><span class="xp-source-label" data-i18n="xp_source_caffeine">1 jour sans caféine</span><span class="xp-source-value">+10 XP</span></div>
+    <div class="xp-source-row"><span class="xp-source-label" data-i18n="xp_source_walk">1 jour de marche à l'extérieur</span><span class="xp-source-value">+15 XP</span></div>
+    <div class="xp-source-row"><span class="xp-source-label" data-i18n="xp_source_platine">Trophée Platine (semaine parfaite)</span><span class="xp-source-value">+50 XP</span></div>
+    <div class="xp-source-row"><span class="xp-source-label" data-i18n="xp_source_badges">Badges débloqués</span><span class="xp-source-value"><span data-i18n="xp_source_variable_prefix">variable — </span><a href="#" id="xp-source-badges-link" class="xp-inline-link" data-i18n="xp_source_badges_link">voir Badges</a></span></div>
+    <div class="xp-source-note" data-i18n="xp_source_note">Annuler une série retire aussi son XP.</div>
+  </section>
+
+  <div class="build-tag"><span data-i18n="version_label">Version</span> <span id="build-version">—</span></div>
+</main>
+
+<nav class="tabbar" id="tabbar">
+  <button class="tab active" data-view="today">
+    <span class="tab-icon">🏠</span><span data-i18n="tab_today">Aujourd'hui</span>
+  </button>
+  <button class="tab" data-view="calendar">
+    <span class="tab-icon">📅</span><span data-i18n="tab_calendar">Calendrier</span>
+  </button>
+  <button class="tab" data-view="habits">
+    <span class="tab-icon">📊</span><span data-i18n="tab_habits">Historique</span>
+  </button>
+  <button class="tab" data-view="badges">
+    <span class="tab-icon">🎖️</span><span data-i18n="tab_badges">Badges</span>
+  </button>
+  <button class="tab" data-view="settings">
+    <span class="tab-icon">⚙️</span><span data-i18n="tab_settings">Réglages</span>
+  </button>
+</nav>
+
+<!-- Day detail modal -->
+<div class="modal-backdrop" id="day-modal" hidden>
+  <div class="modal">
+    <button class="modal-close" id="day-modal-close">×</button>
+    <div class="modal-date" id="modal-date">—</div>
+    <div class="modal-trophy" id="modal-trophy" hidden></div>
+    <div class="modal-total" id="modal-total">0 push-ups</div>
+    <div id="modal-badges-wrap" class="modal-habits-wrap" hidden>
+      <div class="modal-label" data-i18n="modal_badges_title">BADGES DÉBLOQUÉS</div>
+      <div id="modal-badges" class="modal-habits"></div>
+    </div>
+    <div id="modal-habits-wrap" class="modal-habits-wrap" hidden>
+      <div class="modal-label" data-i18n="modal_habits_title">HABITUDES</div>
+      <div id="modal-habits" class="modal-habits"></div>
+    </div>
+    <div class="modal-photo-section">
+      <div class="modal-label" data-i18n="modal_photos_title">PHOTOS</div>
+      <div id="modal-photos-grid" class="modal-photos-grid"></div>
+      <label class="qbtn add-photo-btn">
+        <span data-i18n="modal_add_photo_btn">+ Ajouter une photo</span>
+        <input type="file" accept="image/*" id="modal-add-photo-input" hidden />
+      </label>
+    </div>
+    <div id="modal-notes-wrap" class="modal-note-wrap" hidden>
+      <div class="modal-label" data-i18n="notes_title">PENSÉES DU MOMENT</div>
+      <ul id="modal-notes" class="notes-list"></ul>
+    </div>
+    <div id="modal-entries-wrap">
+      <div class="modal-label" data-i18n="modal_entries_title">SÉRIES</div>
+      <ul id="modal-entries" class="entries-list"></ul>
+    </div>
+  </div>
+</div>
+
+<!-- Trophy celebration modal -->
+<div class="modal-backdrop" id="trophy-modal" hidden>
+  <div class="modal trophy-modal">
+    <div class="trophy-big" id="trophy-big-icon">🏆</div>
+    <div class="trophy-title" id="trophy-title">TROPHÉE!</div>
+    <div class="trophy-desc" id="trophy-desc"></div>
+    <button class="qbtn qbtn-primary" id="trophy-ok" data-i18n="celebration_ok">Merci, continue!</button>
+  </div>
+</div>
+
+<!-- Rank up celebration modal -->
+<div class="modal-backdrop" id="rankup-modal" hidden>
+  <div class="modal trophy-modal rankup-modal">
+    <div class="rankup-burst"></div>
+    <div class="trophy-big rankup-icon">⭐</div>
+    <div class="trophy-title" data-i18n="rankup_title">NOUVEAU RANG!</div>
+    <div class="trophy-desc"><span data-i18n="rankup_desc_prefix">Tu es maintenant</span> <span id="rankup-name" class="rankup-name">—</span></div>
+    <button class="qbtn qbtn-primary" id="rankup-ok" data-i18n="celebration_ok">Merci, continue!</button>
+  </div>
+</div>
+
+<!-- Badge celebration modal -->
+<div class="modal-backdrop" id="badge-modal" hidden>
+  <div class="modal trophy-modal rankup-modal">
+    <div class="rankup-burst"></div>
+    <div class="trophy-big rankup-icon" id="badge-modal-icon">🏅</div>
+    <div class="trophy-title" data-i18n="badge_modal_title">BADGE DÉBLOQUÉ!</div>
+    <div class="trophy-desc"><span id="badge-modal-name" class="rankup-name">—</span></div>
+    <div class="trophy-desc" id="badge-modal-desc"></div>
+    <div class="trophy-desc badge-modal-xp">+<span id="badge-modal-xp">0</span> XP</div>
+    <button class="qbtn qbtn-primary" id="badge-modal-ok" data-i18n="celebration_ok">Merci, continue!</button>
+  </div>
+</div>
+
+<!-- Monthly summary popup -->
+<div class="modal-backdrop" id="monthly-summary-modal" hidden>
+  <div class="modal">
+    <div class="modal-date" id="ms-modal-title">—</div>
+    <div id="ms-modal-content"></div>
+    <button class="qbtn qbtn-primary ms-continue-btn" id="ms-modal-close" data-i18n="ms_continue_btn">Continuer la progression!</button>
+  </div>
+</div>
+
+<!-- Sunday photo popup -->
+<div class="modal-backdrop" id="photo-modal" hidden>
+  <div class="modal">
+    <div class="photo-modal-icon">📸</div>
+    <div class="trophy-title" data-i18n="photo_modal_title">PHOTO DU DIMANCHE</div>
+    <div class="trophy-desc" data-i18n="photo_modal_desc">Capture ton évolution cette semaine.</div>
+    <div class="photo-modal-actions">
+      <label class="qbtn qbtn-primary photo-btn">
+        <span data-i18n="photo_camera_btn">Prendre une photo</span>
+        <input type="file" accept="image/*" capture="environment" id="photo-camera-input" hidden />
+      </label>
+      <label class="qbtn photo-btn">
+        <span data-i18n="photo_library_btn">Choisir dans la photothèque</span>
+        <input type="file" accept="image/*" multiple id="photo-library-input" hidden />
+      </label>
+      <button class="undo-link" id="photo-skip" data-i18n="photo_skip_btn">Plus tard</button>
+    </div>
+  </div>
+</div>
+
+<script src="store.js"></script>
+<script src="local-api.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
