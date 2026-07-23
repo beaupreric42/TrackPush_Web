@@ -11,7 +11,10 @@ function todayStr() {
 }
 
 function nowTimeStr() {
-  return new Date().toLocaleTimeString('fr-CA', { hour: '2-digit', minute: '2-digit', hour12: false });
+  const d = new Date();
+  const hh = String(d.getHours()).padStart(2, '0');
+  const mm = String(d.getMinutes()).padStart(2, '0');
+  return `${hh} h ${mm}`;
 }
 
 function uuid() {
@@ -24,7 +27,7 @@ function uuid() {
 }
 
 const HABIT_KEYS = ['cannabis', 'cafe', 'creatine', 'marche', 'journeeTravail', 'journeeConge'];
-const VALID_MOODS = ['energique', 'calme', 'fatigue', 'epuise', 'stresse', 'anxieux', 'embrouille', 'concentre', 'emotionnel', 'colere', 'motive'];
+const VALID_MOODS = ['energique', 'calme', 'fatigue', 'epuise', 'stresse', 'anxieux', 'embrouille', 'concentre', 'emotionnel', 'colere', 'motive', 'fier'];
 
 const RANKS = [
   { name: 'Débutant', min: 0, max: 1999, goal: 100 },
@@ -40,18 +43,28 @@ const RANKS = [
 
 function freshDB() {
   return {
-    settings: { goalMode: 'auto', manualGoal: 100, accentColor: '#FFC800', habitOrder: [...HABIT_KEYS], language: 'fr', timeFormat: '24h' },
+    settings: { goalMode: 'auto', manualGoal: 100, accentColor: '#FFC800', habitOrder: [...HABIT_KEYS], language: 'fr', timeFormat: '24h', soundEnabled: true },
     entries: [],
     notes: [],
     photos: {},
     goalSnapshots: {},
     habits: {},
     monthlySummaryAcknowledged: null,
+    customHabits: [],
     badges: {},
   };
 }
 
 let _db = null;
+
+function healHabitOrder(db) {
+  const orderableIds = [...HABIT_KEYS, ...(db.customHabits || []).map((c) => c.id)];
+  if (!Array.isArray(db.settings.habitOrder) || db.settings.habitOrder.length !== orderableIds.length || !orderableIds.every((k) => db.settings.habitOrder.includes(k))) {
+    const existing = Array.isArray(db.settings.habitOrder) ? db.settings.habitOrder.filter((k) => orderableIds.includes(k)) : [];
+    const missing = orderableIds.filter((k) => !existing.includes(k));
+    db.settings.habitOrder = [...existing, ...missing];
+  }
+}
 
 function loadDB() {
   if (_db) return _db;
@@ -76,22 +89,20 @@ function loadDB() {
   if (!db.settings.accentColor) db.settings.accentColor = '#FFC800';
   if (!db.settings.language) db.settings.language = 'fr';
   if (!db.settings.timeFormat) db.settings.timeFormat = '24h';
+  if (db.settings.soundEnabled === undefined) db.settings.soundEnabled = true;
   if (db.settings.goalMode === undefined) {
     db.settings.manualGoal = db.settings.goal || 100;
     db.settings.goalMode = 'auto';
     delete db.settings.goal;
   }
-  if (!Array.isArray(db.settings.habitOrder) || db.settings.habitOrder.length !== HABIT_KEYS.length || !HABIT_KEYS.every((k) => db.settings.habitOrder.includes(k))) {
-    const existing = Array.isArray(db.settings.habitOrder) ? db.settings.habitOrder.filter((k) => HABIT_KEYS.includes(k)) : [];
-    const missing = HABIT_KEYS.filter((k) => !existing.includes(k));
-    db.settings.habitOrder = [...existing, ...missing];
-  }
+  healHabitOrder(db);
   if (!db.photos) db.photos = {};
   for (const [date, val] of Object.entries(db.photos)) {
     if (typeof val === 'string') db.photos[date] = [{ filename: val, uploadedAt: new Date().toISOString() }];
   }
   if (!db.habits) db.habits = {};
   if (db.monthlySummaryAcknowledged === undefined) db.monthlySummaryAcknowledged = null;
+  if (!db.customHabits) db.customHabits = [];
   if (!db.badges) db.badges = {};
 
   _db = db;
@@ -213,6 +224,7 @@ function habitsForDate(db, date) {
   const h = db.habits[date] || {};
   const out = {};
   HABIT_KEYS.forEach((k) => { out[k] = !!h[k]; });
+  (db.customHabits || []).forEach((ch) => { out[ch.id] = !!h[ch.id]; });
   return out;
 }
 
@@ -259,6 +271,54 @@ function bestTrueStreak(db, key) {
     if (h && h[key]) { current++; if (current > best) best = current; } else current = 0;
     cursor.setDate(cursor.getDate() + 1);
   }
+  return best;
+}
+
+// ---------- Personal records ----------
+
+function bestSetRecord(db) {
+  if (!db.entries.length) return null;
+  let best = db.entries[0];
+  db.entries.forEach((e) => { if (e.count > best.count) best = e; });
+  return { count: best.count, date: best.date };
+}
+function bestDayRecord(db) {
+  const dates = [...new Set(db.entries.map((e) => e.date))];
+  let bestDate = null, bestTotal = -1;
+  dates.forEach((d) => { const t = totalForDate(db, d); if (t > bestTotal) { bestTotal = t; bestDate = d; } });
+  return bestTotal > 0 ? { total: bestTotal, date: bestDate } : null;
+}
+function bestWeekRecord(db) {
+  const dates = [...new Set(db.entries.map((e) => e.date))];
+  const weekStarts = new Set(dates.map((d) => weekDatesFor(d)[0]));
+  let bestStart = null, bestTotal = -1;
+  weekStarts.forEach((ws) => {
+    const total = weekDatesFor(ws).reduce((sum, d) => sum + totalForDate(db, d), 0);
+    if (total > bestTotal) { bestTotal = total; bestStart = ws; }
+  });
+  return bestTotal > 0 ? { total: bestTotal, weekStart: bestStart } : null;
+}
+function bestMonthRecord(db) {
+  const monthTotals = {};
+  db.entries.forEach((e) => { const mk = e.date.slice(0, 7); monthTotals[mk] = (monthTotals[mk] || 0) + e.count; });
+  let bestMonth = null, bestTotal = -1;
+  Object.entries(monthTotals).forEach(([mk, t]) => { if (t > bestTotal) { bestTotal = t; bestMonth = mk; } });
+  return bestTotal > 0 ? { total: bestTotal, monthKey: bestMonth } : null;
+}
+function longestPlatinumStreak(db) {
+  const dates = [...new Set(db.entries.map((e) => e.date))];
+  const weekStarts = [...new Set(dates.map((d) => weekDatesFor(d)[0]))].sort();
+  let best = 0, current = 0, prevWs = null;
+  weekStarts.forEach((ws) => {
+    if (isPlatinumWeek(db, ws)) {
+      if (prevWs) {
+        const diffDays = (new Date(ws + 'T00:00:00') - new Date(prevWs + 'T00:00:00')) / 86400000;
+        current = diffDays === 7 ? current + 1 : 1;
+      } else current = 1;
+      if (current > best) best = current;
+      prevWs = ws;
+    } else { current = 0; prevWs = null; }
+  });
   return best;
 }
 

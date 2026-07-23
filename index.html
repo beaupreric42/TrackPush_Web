@@ -60,8 +60,11 @@
       <span class="xp-rank" id="xp-rank-name">DÉBUTANT</span>
       <span class="xp-amount"><span id="xp-value">0</span> XP</span>
     </div>
-    <div class="xp-bar-track">
-      <div class="xp-bar-fill" id="xp-bar-fill"></div>
+    <div class="xp-bar-wrap">
+      <div class="xp-bar-track">
+        <div class="xp-bar-fill" id="xp-bar-fill"></div>
+      </div>
+      <div class="xp-sparkle-layer" id="xp-sparkle-layer"></div>
     </div>
     <div class="xp-next" id="xp-next-label" data-i18n="xp_next_default">Prochain rang: —</div>
   </section>
@@ -95,12 +98,18 @@
       <button type="button" id="habits-edit-toggle" class="habits-edit-btn" data-i18n="habits_edit_btn">Modifier</button>
     </div>
     <div id="habits-list"></div>
+    <button type="button" class="undo-link" id="add-custom-habit-btn" data-i18n="add_custom_habit_btn">+ Ajouter une habitude personnalisée</button>
+    <form id="custom-habit-form" class="custom-form" hidden>
+      <input type="text" id="custom-habit-name" maxlength="40" data-i18n-placeholder="custom_habit_name_placeholder" placeholder="Nom de l'habitude" />
+      <button type="submit" class="qbtn qbtn-primary" data-i18n="add_button">Ajouter</button>
+    </form>
   </section>
 
   <section class="notes card">
     <div class="section-title" data-i18n="notes_title">PENSÉES DU MOMENT</div>
     <div class="mood-row" id="mood-row" hidden>
       <button type="button" class="mood-chip" data-mood="motive"></button>
+      <button type="button" class="mood-chip" data-mood="fier"></button>
       <button type="button" class="mood-chip" data-mood="energique"></button>
       <button type="button" class="mood-chip" data-mood="concentre"></button>
       <button type="button" class="mood-chip" data-mood="calme"></button>
@@ -165,13 +174,15 @@
 </main>
 
 <main id="view-habits" class="view" hidden>
+  <section class="card">
+    <div class="section-title" data-i18n="records_title">RECORDS PERSONNELS</div>
+    <div id="records-grid" class="records-grid"></div>
+  </section>
+
   <section class="card stats-card">
     <div class="section-title" data-i18n="stats_title">STATISTIQUES DEPUIS LE DÉBUT</div>
     <div class="stat-row"><span class="stat-label" data-i18n="stat_start_date_label">Début du suivi</span><span class="stat-value" id="stat-start-date">—</span></div>
     <div class="stat-row"><span class="stat-label" data-i18n="stat_total_pushups_label">Push-ups au total</span><span class="stat-value" id="stat-total-pushups">0</span></div>
-    <div class="stat-row"><span class="stat-label" data-i18n="stat_best_cannabis_label">Record — jours consécutifs sans drogue</span><span class="stat-value" id="stat-best-cannabis">0</span></div>
-    <div class="stat-row"><span class="stat-label" data-i18n="stat_best_cafe_label">Record — jours consécutifs sans caféine</span><span class="stat-value" id="stat-best-cafe">0</span></div>
-    <div class="stat-row"><span class="stat-label" data-i18n="stat_best_marche_label">Record — jours consécutifs de marche</span><span class="stat-value" id="stat-best-marche">0</span></div>
     <div class="stat-row"><span class="stat-label" data-i18n="stat_disciplined_days_label">Jours disciplinés (Or+)</span><span class="stat-value" id="stat-disciplined-days">0</span></div>
     <div class="stat-row"><span class="stat-label" data-i18n="stat_disciplined_weeks_label">Semaines disciplinées (Platine)</span><span class="stat-value" id="stat-disciplined-weeks">0</span></div>
     <div class="stat-row"><span class="stat-label" data-i18n="stat_total_photos_label">Photos prises</span><span class="stat-value" id="stat-total-photos">0</span></div>
@@ -193,7 +204,7 @@
 
 <main id="view-settings" class="view" hidden>
   <section class="card">
-    <div class="section-title" data-i18n="goal_section_title">OBJECTIF QUOTIDIEN</div>
+    <div class="section-title" data-i18n="goal_section_title">OBJECTIF QUOTIDIEN — NOMBRE DE PUSH-UPS PAR JOUR</div>
     <div class="goal-mode-toggle">
       <button type="button" class="mode-btn" id="goal-mode-auto" data-mode="auto" data-i18n="goal_mode_auto">Automatique (selon rang)</button>
       <button type="button" class="mode-btn" id="goal-mode-manual" data-mode="manual" data-i18n="goal_mode_manual">Manuel</button>
@@ -218,6 +229,14 @@
     <div class="goal-mode-toggle">
       <button type="button" class="mode-btn" id="time-format-24h" data-time-format="24h">24h</button>
       <button type="button" class="mode-btn" id="time-format-12h" data-time-format="12h">12h (AM/PM)</button>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="section-title" data-i18n="sound_title">SONS</div>
+    <div class="reminder-row">
+      <span class="reminder-text" data-i18n="sound_toggle_label">Sons de célébration (badge, rang, trophée)</span>
+      <button type="button" id="sound-toggle" class="reminder-switch"><span class="reminder-knob"></span></button>
     </div>
   </section>
 

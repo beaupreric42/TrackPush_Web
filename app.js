@@ -1,4 +1,4 @@
-const APP_VERSION = '2026-07-21.47';
+const APP_VERSION = '2026-07-22.61';
 
 const state = {
   today: null,
@@ -22,6 +22,8 @@ const state = {
   monthlySummaryPopupShown: false,
   timeFormat: '24h',
   languageSwitching: false,
+  soundEnabled: true,
+  customHabits: [],
 };
 
 function hexToRgb(hex){
@@ -110,8 +112,25 @@ const TRANSLATIONS = {
     weekdays_short: ['D','L','M','M','J','V','S'],
     habits_title: "HABITUDES D'AUJOURD'HUI",
     habits_edit_btn: "Modifier",
+    add_custom_habit_btn: "+ Ajouter une habitude personnalisée",
+    custom_habit_name_placeholder: "Nom de l'habitude",
+    custom_habit_delete_confirm: "Retirer cette habitude personnalisée? L'historique déjà coché reste dans tes journées passées, mais elle ne sera plus affichée.",
     habits_edit_btn_done: "Terminé",
     stats_title: "STATISTIQUES DEPUIS LE DÉBUT",
+    records_title: "RECORDS PERSONNELS",
+    record_best_set: "Meilleure série",
+    record_best_day: "Meilleure journée",
+    record_best_week: "Meilleure semaine",
+    record_best_month: "Meilleur mois",
+    record_streak_drugs: "Plus long streak sans drogue",
+    record_streak_caffeine: "Plus long streak sans caféine",
+    record_streak_marche: "Plus long streak de marche",
+    record_platinum_streak: "Semaines Platine d'affilée",
+    record_none: "—",
+    record_days_suffix: "jours",
+    record_weeks_suffix: "semaines",
+    record_day_singular: "jour",
+    record_week_singular: "semaine",
     stat_start_date_label: "Début du suivi",
     stat_total_pushups_label: "Push-ups au total",
     stat_best_cannabis_label: "Record — jours consécutifs sans drogue",
@@ -125,7 +144,23 @@ const TRANSLATIONS = {
     badge_secret_placeholder: "Badge secret — débloque-le pour découvrir son secret!",
     lang_title: "LANGUE",
     time_format_title: "FORMAT DE L'HEURE",
-    goal_section_title: "OBJECTIF QUOTIDIEN",
+    sound_title: "SONS",
+    sound_toggle_label: "Sons de célébration (badge, rang, trophée)",
+    offline_primary_title: "MODE HORS-LIGNE (CET APPAREIL)",
+    offline_primary_toggle_label: "Faire de cet appareil ma copie principale hors ligne",
+    offline_primary_warning: "N'active ceci que sur UN SEUL appareil (celui que tu gardes toujours sur toi). Les autres appareils continueront de parler directement au serveur.",
+    offline_primary_confirm: "Ceci va faire de cet appareil ta copie principale hors ligne, avec tout ton historique actuel copié ici. N'active ceci que sur un seul appareil. Continuer?",
+    sync_title: "SYNCHRONISATION AVEC LE SERVEUR",
+    sync_status_label: "Dernière synchronisation",
+    sync_now_btn: "Synchroniser maintenant",
+    sync_explainer: "Tes données vivent sur ce téléphone. Une copie est envoyée au serveur automatiquement quand il est accessible.",
+    sync_never: "Jamais encore",
+    sync_just_now: "À l'instant",
+    sync_minutes_ago: "Il y a {n} min",
+    sync_in_progress: "Synchronisation...",
+    sync_success: "Synchronisé!",
+    sync_failed: "Serveur non accessible — réessai automatique plus tard.",
+    goal_section_title: "OBJECTIF QUOTIDIEN — NOMBRE DE PUSH-UPS PAR JOUR",
     goal_mode_auto: "Automatique (selon rang)",
     goal_mode_manual: "Manuel",
     goal_auto_info: "Ton objectif actuel est de {goal} push-ups, basé sur ton rang actuel: {rank}.",
@@ -234,8 +269,25 @@ const TRANSLATIONS = {
     weekdays_short: ['S','M','T','W','T','F','S'],
     habits_title: "TODAY'S HABITS",
     habits_edit_btn: "Edit",
+    add_custom_habit_btn: "+ Add a custom habit",
+    custom_habit_name_placeholder: "Habit name",
+    custom_habit_delete_confirm: "Remove this custom habit? History already checked stays on past days, but it won't be shown anymore.",
     habits_edit_btn_done: "Done",
     stats_title: "STATS SINCE THE START",
+    records_title: "PERSONAL RECORDS",
+    record_best_set: "Best single set",
+    record_best_day: "Best day",
+    record_best_week: "Best week",
+    record_best_month: "Best month",
+    record_streak_drugs: "Longest drug-free streak",
+    record_streak_caffeine: "Longest caffeine-free streak",
+    record_streak_marche: "Longest walking streak",
+    record_platinum_streak: "Platinum weeks in a row",
+    record_none: "—",
+    record_days_suffix: "days",
+    record_weeks_suffix: "weeks",
+    record_day_singular: "day",
+    record_week_singular: "week",
     stat_start_date_label: "Tracking since",
     stat_total_pushups_label: "Total push-ups",
     stat_best_cannabis_label: "Record — consecutive drug-free days",
@@ -249,7 +301,23 @@ const TRANSLATIONS = {
     badge_secret_placeholder: "Secret badge — unlock it to discover its secret!",
     lang_title: "LANGUAGE",
     time_format_title: "TIME FORMAT",
-    goal_section_title: "DAILY GOAL",
+    sound_title: "SOUND",
+    sound_toggle_label: "Celebration sounds (badge, rank, trophy)",
+    offline_primary_title: "OFFLINE MODE (THIS DEVICE)",
+    offline_primary_toggle_label: "Make this device my main offline copy",
+    offline_primary_warning: "Only turn this on for ONE device (the one you always carry). Other devices will keep talking directly to the server.",
+    offline_primary_confirm: "This will make this device your main offline copy, with all your current history copied here. Only enable this on one device. Continue?",
+    sync_title: "SERVER SYNC",
+    sync_status_label: "Last synced",
+    sync_now_btn: "Sync now",
+    sync_explainer: "Your data lives on this phone. A copy is sent to the server automatically whenever it's reachable.",
+    sync_never: "Never yet",
+    sync_just_now: "Just now",
+    sync_minutes_ago: "{n} min ago",
+    sync_in_progress: "Syncing...",
+    sync_success: "Synced!",
+    sync_failed: "Server unreachable — will retry automatically.",
+    goal_section_title: "DAILY GOAL — NUMBER OF PUSH-UPS PER DAY",
     goal_mode_auto: "Automatic (by rank)",
     goal_mode_manual: "Manual",
     goal_auto_info: "Your current goal is {goal} push-ups, based on your current rank: {rank}.",
@@ -378,12 +446,12 @@ const MOOD_LABELS_BY_LANG = {
   fr: {
     energique: '⚡ Énergique', calme: '🌙 Calme', fatigue: '😴 Fatigué',
     epuise: '🔋 Épuisé', stresse: '😣 Stressé', anxieux: '😰 Anxieux', embrouille: '🌀 Embrouillé',
-    concentre: '🎯 Concentré', emotionnel: '🥲 Émotif', colere: '😠 En colère', motive: '💪 Motivé',
+    concentre: '🎯 Concentré', emotionnel: '🥲 Émotif', colere: '😠 En colère', motive: '💪 Motivé', fier: '😤 Fier',
   },
   en: {
     energique: '⚡ Energetic', calme: '🌙 Calm', fatigue: '😴 Tired',
     epuise: '🔋 Exhausted', stresse: '😣 Stressed', anxieux: '😰 Anxious', embrouille: '🌀 Foggy',
-    concentre: '🎯 Focused', emotionnel: '🥲 Emotional', colere: '😠 Angry', motive: '💪 Motivated',
+    concentre: '🎯 Focused', emotionnel: '🥲 Emotional', colere: '😠 Angry', motive: '💪 Motivated', fier: '😤 Proud',
   },
 };
 function MOOD_LABELS(){ return MOOD_LABELS_BY_LANG[state.lang] || MOOD_LABELS_BY_LANG.fr; }
@@ -456,6 +524,7 @@ function applyTranslations(){
   $('#lang-en').classList.toggle('active', state.lang === 'en');
   $('#time-format-24h').classList.toggle('active', state.timeFormat === '24h');
   $('#time-format-12h').classList.toggle('active', state.timeFormat === '12h');
+  $('#sound-toggle').classList.toggle('active', state.soundEnabled);
 }
 
 async function api(path, opts){
@@ -501,6 +570,37 @@ function updateRing(total, goal){
   }
   state.ringAnimFrame = requestAnimationFrame(step);
   return pct;
+}
+
+function spawnXPSparkles(pushupCount){
+  const layer = $('#xp-sparkle-layer');
+  const fill = $('#xp-bar-fill');
+  if (!layer || !fill) return;
+  const trackWidth = fill.parentElement.offsetWidth;
+  const pct = parseFloat(fill.style.width) || 0;
+  const fillWidth = Math.min(trackWidth, (pct / 100) * trackWidth);
+  const y = fill.offsetHeight / 2;
+  if (fillWidth < 1) return;
+  const count = Math.max(6, Math.min(28, pushupCount || 18));
+  for (let i = 0; i < count; i++){
+    const spark = document.createElement('div');
+    spark.className = 'xp-spark';
+    const x = Math.random() * fillWidth;
+    const angle = Math.random() * Math.PI * 2;
+    const dist = 20 + Math.random() * 34;
+    const ex = Math.cos(angle) * dist;
+    const ey = Math.sin(angle) * dist * 0.75;
+    const size = 3 + Math.random() * 4;
+    const spin = (Math.random() * 240 - 120).toFixed(0);
+    spark.style.left = x + 'px';
+    spark.style.top = y + 'px';
+    spark.style.width = size + 'px';
+    spark.style.height = size + 'px';
+    spark.style.setProperty('--xp-spark-end', `translate(${ex.toFixed(1)}px, ${ey.toFixed(1)}px) rotate(${spin}deg)`);
+    spark.style.animationDelay = (Math.random() * 0.18) + 's';
+    layer.appendChild(spark);
+    setTimeout(() => spark.remove(), 1300);
+  }
 }
 
 function pulseRing(){
@@ -570,6 +670,43 @@ function dismissCelebration(modalId){
   processCelebrationQueue();
 }
 
+let _audioCtx = null;
+function getAudioCtx(){
+  const AC = window.AudioContext || window.webkitAudioContext;
+  if (!AC) return null;
+  if (!_audioCtx) _audioCtx = new AC();
+  if (_audioCtx.state === 'suspended') _audioCtx.resume();
+  return _audioCtx;
+}
+
+function playTone(ctx, freq, startTime, duration, gainPeak){
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = 'sine';
+  osc.frequency.value = freq;
+  gain.gain.setValueAtTime(0, startTime);
+  gain.gain.linearRampToValueAtTime(gainPeak, startTime + 0.03);
+  gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+  osc.start(startTime);
+  osc.stop(startTime + duration + 0.05);
+}
+
+function playCelebrationSound(kind){
+  if (!state.soundEnabled) return;
+  const ctx = getAudioCtx();
+  if (!ctx) return;
+  const now = ctx.currentTime;
+  const notesByKind = {
+    trophy: [523.25, 659.25],
+    badge: [523.25, 659.25, 783.99],
+    rank: [392.00, 523.25, 659.25, 783.99],
+  };
+  const notes = notesByKind[kind] || notesByKind.trophy;
+  notes.forEach((freq, i) => { playTone(ctx, freq, now + i * 0.09, 0.5, 0.12); });
+}
+
 function showTrophyModal(trophy){
   $('#trophy-big-icon').textContent = trophyEmoji(trophy);
   $('#trophy-title').textContent = t('trophy_title', { name: trophyLabel(trophy) });
@@ -582,6 +719,7 @@ function showTrophyModal(trophy){
   $('#trophy-desc').textContent = descKeys[trophy] ? t(descKeys[trophy]) : '';
   $('#trophy-modal').hidden = false;
   burstConfetti(trophyColors(trophy));
+  playCelebrationSound('trophy');
 }
 
 function showRankUpModal(rankName){
@@ -589,6 +727,7 @@ function showRankUpModal(rankName){
   $('#rankup-modal').hidden = false;
   burstConfetti(['#F5B942','#FFDD8A', state.accentColor, '#FFFFFF']);
   setTimeout(() => burstConfetti(['#F5B942', state.accentColor, '#FFFFFF']), 400);
+  playCelebrationSound('rank');
 }
 
 function showBadgeModal(badge){
@@ -600,6 +739,7 @@ function showBadgeModal(badge){
   $('#badge-modal').hidden = false;
   burstConfetti(['#F5B942', state.accentColor, '#FFFFFF']);
   setTimeout(() => burstConfetti([state.accentColor, '#F5B942', '#FFFFFF']), 400);
+  playCelebrationSound('badge');
 }
 
 // ---------- Today view ----------
@@ -609,7 +749,7 @@ function restartShimmer(){
   el.classList.remove('shimmer-active');
   requestAnimationFrame(() => {
     requestAnimationFrame(() => {
-      el.classList.add('shimmer-active');
+      setTimeout(() => el.classList.add('shimmer-active'), 60);
     });
   });
 }
@@ -622,6 +762,7 @@ async function loadToday(){
   state.goalMode = settings.goalMode || 'auto';
   state.lang = settings.language || 'fr';
   state.timeFormat = settings.timeFormat || '24h';
+  state.soundEnabled = settings.soundEnabled !== false;
   applyAccent(state.accentColor);
   applyTranslations();
   $('#goal-value').textContent = settings.goal;
@@ -640,6 +781,8 @@ async function loadToday(){
   loadMonthlySummary(true);
 
   state.habitOrder = settings.habitOrder || Object.keys(HABIT_META());
+  const customHabitsData = await api('/api/custom-habits');
+  state.customHabits = customHabitsData.customHabits || [];
   renderHabitsList(day.habits || {});
 
   prewarmOtherViews();
@@ -862,7 +1005,8 @@ async function addReps(count){
   pulseRing();
   renderDay(day);
   checkEveningReminder(day);
-  refreshXP();
+  await refreshXP();
+  spawnXPSparkles(count);
   const badges = day.newlyUnlockedBadges || [];
   badges.forEach((b) => enqueueCelebration({ type:'badge', badge:b }));
   if (day.trophyJustUnlocked){
@@ -941,7 +1085,7 @@ async function loadCalendar(){
     const date = `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
     const info = data.days[date] || { total:0, trophy:null };
     const cell = document.createElement('div');
-    cell.className = 'cal-day ' + trophyClass(info.trophy) + (date === state.today ? ' is-today' : '');
+    cell.className = 'cal-day ' + trophyClass(info.trophy) + (info.inPlatinumWeek ? ' platinum-week' : '') + (date === state.today ? ' is-today' : '');
     cell.innerHTML = `<span class="dnum">${d}</span><span class="dtotal">${info.total>0?info.total:''}</span>`;
     cell.addEventListener('click', () => openDayModal(date));
     grid.appendChild(cell);
@@ -1001,28 +1145,73 @@ async function loadHabits(){
   const stats = await api('/api/stats');
   renderStats(stats);
   loadMonthlySummary(false);
+  loadPersonalRecords();
+}
+
+function pluralSuffix(n, singularKey, pluralKey){
+  return n === 1 ? t(singularKey) : t(pluralKey);
+}
+
+async function loadPersonalRecords(){
+  const r = await api('/api/personal-records');
+  const cards = [
+    { icon:'🔥', label:t('record_best_set'), value: r.bestSet ? `${r.bestSet.count}` : null, date: r.bestSet ? formatShortDate(r.bestSet.date) : null },
+    { icon:'📅', label:t('record_best_day'), value: r.bestDay ? `${r.bestDay.total}` : null, date: r.bestDay ? formatShortDate(r.bestDay.date) : null },
+    { icon:'📈', label:t('record_best_week'), value: r.bestWeek ? `${r.bestWeek.total}` : null, date: r.bestWeek ? formatShortDate(r.bestWeek.weekStart) : null },
+    { icon:'🗓️', label:t('record_best_month'), value: r.bestMonth ? `${r.bestMonth.total}` : null, date: r.bestMonth ? fmtMonth(r.bestMonth.monthKey) : null },
+    { icon:'🚭', label:t('record_streak_drugs'), value: r.bestStreakCannabis ? `${r.bestStreakCannabis} ${pluralSuffix(r.bestStreakCannabis, 'record_day_singular', 'record_days_suffix')}` : null, date: null },
+    { icon:'☕', label:t('record_streak_caffeine'), value: r.bestStreakCafe ? `${r.bestStreakCafe} ${pluralSuffix(r.bestStreakCafe, 'record_day_singular', 'record_days_suffix')}` : null, date: null },
+    { icon:'🚶', label:t('record_streak_marche'), value: r.bestStreakMarche ? `${r.bestStreakMarche} ${pluralSuffix(r.bestStreakMarche, 'record_day_singular', 'record_days_suffix')}` : null, date: null },
+    { icon:'💎', label:t('record_platinum_streak'), value: r.longestPlatinumStreak ? `${r.longestPlatinumStreak} ${pluralSuffix(r.longestPlatinumStreak, 'record_week_singular', 'record_weeks_suffix')}` : null, date: null },
+  ];
+  $('#records-grid').innerHTML = cards.map((c) => `
+    <div class="record-card${c.value ? '' : ' empty'}">
+      <div class="record-icon">${c.icon}</div>
+      <div class="record-value">${c.value || t('record_none')}</div>
+      <div class="record-label">${c.label}</div>
+      ${c.date ? `<div class="record-date">${c.date}</div>` : ''}
+    </div>
+  `).join('');
 }
 
 function renderHabitsList(habitState){
   const list = $('#habits-list');
   list.innerHTML = '';
+  const customMap = {};
+  (state.customHabits || []).forEach((ch) => { customMap[ch.id] = ch; });
+
   state.habitOrder.forEach((key, idx) => {
-    const meta = HABIT_META()[key];
+    const custom = customMap[key];
+    const meta = custom ? { icon: custom.icon, label: custom.name } : HABIT_META()[key];
     if (!meta) return;
     const row = document.createElement('label');
     row.className = 'habit-row' + (state.habitsEditMode ? ' editing' : '');
+    const deleteBtn = custom ? `<button type="button" class="habit-delete-custom" title="Supprimer">✕</button>` : '';
     row.innerHTML = `
       <input type="checkbox" data-habit="${key}" ${habitState[key] ? 'checked' : ''} />
       <span class="habit-check"></span>
-      <span class="habit-label">${meta.icon} ${meta.label}</span>
+      <span class="habit-label">${meta.icon ? meta.icon + ' ' : ''}${escapeHtml(meta.label)}</span>
       <span class="habit-reorder-btns">
         <button type="button" class="habit-up" ${idx === 0 ? 'disabled' : ''}>▲</button>
         <button type="button" class="habit-down" ${idx === state.habitOrder.length - 1 ? 'disabled' : ''}>▼</button>
+        ${deleteBtn}
       </span>
     `;
     row.querySelector('input').addEventListener('change', (e) => saveHabit(key, e.target.checked));
     row.querySelector('.habit-up').addEventListener('click', (e) => { e.preventDefault(); moveHabit(idx, -1); });
     row.querySelector('.habit-down').addEventListener('click', (e) => { e.preventDefault(); moveHabit(idx, 1); });
+    if (custom){
+      row.querySelector('.habit-delete-custom').addEventListener('click', async (e) => {
+        e.preventDefault();
+        if (!confirm(t('custom_habit_delete_confirm'))) return;
+        const data = await api(`/api/custom-habits/${key}`, { method:'DELETE' });
+        state.customHabits = data.customHabits;
+        const settings = await api('/api/settings');
+        state.habitOrder = settings.habitOrder || state.habitOrder;
+        const day = await api(`/api/day/${state.today}`);
+        renderHabitsList(day.habits || {});
+      });
+    }
     list.appendChild(row);
   });
 }
@@ -1046,9 +1235,6 @@ async function moveHabit(idx, dir){
 function renderStats(stats){
   $('#stat-start-date').textContent = stats.startDate ? formatFullDate(stats.startDate) : '—';
   $('#stat-total-pushups').textContent = stats.totalPushups;
-  $('#stat-best-cannabis').textContent = stats.bestStreakCannabis;
-  $('#stat-best-cafe').textContent = stats.bestStreakCafe;
-  $('#stat-best-marche').textContent = stats.bestStreakMarche;
   $('#stat-disciplined-days').textContent = stats.disciplinedDays;
   $('#stat-disciplined-weeks').textContent = stats.disciplinedWeeks;
   $('#stat-total-photos').textContent = stats.totalPhotos;
@@ -1270,14 +1456,18 @@ function buildMonthlySummaryHTML(s){
   return trophyRow + moodSection + photoSection + habitsSection + avgSection + workOffSection + bonusSection;
 }
 
+async function resolvePhotoSrc(filename){
+  return getPhotoBlob(filename);
+}
+
 function wireMonthlySummaryPhotos(container){
   container.querySelectorAll('[data-ms-photo]').forEach((item) => {
     const overlay = item.querySelector('.photo-reveal-overlay');
     const toggle = () => item.classList.toggle('blurred');
     if (overlay) overlay.addEventListener('click', (e) => { e.stopPropagation(); toggle(); });
     item.querySelector('img').addEventListener('click', toggle);
-    getPhotoBlob(item.dataset.msPhoto).then((dataUrl) => {
-      if (dataUrl) item.querySelector('img').src = dataUrl;
+    resolvePhotoSrc(item.dataset.msPhoto).then((src) => {
+      if (src) item.querySelector('img').src = src;
     });
   });
 }
@@ -1293,8 +1483,8 @@ function renderPhotoGrid(photos, date){
       <div class="photo-reveal-overlay">👁️</div>
       <button type="button" class="photo-delete">×</button>
     `;
-    getPhotoBlob(p.filename).then((dataUrl) => {
-      if (dataUrl) item.querySelector('img').src = dataUrl;
+    resolvePhotoSrc(p.filename).then((src) => {
+      if (src) item.querySelector('img').src = src;
     });
     item.querySelector('.photo-reveal-overlay').addEventListener('click', (e) => {
       e.stopPropagation();
@@ -1544,7 +1734,47 @@ function init(){
     const btn = $('#habits-edit-toggle');
     btn.textContent = state.habitsEditMode ? t('habits_edit_btn_done') : t('habits_edit_btn');
     btn.classList.toggle('active', state.habitsEditMode);
-    loadHabits();
+    const currentChecks = {};
+    $$('#habits-list input[type="checkbox"]').forEach((cb) => { currentChecks[cb.dataset.habit] = cb.checked; });
+    renderHabitsList(currentChecks);
+  });
+
+  $('#add-custom-habit-btn').addEventListener('click', () => {
+    $('#custom-habit-form').hidden = false;
+    $('#add-custom-habit-btn').hidden = true;
+    $('#custom-habit-name').focus();
+  });
+
+  document.addEventListener('click', (e) => {
+    const form = $('#custom-habit-form');
+    const addBtn = $('#add-custom-habit-btn');
+    if (form.hidden) return;
+    const clickedInside = form.contains(e.target) || e.target === addBtn;
+    if (!clickedInside){
+      form.hidden = true;
+      addBtn.hidden = false;
+      $('#custom-habit-name').value = '';
+    }
+  });
+
+  $('#custom-habit-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const name = $('#custom-habit-name').value.trim();
+    if (!name) return;
+    const icon = '';
+    const data = await api('/api/custom-habits', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ name, icon }),
+    });
+    state.customHabits = data.customHabits;
+    const settings = await api('/api/settings');
+    state.habitOrder = settings.habitOrder || state.habitOrder;
+    $('#custom-habit-name').value = '';
+    $('#custom-habit-form').hidden = true;
+    $('#add-custom-habit-btn').hidden = false;
+    const day = await api(`/api/day/${state.today}`);
+    renderHabitsList(day.habits || {});
   });
 
   $('#lang-fr').addEventListener('click', () => setLanguage('fr'));
@@ -1552,6 +1782,17 @@ function init(){
 
   $('#time-format-24h').addEventListener('click', () => setTimeFormat('24h'));
   $('#time-format-12h').addEventListener('click', () => setTimeFormat('12h'));
+
+  $('#sound-toggle').addEventListener('click', async () => {
+    state.soundEnabled = !state.soundEnabled;
+    $('#sound-toggle').classList.toggle('active', state.soundEnabled);
+    await api('/api/settings', {
+      method:'PUT',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ soundEnabled: state.soundEnabled }),
+    });
+    if (state.soundEnabled) playCelebrationSound('trophy');
+  });
 
   $('#xp-source-badges-link').addEventListener('click', (e) => {
     e.preventDefault();
@@ -1561,9 +1802,6 @@ function init(){
   loadToday();
 
   $('#build-version').textContent = APP_VERSION;
-
-  // no service worker in the standalone build — not needed and avoids
-  // reaching for a /sw.js file that doesn't exist here
 }
 
 document.addEventListener('DOMContentLoaded', init);

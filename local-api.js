@@ -40,7 +40,8 @@ async function localApi(path, opts) {
     }
     if (body.habitOrder !== undefined) {
       const order = body.habitOrder;
-      const isValid = Array.isArray(order) && order.length === HABIT_KEYS.length && HABIT_KEYS.every((k) => order.includes(k));
+      const orderableIds = [...HABIT_KEYS, ...(db.customHabits || []).map((c) => c.id)];
+      const isValid = Array.isArray(order) && order.length === orderableIds.length && orderableIds.every((k) => order.includes(k));
       if (!isValid) throw new Error('ordre invalide');
       db.settings.habitOrder = order;
     }
@@ -51,6 +52,9 @@ async function localApi(path, opts) {
     if (body.timeFormat !== undefined) {
       if (!['24h', '12h'].includes(body.timeFormat)) throw new Error('format invalide');
       db.settings.timeFormat = body.timeFormat;
+    }
+    if (body.soundEnabled !== undefined) {
+      db.settings.soundEnabled = !!body.soundEnabled;
     }
     saveDB(db);
     return { ...db.settings, goal: currentGoal(db) };
@@ -93,10 +97,12 @@ async function localApi(path, opts) {
       const goal = goalForDate(db, date);
       let trophy = trophyForTotal(total, goal);
       const dow = new Date(date + 'T00:00:00').getDay();
-      if (dow === 6 && isPlatinumWeek(db, date)) trophy = 'platine';
+      const weekIsPlatinum = isPlatinumWeek(db, date);
+      if (dow === 6 && weekIsPlatinum) trophy = 'platine';
       const h = habitsForDate(db, date);
       days[date] = {
         total, goal, trophy,
+        inPlatinumWeek: weekIsPlatinum,
         hasNote: db.notes.some((n) => n.date === date),
         hasPhoto: (db.photos[date] || []).length > 0,
         hasHabit: HABIT_KEYS.some((k) => h[k]),
@@ -125,6 +131,19 @@ async function localApi(path, opts) {
       points.push({ date: ds, total, goal, trophy });
     }
     return { points };
+  }
+
+  if (path === '/api/personal-records' && method === 'GET') {
+    return {
+      bestSet: bestSetRecord(db),
+      bestDay: bestDayRecord(db),
+      bestWeek: bestWeekRecord(db),
+      bestMonth: bestMonthRecord(db),
+      bestStreakCannabis: bestStreak(db, 'cannabis'),
+      bestStreakCafe: bestStreak(db, 'cafe'),
+      bestStreakMarche: bestTrueStreak(db, 'marche'),
+      longestPlatinumStreak: longestPlatinumStreak(db),
+    };
   }
 
   if (path === '/api/stats' && method === 'GET') {
@@ -208,7 +227,8 @@ async function localApi(path, opts) {
     const date = m[1];
     const current = habitsForDate(db, date);
     const updated = {};
-    HABIT_KEYS.forEach((k) => { updated[k] = body[k] !== undefined ? !!body[k] : current[k]; });
+    const allKeys = [...HABIT_KEYS, ...(db.customHabits || []).map((c) => c.id)];
+    allKeys.forEach((k) => { updated[k] = body[k] !== undefined ? !!body[k] : current[k]; });
     db.habits[date] = updated;
     relockStaleBadges(db);
     const newlyUnlockedBadges = checkAndUnlockBadges(db);
@@ -216,6 +236,27 @@ async function localApi(path, opts) {
     const payload = dayPayload(db, date);
     payload.newlyUnlockedBadges = newlyUnlockedBadges;
     return payload;
+  }
+
+  if (path === '/api/custom-habits' && method === 'GET') {
+    return { customHabits: db.customHabits || [] };
+  }
+  if (path === '/api/custom-habits' && method === 'POST') {
+    const name = (body.name || '').trim().slice(0, 40);
+    if (!name) throw new Error('nom requis');
+    const icon = (body.icon || '').trim().slice(0, 4);
+    const habit = { id: 'custom_' + uuid(), name, icon };
+    if (!db.customHabits) db.customHabits = [];
+    db.customHabits.push(habit);
+    healHabitOrder(db);
+    saveDB(db);
+    return { customHabits: db.customHabits, habitOrder: db.settings.habitOrder };
+  }
+  if ((m = path.match(/^\/api\/custom-habits\/([\w-]+)$/)) && method === 'DELETE') {
+    db.customHabits = (db.customHabits || []).filter((c) => c.id !== m[1]);
+    healHabitOrder(db);
+    saveDB(db);
+    return { customHabits: db.customHabits, habitOrder: db.settings.habitOrder };
   }
 
   // ---- Photos ----
