@@ -1,4 +1,4 @@
-const APP_VERSION = '2026-07-22.61';
+const APP_VERSION = '2026-07-24.73';
 
 const state = {
   today: null,
@@ -49,6 +49,7 @@ function applyAccent(hex){
   root.setProperty('--fire-r', r);
   root.setProperty('--fire-g', g);
   root.setProperty('--fire-b', b);
+  try { localStorage.setItem('trackpush_last_accent', hex); } catch (err) { /* ignore */ }
 }
 
 const $ = (sel) => document.querySelector(sel);
@@ -173,11 +174,17 @@ const TRANSLATIONS = {
     xp_source_drug: "1 jour sans drogue",
     xp_source_caffeine: "1 jour sans caféine",
     xp_source_walk: "1 jour de marche à l'extérieur",
+    xp_source_bronze: "Trophée Bronze du jour",
+    xp_source_bronze_value: "+2 XP",
+    xp_source_argent: "Trophée Argent du jour",
+    xp_source_argent_value: "+5 XP de plus",
+    xp_source_or: "Trophée Or du jour",
+    xp_source_or_value: "+10 XP de plus",
     xp_source_platine: "Trophée Platine (semaine parfaite)",
     xp_source_badges: "Badges débloqués",
     xp_source_variable_prefix: "variable — ",
     xp_source_badges_link: "voir Badges",
-    xp_source_note: "Annuler une série retire aussi son XP.",
+    xp_source_note: "L'XP des trophées s'additionne en montant de palier (valeurs pour Débutant, ça grossit avec ton rang). Annuler une série retire aussi son XP.",
     version_label: "Version",
     tab_today: "Aujourd'hui", tab_calendar: "Calendrier", tab_habits: "Historique", tab_badges: "Badges", tab_settings: "Réglages",
     modal_badges_title: "BADGES DÉBLOQUÉS",
@@ -189,6 +196,10 @@ const TRANSLATIONS = {
     celebration_ok: "Merci, continue!",
     rankup_title: "NOUVEAU RANG!",
     rankup_desc_prefix: "Tu es maintenant",
+    rankup_new_goal: "Nouvel objectif",
+    rankup_new_bronze: "Trophée Bronze",
+    rankup_new_argent: "Trophée Argent",
+    rankup_new_or: "Trophée Or",
     badge_modal_title: "BADGE DÉBLOQUÉ!",
     photo_modal_title: "PHOTO DU DIMANCHE",
     photo_modal_desc: "Capture ton évolution cette semaine.",
@@ -330,11 +341,17 @@ const TRANSLATIONS = {
     xp_source_drug: "1 drug-free day",
     xp_source_caffeine: "1 caffeine-free day",
     xp_source_walk: "1 day of walking outside",
+    xp_source_bronze: "Bronze trophy for the day",
+    xp_source_bronze_value: "+2 XP",
+    xp_source_argent: "Silver trophy for the day",
+    xp_source_argent_value: "+5 more XP",
+    xp_source_or: "Gold trophy for the day",
+    xp_source_or_value: "+10 more XP",
     xp_source_platine: "Platinum trophy (perfect week)",
     xp_source_badges: "Unlocked badges",
     xp_source_variable_prefix: "variable — ",
     xp_source_badges_link: "see Badges",
-    xp_source_note: "Undoing a set also removes its XP.",
+    xp_source_note: "Trophy XP adds up as you climb tiers (values shown are for Beginner rank — it grows with your rank). Undoing a set also removes its XP.",
     version_label: "Version",
     tab_today: "Today", tab_calendar: "Calendar", tab_habits: "History", tab_badges: "Badges", tab_settings: "Settings",
     modal_badges_title: "BADGES UNLOCKED",
@@ -346,6 +363,10 @@ const TRANSLATIONS = {
     celebration_ok: "Thanks, keep going!",
     rankup_title: "NEW RANK!",
     rankup_desc_prefix: "You are now",
+    rankup_new_goal: "New goal",
+    rankup_new_bronze: "Bronze trophy",
+    rankup_new_argent: "Silver trophy",
+    rankup_new_or: "Gold trophy",
     badge_modal_title: "BADGE UNLOCKED!",
     photo_modal_title: "SUNDAY PHOTO",
     photo_modal_desc: "Capture your progress this week.",
@@ -406,8 +427,8 @@ function t(key, vars){
   return str;
 }
 
-const RANK_NAMES_EN = ['Beginner','Disciplined','Professional','Elite','Legend','Unbeatable','Immortal'];
-const RANK_NAMES_FR = ['Débutant','Discipliné','Professionnel','Élite','Légende','Imbattable','Immortel'];
+const RANK_NAMES_EN = ['Beginner','Disciplined','Professional','Elite','Legend','Unbeatable','Immortal','Divine'];
+const RANK_NAMES_FR = ['Débutant','Discipliné','Professionnel','Élite','Légende','Imbattable','Immortel','Divin'];
 function translateRankName(frName){
   if (state.lang !== 'en') return frName;
   const idx = RANK_NAMES_FR.indexOf(frName);
@@ -427,6 +448,9 @@ const BADGE_TRANSLATIONS_EN = {
   'rank-legende': { name: 'Legend Rank', desc: 'Reach the Legend rank' },
   'rank-imbattable': { name: 'Unbeatable Rank', desc: 'Reach the Unbeatable rank' },
   'rank-immortel': { name: 'Immortal Rank', desc: 'Reach the Immortal rank' },
+  'rank-divin': { name: 'Divine Rank', desc: 'Reach the Divine rank' },
+  'or-streak-5': { name: 'Worth Its Weight in Gold', desc: 'Reach Gold 5 days in a row' },
+  'cent-mille': { name: '100k!', desc: 'Reach 100,000 total XP' },
   'force-tot': { name: 'Early Bird!', desc: '150 push-ups between 6am and noon, same day' },
   'oiseau-nuit': { name: 'Night Owl', desc: '50 push-ups between midnight and 4am, same night' },
   'resolution-nouvel-an': { name: "New Year's Resolution", desc: '100 push-ups on January 1st' },
@@ -530,7 +554,6 @@ function applyTranslations(){
 async function api(path, opts){
   return localApi(path, opts || {});
 }
-
 // ---------- Ring math ----------
 const RING_CIRC = 2 * Math.PI * 104;
 
@@ -661,7 +684,7 @@ function processCelebrationQueue(){
   state.celebrationBusy = true;
   if (item.type === 'badge') showBadgeModal(item.badge);
   else if (item.type === 'trophy') showTrophyModal(item.trophy);
-  else if (item.type === 'rankup') showRankUpModal(item.rankName);
+  else if (item.type === 'rankup') showRankUpModal(item.rankName, item.goal, item.rankIndex);
 }
 
 function dismissCelebration(modalId){
@@ -722,8 +745,25 @@ function showTrophyModal(trophy){
   playCelebrationSound('trophy');
 }
 
-function showRankUpModal(rankName){
+function trophyXPTableClient(rankIdx){
+  const growth = 1.15;
+  const g = Math.pow(growth, rankIdx);
+  return {
+    bronze: Math.round(2 * g),
+    argent: Math.round(7 * g),
+    or: Math.round(17 * g),
+  };
+}
+
+function showRankUpModal(rankName, goal, rankIndex){
   $('#rankup-name').textContent = translateRankName(rankName);
+  if (goal !== undefined) $('#rankup-goal').textContent = `${goal} ${t('pushups_word')}`;
+  if (rankIndex !== undefined){
+    const table = trophyXPTableClient(rankIndex);
+    $('#rankup-bronze').textContent = `+${table.bronze} XP`;
+    $('#rankup-argent').textContent = `+${table.argent} XP`;
+    $('#rankup-or').textContent = `+${table.or} XP`;
+  }
   $('#rankup-modal').hidden = false;
   burstConfetti(['#F5B942','#FFDD8A', state.accentColor, '#FFFFFF']);
   setTimeout(() => burstConfetti(['#F5B942', state.accentColor, '#FFFFFF']), 400);
@@ -767,12 +807,14 @@ async function loadToday(){
   applyTranslations();
   $('#goal-value').textContent = settings.goal;
   $('#goal-echo').textContent = settings.goal;
+  cacheDisplaySnapshot({ goal: settings.goal });
   $('#custom-color-input').value = state.accentColor;
   updateSwatchSelection();
   updateGoalModeUI(settings, xp);
   renderXPBar(xp);
 
   $('#today-date').textContent = formatDayHeader(state.today);
+  cacheDisplaySnapshot({ dateText: $('#today-date').textContent });
 
   const day = await api(`/api/day/${state.today}`);
   renderDay(day);
@@ -785,7 +827,7 @@ async function loadToday(){
   state.customHabits = customHabitsData.customHabits || [];
   renderHabitsList(day.habits || {});
 
-  prewarmOtherViews();
+  setTimeout(prewarmOtherViews, 1500);
 }
 
 // Pre-populates the other tabs' DOM content, then forces one off-screen
@@ -841,6 +883,14 @@ async function refreshXP(retryCount){
   }
 }
 
+function cacheDisplaySnapshot(partial){
+  try {
+    const key = 'trackpush_last_snapshot';
+    const existing = JSON.parse(localStorage.getItem(key) || '{}');
+    localStorage.setItem(key, JSON.stringify({ ...existing, ...partial }));
+  } catch (err) { /* ignore */ }
+}
+
 function renderXPBar(xp){
   $('#xp-rank-name').textContent = translateRankName(xp.rankName).toUpperCase();
   $('#xp-value').textContent = xp.xp;
@@ -853,10 +903,16 @@ function renderXPBar(xp){
     $('#xp-next-label').textContent = t('xp_next', { n: remaining, rank: translateRankName(xp.nextRankName) });
   }
   if (state.rankIndexKnown && xp.rankIndex > state.rankIndex){
-    enqueueCelebration({ type:'rankup', rankName: xp.rankName });
+    enqueueCelebration({ type:'rankup', rankName: xp.rankName, goal: xp.goal, rankIndex: xp.rankIndex });
   }
   state.rankIndex = xp.rankIndex;
   state.rankIndexKnown = true;
+  cacheDisplaySnapshot({
+    rankName: $('#xp-rank-name').textContent,
+    xpValue: $('#xp-value').textContent,
+    xpBarPct: xp.progressPct,
+    xpNextLabel: $('#xp-next-label').textContent,
+  });
 }
 
 async function refreshDay(){
@@ -883,6 +939,9 @@ function checkEveningReminder(day){
 function renderDay(day){
   $('#today-total').textContent = day.total;
   updateRing(day.total, day.goal);
+  if (day.date === state.today){
+    cacheDisplaySnapshot({ total: day.total, goal: day.goal });
+  }
 
   const chip = $('#today-trophy');
   if (day.trophy){
@@ -1064,11 +1123,15 @@ async function loadCalendar(){
   if (!state.calMonth) state.calMonth = state.today.slice(0,7);
   $('#cal-month-label').textContent = fmtMonth(state.calMonth);
 
+  const myToken = (state.calendarLoadToken = (state.calendarLoadToken || 0) + 1);
+
   const [data, streaks, trendData] = await Promise.all([
     api(`/api/month/${state.calMonth}`),
     api('/api/streaks'),
     api('/api/trend'),
   ]);
+
+  if (myToken !== state.calendarLoadToken) return;
 
   const [y,m] = state.calMonth.split('-').map(Number);
   const firstDow = new Date(y, m-1, 1).getDay();
@@ -1094,7 +1157,11 @@ async function loadCalendar(){
   $('#streak-cannabis-text').innerHTML = t('streak_cannabis', { n: `<span id="streak-cannabis">${streaks.cannabis}</span>` });
   $('#streak-cafe-text').innerHTML = t('streak_cafe', { n: `<span id="streak-cafe">${streaks.cafe}</span>` });
 
-  requestAnimationFrame(() => requestAnimationFrame(() => renderTrendChart(trendData.points)));
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    if (myToken !== state.calendarLoadToken) return;
+    renderTrendChart(trendData.points);
+    if (state.view === 'calendar') window.scrollTo(0, 0);
+  }));
 }
 
 function renderTrendChart(points){
@@ -1566,6 +1633,10 @@ function formatDayHeader(dateStr){
 }
 
 function switchView(view){
+  if (state.view === view){
+    window.scrollTo(0, 0);
+    return;
+  }
   state.view = view;
   window.scrollTo(0, 0);
   $('#view-today').hidden = view !== 'today';
@@ -1614,6 +1685,7 @@ async function saveAccentColor(hex){
 
 // ---------- Wire up ----------
 function init(){
+  window.scrollTo(0, 0);
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible') restartShimmer();
   });

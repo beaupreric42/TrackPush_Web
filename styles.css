@@ -67,6 +67,8 @@ body{
 .topbar{
   display:flex;align-items:center;justify-content:space-between;
   padding:calc(env(safe-area-inset-top) + 14px) 18px 6px;
+  min-height:64px;
+  box-sizing:border-box;
 }
 .wordmark{
   font-family:'Manrope',sans-serif;
@@ -716,6 +718,17 @@ body{
   color:var(--fire);font-family:'Manrope',sans-serif;font-weight:700;
   letter-spacing:1px;text-transform:uppercase;
 }
+.rankup-details{
+  width:100%;background:rgba(255,255,255,0.04);border-radius:var(--radius-sm);
+  padding:10px 16px;margin:14px 0;
+}
+.rankup-detail-row{
+  display:flex;justify-content:space-between;padding:6px 0;
+  font-family:'Manrope',sans-serif;font-size:13px;color:var(--text-muted);
+  border-bottom:1px solid rgba(255,255,255,0.06);
+}
+.rankup-detail-row:last-child{border-bottom:none;}
+.rankup-detail-value{color:var(--fire);font-weight:700;}
 .badge-modal-xp{color:var(--fire) !important;font-family:'Manrope',sans-serif;font-weight:700;font-size:18px;}
 
 /* ---------- Badges page ---------- */

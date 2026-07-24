@@ -5,6 +5,26 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
 <title>Track Push</title>
 <meta name="theme-color" content="#12151B" />
+<script>
+  if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+  window.scrollTo(0, 0);
+</script>
+<script>
+  try {
+    var savedAccent = localStorage.getItem('trackpush_last_accent');
+    if (savedAccent) {
+      var m = savedAccent.replace('#','');
+      var r = parseInt(m.substring(0,2),16), g = parseInt(m.substring(2,4),16), b = parseInt(m.substring(4,6),16);
+      var dim = '#' + [r,g,b].map(function(c){ return Math.round(c*0.45).toString(16).padStart(2,'0'); }).join('');
+      var root = document.documentElement.style;
+      root.setProperty('--fire', savedAccent);
+      root.setProperty('--fire-dim', dim);
+      root.setProperty('--fire-r', r);
+      root.setProperty('--fire-g', g);
+      root.setProperty('--fire-b', b);
+    }
+  } catch (err) { /* ignore */ }
+</script>
 <link rel="manifest" href="manifest.json" />
 <link rel="icon" type="image/png" href="icons/icon-192.png" />
 <link rel="apple-touch-icon" href="icons/icon-192.png" />
@@ -267,9 +287,12 @@
     <div class="xp-source-row"><span class="xp-source-label" data-i18n="xp_source_drug">1 jour sans drogue</span><span class="xp-source-value">+20 XP</span></div>
     <div class="xp-source-row"><span class="xp-source-label" data-i18n="xp_source_caffeine">1 jour sans caféine</span><span class="xp-source-value">+10 XP</span></div>
     <div class="xp-source-row"><span class="xp-source-label" data-i18n="xp_source_walk">1 jour de marche à l'extérieur</span><span class="xp-source-value">+15 XP</span></div>
+    <div class="xp-source-row"><span class="xp-source-label" data-i18n="xp_source_bronze">Trophée Bronze du jour</span><span class="xp-source-value" data-i18n="xp_source_bronze_value">+2 XP</span></div>
+    <div class="xp-source-row"><span class="xp-source-label" data-i18n="xp_source_argent">Trophée Argent du jour</span><span class="xp-source-value" data-i18n="xp_source_argent_value">+5 XP de plus</span></div>
+    <div class="xp-source-row"><span class="xp-source-label" data-i18n="xp_source_or">Trophée Or du jour</span><span class="xp-source-value" data-i18n="xp_source_or_value">+10 XP de plus</span></div>
     <div class="xp-source-row"><span class="xp-source-label" data-i18n="xp_source_platine">Trophée Platine (semaine parfaite)</span><span class="xp-source-value">+50 XP</span></div>
     <div class="xp-source-row"><span class="xp-source-label" data-i18n="xp_source_badges">Badges débloqués</span><span class="xp-source-value"><span data-i18n="xp_source_variable_prefix">variable — </span><a href="#" id="xp-source-badges-link" class="xp-inline-link" data-i18n="xp_source_badges_link">voir Badges</a></span></div>
-    <div class="xp-source-note" data-i18n="xp_source_note">Annuler une série retire aussi son XP.</div>
+    <div class="xp-source-note" data-i18n="xp_source_note">L'XP des trophées s'additionne en montant de palier (Or = 17 XP en tout). Annuler une série retire aussi son XP.</div>
   </section>
 
   <div class="build-tag"><span data-i18n="version_label">Version</span> <span id="build-version">—</span></div>
@@ -344,6 +367,12 @@
     <div class="trophy-big rankup-icon">⭐</div>
     <div class="trophy-title" data-i18n="rankup_title">NOUVEAU RANG!</div>
     <div class="trophy-desc"><span data-i18n="rankup_desc_prefix">Tu es maintenant</span> <span id="rankup-name" class="rankup-name">—</span></div>
+    <div class="rankup-details">
+      <div class="rankup-detail-row"><span data-i18n="rankup_new_goal">Nouvel objectif</span><span id="rankup-goal" class="rankup-detail-value">—</span></div>
+      <div class="rankup-detail-row"><span data-i18n="rankup_new_bronze">Trophée Bronze</span><span id="rankup-bronze" class="rankup-detail-value">—</span></div>
+      <div class="rankup-detail-row"><span data-i18n="rankup_new_argent">Trophée Argent</span><span id="rankup-argent" class="rankup-detail-value">—</span></div>
+      <div class="rankup-detail-row"><span data-i18n="rankup_new_or">Trophée Or</span><span id="rankup-or" class="rankup-detail-value">—</span></div>
+    </div>
     <button class="qbtn qbtn-primary" id="rankup-ok" data-i18n="celebration_ok">Merci, continue!</button>
   </div>
 </div>
@@ -390,6 +419,31 @@
   </div>
 </div>
 
+<script>
+  (function(){
+    try {
+      var snap = JSON.parse(localStorage.getItem('trackpush_last_snapshot') || 'null');
+      if (!snap) return;
+      if (snap.total !== undefined) document.getElementById('today-total').textContent = snap.total;
+      if (snap.goal !== undefined) {
+        document.getElementById('goal-echo').textContent = snap.goal;
+        document.getElementById('goal-value').textContent = snap.goal;
+        var pct = Math.min(1, snap.goal > 0 ? snap.total / snap.goal : 0);
+        var RING_CIRC = 2 * Math.PI * 104;
+        var ring = document.getElementById('ring-progress');
+        ring.style.strokeDasharray = RING_CIRC;
+        ring.style.strokeDashoffset = Math.max(0, RING_CIRC - pct * RING_CIRC);
+        ring.style.stroke = pct >= 1 ? 'var(--or)' : (pct >= 0.8 ? 'var(--argent)' : 'var(--fire)');
+        if (pct >= 1) ring.classList.add('ring-complete');
+      }
+      if (snap.rankName) document.getElementById('xp-rank-name').textContent = snap.rankName;
+      if (snap.dateText) document.getElementById('today-date').textContent = snap.dateText;
+      if (snap.xpValue !== undefined) document.getElementById('xp-value').textContent = snap.xpValue;
+      if (snap.xpBarPct !== undefined) document.getElementById('xp-bar-fill').style.width = snap.xpBarPct + '%';
+      if (snap.xpNextLabel) document.getElementById('xp-next-label').textContent = snap.xpNextLabel;
+    } catch (err) { /* ignore, real data will load normally */ }
+  })();
+</script>
 <script src="store.js"></script>
 <script src="local-api.js"></script>
 <script src="app.js"></script>

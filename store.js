@@ -31,13 +31,30 @@ const VALID_MOODS = ['energique', 'calme', 'fatigue', 'epuise', 'stresse', 'anxi
 
 const RANKS = [
   { name: 'Débutant', min: 0, max: 1999, goal: 100 },
-  { name: 'Discipliné', min: 2000, max: 4999, goal: 120 },
-  { name: 'Professionnel', min: 5000, max: 9999, goal: 150 },
-  { name: 'Élite', min: 10000, max: 19999, goal: 170 },
-  { name: 'Légende', min: 20000, max: 35999, goal: 190 },
-  { name: 'Imbattable', min: 36000, max: 72999, goal: 220 },
-  { name: 'Immortel', min: 73000, max: Infinity, goal: 250 },
+  { name: 'Discipliné', min: 2000, max: 4099, goal: 115 },
+  { name: 'Professionnel', min: 4100, max: 8399, goal: 130 },
+  { name: 'Élite', min: 8400, max: 17299, goal: 145 },
+  { name: 'Légende', min: 17300, max: 35599, goal: 160 },
+  { name: 'Imbattable', min: 35600, max: 72999, goal: 180 },
+  { name: 'Immortel', min: 73000, max: 149999, goal: 200 },
+  { name: 'Divin', min: 150000, max: Infinity, goal: 225 },
 ];
+
+const TROPHY_XP_BASE = { bronze: 2, argent: 7, or: 17 };
+const TROPHY_XP_GROWTH = 1.15;
+function trophyXPTable(rankIdx) {
+  const g = Math.pow(TROPHY_XP_GROWTH, rankIdx);
+  return {
+    bronze: Math.round(TROPHY_XP_BASE.bronze * g),
+    argent: Math.round(TROPHY_XP_BASE.argent * g),
+    or: Math.round(TROPHY_XP_BASE.or * g),
+  };
+}
+function rankIndexForGoal(goal) {
+  let idx = 0;
+  for (let i = 0; i < RANKS.length; i++) { if (goal >= RANKS[i].goal) idx = i; }
+  return idx;
+}
 
 // ---------- DB load/save ----------
 
@@ -191,15 +208,34 @@ function badgeBonusXP(db) {
   }, 0);
 }
 
+function dailyTrophyXP(db, date) {
+  const total = totalForDate(db, date);
+  const goal = goalForDate(db, date);
+  if (!goal || goal <= 0) return 0;
+  const pct = total / goal;
+  const table = trophyXPTable(rankIndexForGoal(goal));
+  if (pct >= 1) return table.or;
+  if (pct >= 0.8) return table.argent;
+  if (pct >= 0.5) return table.bronze;
+  return 0;
+}
+
+function sumTrophyXP(db) {
+  const dates = [...new Set(db.entries.map((e) => e.date))];
+  return dates.reduce((sum, d) => sum + dailyTrophyXP(db, d), 0);
+}
+
 function computeXP(db) {
   const totalPushups = db.entries.reduce((sum, e) => sum + e.count, 0);
   const cleanCannabisDays = cleanDaysCount(db, 'cannabis');
   const cleanCafeDays = cleanDaysCount(db, 'cafe');
   const marcheDays = countTrueDays(db, 'marche');
   const platinumWeeks = countPlatinumWeeks(db);
+  const trophyXP = sumTrophyXP(db);
   const badgeXP = badgeBonusXP(db);
-  const xp = totalPushups * 1 + cleanCannabisDays * 20 + cleanCafeDays * 10 + marcheDays * 15 + platinumWeeks * 50 + badgeXP;
-  return { xp, totalPushups, cleanCannabisDays, cleanCafeDays, marcheDays, platinumWeeks, badgeXP };
+  const xp = totalPushups * 1 + cleanCannabisDays * 20 + cleanCafeDays * 10 + marcheDays * 15
+    + platinumWeeks * 50 + trophyXP + badgeXP;
+  return { xp, totalPushups, cleanCannabisDays, cleanCafeDays, marcheDays, platinumWeeks, trophyXP, badgeXP };
 }
 
 function currentGoal(db) {
@@ -412,6 +448,23 @@ function firstDateTrueStreakReaches(db, key, target) {
   }
   return null;
 }
+function firstDateGoalStreakReaches(db, target) {
+  const datesWithEntries = [...new Set(db.entries.map((e) => e.date))];
+  if (!datesWithEntries.length) return null;
+  const floorStr = datesWithEntries.sort()[0];
+  let cursor = new Date(floorStr + 'T00:00:00');
+  const today = new Date(todayStr() + 'T00:00:00');
+  let run = 0;
+  while (cursor <= today) {
+    const ds = cursor.toLocaleDateString('en-CA');
+    const total = totalForDate(db, ds);
+    const goal = goalForDate(db, ds);
+    if (goal > 0 && total >= goal) { run++; if (run >= target) return ds; } else run = 0;
+    cursor.setDate(cursor.getDate() + 1);
+  }
+  return null;
+}
+
 function firstDateAtNthNote(db, n) {
   const sorted = db.notes.slice().sort((a, b) => a.createdAt.localeCompare(b.createdAt));
   return sorted.length >= n ? sorted[n - 1].date : null;
@@ -441,7 +494,8 @@ function simulateXPTimeline(db) {
   const todayStrVal = todayStr();
   while (cursor <= today) {
     const ds = cursor.toLocaleDateString('en-CA');
-    cumulative += totalForDate(db, ds);
+    const dayTotal = totalForDate(db, ds);
+    cumulative += dayTotal;
     if (habitFloorStr && ds >= habitFloorStr) {
       const h = db.habits[ds];
       if (ds !== todayStrVal) {
@@ -450,6 +504,7 @@ function simulateXPTimeline(db) {
       }
       if (h && h.marche) cumulative += 15;
     }
+    cumulative += dailyTrophyXP(db, ds);
     if (cursor.getDay() === 6 && isPlatinumWeek(db, ds)) cumulative += 50;
     timeline.push({ date: ds, xp: cumulative });
     cursor.setDate(cursor.getDate() + 1);
@@ -469,6 +524,9 @@ const BADGES = [
   { id: 'rank-legende', name: 'Rang Légende', desc: 'Atteindre le rang Légende', xp: Math.round(RANKS[4].min * 0.01), icon: '⭐', check: (db) => firstDateReachingXP(db, RANKS[4].min) },
   { id: 'rank-imbattable', name: 'Rang Imbattable', desc: 'Atteindre le rang Imbattable', xp: Math.round(RANKS[5].min * 0.01), icon: '⭐', check: (db) => firstDateReachingXP(db, RANKS[5].min) },
   { id: 'rank-immortel', name: 'Rang Immortel', desc: 'Atteindre le rang Immortel', xp: Math.round(RANKS[6].min * 0.01), icon: '⭐', check: (db) => firstDateReachingXP(db, RANKS[6].min) },
+  { id: 'rank-divin', name: 'Rang Divin', desc: 'Atteindre le rang Divin', xp: Math.round(RANKS[7].min * 0.01), icon: '⭐', check: (db) => firstDateReachingXP(db, RANKS[7].min) },
+  { id: 'or-streak-5', name: "Ça vaut de l'or", desc: "Atteint l'or 5 jours de suite", xp: 25, icon: '🏅', check: (db) => firstDateGoalStreakReaches(db, 5) },
+  { id: 'cent-mille', name: '100k!', desc: 'Atteint 100 000 XP au total', xp: 1000, icon: '💯', check: (db) => firstDateReachingXP(db, 100000) },
   { id: 'decafeine', name: 'Décaféiné!', desc: '1 mois complet (30 jours consécutifs) sans caféine', xp: 150, icon: '☕', check: (db) => firstDateStreakReaches(db, 'cafe', 30) },
   { id: 'clarte', name: "Clarté d'esprit", desc: '1 mois complet (30 jours consécutifs) sans drogue', xp: 300, icon: '🧠', check: (db) => firstDateStreakReaches(db, 'cannabis', 30) },
   { id: 'consistance', name: 'La consistance porte fruits', desc: '50 push-ups en une seule série', xp: 75, icon: '💪', check: (db) => firstEntryDateWithMinCount(db, 50) },
