@@ -4,6 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
 <title>Track Push</title>
+<style>.topbar{opacity:0;}.view>.card{opacity:0;}</style>
 <meta name="theme-color" content="#12151B" />
 <script>
   if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
@@ -25,32 +26,38 @@
     }
   } catch (err) { /* ignore */ }
 </script>
-<link rel="manifest" href="manifest.json" />
-<link rel="icon" type="image/png" href="icons/icon-192.png" />
-<link rel="apple-touch-icon" href="icons/icon-192.png" />
+<link rel="manifest" href="./manifest.json" />
+<link rel="icon" type="image/png" href="./icon-192.png" />
+<link rel="apple-touch-icon" href="./icon-192.png" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-<link rel="stylesheet" href="styles.css" />
+<link rel="stylesheet" href="./styles.css" />
 </head>
 <body>
 
-<div id="flash"></div>
 <div id="confetti-layer"></div>
 
 <header class="topbar">
-  <div class="wordmark">
-    <svg class="dumbbell-icon" viewBox="0 0 48 24" xmlns="http://www.w3.org/2000/svg">
-      <rect x="20" y="10" width="8" height="4" rx="1.5" fill="currentColor"/>
-      <rect x="4" y="4" width="6" height="16" rx="2" fill="currentColor"/>
-      <rect x="0" y="7" width="3" height="10" rx="1.5" fill="currentColor"/>
-      <rect x="38" y="4" width="6" height="16" rx="2" fill="currentColor"/>
-      <rect x="45" y="7" width="3" height="10" rx="1.5" fill="currentColor"/>
+  <div class="wordmark" id="app-wordmark">
+    <svg class="dumbbell-icon" viewBox="0 0 157 68" xmlns="http://www.w3.org/2000/svg">
+      <g transform="translate(-18.500000,129.917148) scale(0.100000,-0.100000)" fill="currentColor" stroke="none">
+      <path d="M1610 1291 c-22 -6 -40 -27 -75 -85 -9 -16 -13 -16 -47 -2 -21 9 -49
+16 -62 16 -47 0 -136 -29 -170 -55 -71 -54 -126 -75 -183 -69 -71 9 -97 0
+-151 -50 -26 -24 -58 -47 -72 -51 -14 -3 -56 -18 -94 -32 -54 -20 -90 -26
+-155 -27 -73 -1 -95 -5 -146 -30 -50 -24 -78 -30 -165 -35 l-105 -6 2 -40 c3
+-79 20 -148 38 -161 23 -17 67 -18 83 -2 9 9 8 16 -4 29 -15 16 -14 21 7 58
+12 22 29 43 38 46 9 4 96 11 194 17 158 8 181 8 196 -6 15 -13 27 -14 77 -6
+64 12 225 62 289 90 22 10 69 26 105 36 36 10 77 23 92 31 26 13 27 12 32 -19
+3 -18 7 -60 10 -93 3 -48 52 -192 72 -214 6 -7 165 -8 169 -1 6 9 -34 27 -79
+35 -50 10 -46 29 4 20 62 -10 49 12 -15 26 -31 7 -58 15 -59 18 -2 3 0 66 6
+139 8 115 13 138 34 169 13 20 24 39 24 44 0 4 14 11 32 14 25 6 34 3 48 -14
+15 -21 18 -21 45 -7 16 8 32 13 37 10 4 -3 12 5 17 18 10 26 37 52 64 61 38
+14 -56 141 -100 136 -4 -1 -19 -4 -33 -8z"/>
+      </g>
     </svg>
     Track<span class="accent">Push</span>
   </div>
-  <button id="goal-pill" class="goal-pill" data-i18n-title="goal_pill_title" title="Voir dans Réglages">
-    <span data-i18n="goal_pill_obj">OBJ</span> <span id="goal-value">100</span>
-  </button>
+  <button id="inventory-header-btn" class="goal-pill inventory-header-btn-img" data-i18n-title="inventory_btn" title="Inventaire"><img src="./inventory-icon-small.png" alt="Inventaire" /></button>
 </header>
 
 <main id="view-today" class="view">
@@ -60,6 +67,9 @@
   </div>
 
   <section class="hero card">
+    <div class="hero-corner-stack hero-corner-tl" id="hero-daily-items-corner"></div>
+    <div class="hero-corner hero-corner-tr" id="hero-detecteur-corner" hidden></div>
+    <div class="hero-corner hero-corner-br" id="hero-amulette-corner" hidden></div>
     <div class="ring-wrap" id="ring-wrap">
       <svg viewBox="0 0 240 240" class="ring">
         <circle cx="120" cy="120" r="104" class="ring-track" />
@@ -73,9 +83,10 @@
       </div>
     </div>
     <div class="today-date" id="today-date">—</div>
+    <div class="today-week-total" id="today-week-total"></div>
   </section>
 
-  <section class="card xp-card">
+  <section class="card xp-card" id="xp-card-btn" role="button" tabindex="0">
     <div class="xp-head">
       <span class="xp-rank" id="xp-rank-name">DÉBUTANT</span>
       <span class="xp-amount"><span id="xp-value">0</span> XP</span>
@@ -127,23 +138,14 @@
 
   <section class="notes card">
     <div class="section-title" data-i18n="notes_title">PENSÉES DU MOMENT</div>
-    <div class="mood-row" id="mood-row" hidden>
-      <button type="button" class="mood-chip" data-mood="motive"></button>
-      <button type="button" class="mood-chip" data-mood="fier"></button>
-      <button type="button" class="mood-chip" data-mood="energique"></button>
-      <button type="button" class="mood-chip" data-mood="concentre"></button>
-      <button type="button" class="mood-chip" data-mood="calme"></button>
-      <button type="button" class="mood-chip" data-mood="fatigue"></button>
-      <button type="button" class="mood-chip" data-mood="epuise"></button>
-      <button type="button" class="mood-chip" data-mood="stresse"></button>
-      <button type="button" class="mood-chip" data-mood="anxieux"></button>
-      <button type="button" class="mood-chip" data-mood="embrouille"></button>
-      <button type="button" class="mood-chip" data-mood="emotionnel"></button>
-      <button type="button" class="mood-chip" data-mood="colere"></button>
-    </div>
     <form id="note-form" class="custom-form note-form">
       <textarea id="note-input" data-i18n-placeholder="note_placeholder" placeholder="Comment tu te sens? Douleurs, énergie, forme..." maxlength="2000" rows="2"></textarea>
-      <button type="submit" class="qbtn qbtn-primary" data-i18n="save_button">Sauvegarder</button>
+      <div class="note-form-actions" id="note-form-actions" hidden>
+        <button type="button" class="qbtn mood-picker-open-btn" id="mood-picker-open-btn">
+          <span id="mood-picker-open-label" data-i18n="mood_picker_open">🙂 Humeur du moment</span>
+        </button>
+        <button type="submit" id="note-save-btn" class="qbtn qbtn-primary" data-i18n="save_button">Sauvegarder</button>
+      </div>
     </form>
     <ul id="notes-list" class="notes-list">
       <li class="empty-state" id="notes-empty" data-i18n="notes_empty">Aucune note aujourd'hui.</li>
@@ -151,6 +153,29 @@
   </section>
 
 </main>
+
+<div class="modal-backdrop" id="inventory-modal" hidden>
+  <div class="modal inventory-modal-inner">
+    <button class="modal-close" id="inventory-close-x">×</button>
+    <img src="./inventory-icon-medium.png" alt="" class="inventory-section-icon" />
+    <div class="section-title" data-i18n="inventory_title">INVENTAIRE</div>
+    <div id="inventory-grid" class="inventory-grid"></div>
+    <img src="./inventory-mythic-icon-medium.png" alt="" class="inventory-section-icon" style="margin-top:16px;" />
+    <div class="section-title" id="mythic-section" data-i18n="inventory_mythic_title" style="margin-top:4px;">OBJETS MYTHIQUES</div>
+    <div id="mythic-grid" class="inventory-grid"></div>
+    <button type="button" class="qbtn qbtn-primary" id="inventory-back-btn" data-i18n="inventory_back_btn">Retour</button>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="xp-log-modal" hidden>
+  <div class="modal xp-log-modal-inner">
+    <button class="modal-close" id="xp-log-close-x">×</button>
+    <div class="section-title" data-i18n="xp_log_title">DÉTAIL DE L'XP</div>
+    <div class="ms-empty-note" id="xp-log-empty" data-i18n="xp_log_empty" hidden>Aucune action n'a encore accordé d'XP.</div>
+    <ul id="xp-log-list" class="entries-list xp-log-list"></ul>
+    <button type="button" class="qbtn qbtn-primary" id="xp-log-back-btn" data-i18n="xp_log_back_btn">Retour</button>
+  </div>
+</div>
 
 <main id="view-calendar" class="view" hidden>
   <section class="cal-header card">
@@ -164,11 +189,23 @@
     </div>
     <div class="cal-grid" id="cal-grid"></div>
     <div class="legend">
-      <span class="legend-item"><i class="dot bronze"></i><span data-i18n="legend_bronze">Bronze 50%</span></span>
-      <span class="legend-item"><i class="dot argent"></i><span data-i18n="legend_argent">Argent 80%</span></span>
-      <span class="legend-item"><i class="dot or"></i><span data-i18n="legend_or">Or 100%</span></span>
-      <span class="legend-item"><i class="dot platine"></i><span data-i18n="legend_platine">Platine — semaine parfaite</span></span>
+      <div class="legend-row">
+        <span class="legend-item"><i class="dot bronze"></i><span data-i18n="legend_bronze">Bronze 50%</span></span>
+        <span class="legend-item"><i class="dot argent"></i><span data-i18n="legend_argent">Argent 80%</span></span>
+        <span class="legend-item"><i class="dot or"></i><span data-i18n="legend_or">Or 100%</span></span>
+      </div>
+      <div class="legend-row">
+        <span class="legend-item"><i class="dot platine"></i><span data-i18n="legend_platine">Platine — Semaine parfaite de 7 jours Or consécutifs</span></span>
+      </div>
     </div>
+    <div class="cal-month-total" id="cal-month-total"></div>
+    <label class="cal-camera-fab" id="cal-camera-fab" data-i18n-title="cal_camera_fab_title" title="Prendre une photo">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M4 8.5C4 7.67157 4.67157 7 5.5 7H8L9 5.5H15L16 7H18.5C19.3284 7 20 7.67157 20 8.5V17.5C20 18.3284 19.3284 19 18.5 19H5.5C4.67157 19 4 18.3284 4 17.5V8.5Z"/>
+        <circle cx="12" cy="13" r="3.2"/>
+      </svg>
+      <input type="file" accept="image/*" id="cal-camera-input" hidden />
+    </label>
   </section>
   <section class="card trend-card">
     <div class="section-title" data-i18n="trend_title">TENDANCE — 30 DERNIERS JOURS</div>
@@ -184,7 +221,11 @@
   <section class="card streaks-card">
     <div class="streak-row">
       <span class="streak-icon">🚭</span>
-      <span class="streak-text" id="streak-cannabis-text">Jour <span id="streak-cannabis">0</span> sans drogue</span>
+      <span class="streak-text" id="streak-cannabis-text">Jour <span id="streak-cannabis">0</span> sans cannabis</span>
+    </div>
+    <div class="streak-row">
+      <span class="streak-icon">🍺</span>
+      <span class="streak-text" id="streak-alcool-text">Jour <span id="streak-alcool">0</span> sans alcool</span>
     </div>
     <div class="streak-row">
       <span class="streak-icon">☕</span>
@@ -203,6 +244,7 @@
     <div class="section-title" data-i18n="stats_title">STATISTIQUES DEPUIS LE DÉBUT</div>
     <div class="stat-row"><span class="stat-label" data-i18n="stat_start_date_label">Début du suivi</span><span class="stat-value" id="stat-start-date">—</span></div>
     <div class="stat-row"><span class="stat-label" data-i18n="stat_total_pushups_label">Push-ups au total</span><span class="stat-value" id="stat-total-pushups">0</span></div>
+    <div class="stat-row"><span class="stat-label" data-i18n="stat_avg_per_day_label">Moyenne quotidienne</span><span class="stat-value" id="stat-avg-per-day">0</span></div>
     <div class="stat-row"><span class="stat-label" data-i18n="stat_disciplined_days_label">Jours disciplinés (Or+)</span><span class="stat-value" id="stat-disciplined-days">0</span></div>
     <div class="stat-row"><span class="stat-label" data-i18n="stat_disciplined_weeks_label">Semaines disciplinées (Platine)</span><span class="stat-value" id="stat-disciplined-weeks">0</span></div>
     <div class="stat-row"><span class="stat-label" data-i18n="stat_total_photos_label">Photos prises</span><span class="stat-value" id="stat-total-photos">0</span></div>
@@ -217,8 +259,18 @@
 
 <main id="view-badges" class="view" hidden>
   <section class="card">
-    <div class="section-title" data-i18n="badges_title">BADGES</div>
-    <div id="badges-grid" class="badges-grid"></div>
+    <button type="button" class="badges-section-toggle" id="badges-unlocked-toggle">
+      <span class="section-title" id="badges-unlocked-title">BADGES DÉBLOQUÉS</span>
+      <span class="badges-section-chevron is-expanded" id="badges-unlocked-chevron"></span>
+    </button>
+    <div id="badges-grid-unlocked" class="badges-grid"></div>
+  </section>
+  <section class="card">
+    <button type="button" class="badges-section-toggle" id="badges-locked-toggle">
+      <span class="section-title" id="badges-locked-title">BADGES NON DÉBLOQUÉS</span>
+      <span class="badges-section-chevron is-expanded" id="badges-locked-chevron"></span>
+    </button>
+    <div id="badges-grid-locked" class="badges-grid"></div>
   </section>
 </main>
 
@@ -226,7 +278,10 @@
   <section class="card">
     <div class="section-title" data-i18n="goal_section_title">OBJECTIF QUOTIDIEN — NOMBRE DE PUSH-UPS PAR JOUR</div>
     <div class="goal-mode-toggle">
-      <button type="button" class="mode-btn" id="goal-mode-auto" data-mode="auto" data-i18n="goal_mode_auto">Automatique (selon rang)</button>
+      <button type="button" class="mode-btn mode-btn-two-line" id="goal-mode-auto" data-mode="auto">
+        <span data-i18n="goal_mode_auto">Automatique</span>
+        <span class="mode-btn-sub" data-i18n="goal_mode_auto_sub">(selon le rang)</span>
+      </button>
       <button type="button" class="mode-btn" id="goal-mode-manual" data-mode="manual" data-i18n="goal_mode_manual">Manuel</button>
     </div>
     <div id="goal-auto-info" class="goal-auto-info"></div>
@@ -260,6 +315,31 @@
     </div>
   </section>
 
+  <section class="card" id="offline-primary-section" hidden>
+    <div class="section-title" id="offline-primary-title" data-i18n="offline_primary_title">MODE HORS-LIGNE (CET APPAREIL)</div>
+    <div id="offline-primary-toggle-block">
+      <div class="reminder-row">
+        <span class="reminder-text" data-i18n="offline_primary_toggle_label">Faire de cet appareil ma copie principale hors ligne</span>
+        <button type="button" id="offline-primary-toggle" class="reminder-switch"><span class="reminder-knob"></span></button>
+      </div>
+      <div class="ms-empty-note" data-i18n="offline_primary_warning">N'active ceci que sur UN SEUL appareil (celui que tu gardes toujours sur toi). Les autres appareils continueront de parler directement au serveur.</div>
+    </div>
+
+    <div id="sync-section-content" hidden>
+      <div class="ms-stat-row sync-status-row" style="margin-top:12px;"><span class="ms-stat-label" data-i18n="sync_status_label">Dernière synchronisation</span><span class="ms-stat-value" id="sync-status">—</span></div>
+      <button type="button" class="qbtn" id="sync-now-btn" data-i18n="sync_now_btn">Synchroniser maintenant</button>
+      <div class="ms-empty-note" id="sync-explainer" data-i18n="sync_explainer">Tes données vivent sur ce téléphone. Une copie est envoyée au serveur automatiquement quand il est accessible.</div>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="section-title" data-i18n="backup_section_title">SAUVEGARDE MANUELLE</div>
+    <div class="ms-empty-note" data-i18n="backup_explainer">Tes données vivent uniquement dans ce navigateur. Télécharge une copie régulièrement pour ne rien perdre si tu changes d'appareil ou si le navigateur efface ses données.</div>
+    <button type="button" class="qbtn" id="backup-export-btn" data-i18n="backup_export_btn">Exporter mes données</button>
+    <button type="button" class="qbtn" id="backup-import-btn" data-i18n="backup_import_btn">Importer une sauvegarde</button>
+    <input type="file" id="backup-import-input" accept="application/json,.json" hidden />
+  </section>
+
   <section class="card">
     <div class="section-title" data-i18n="color_section_title">COULEUR D'ACCENT</div>
     <div class="swatch-row" id="swatch-row">
@@ -284,15 +364,17 @@
   <section class="card">
     <div class="section-title" data-i18n="xp_source_title">COMMENT GAGNER DE L'XP</div>
     <div class="xp-source-row"><span class="xp-source-label" data-i18n="xp_source_pushup">1 push-up</span><span class="xp-source-value">+1 XP</span></div>
-    <div class="xp-source-row"><span class="xp-source-label" data-i18n="xp_source_drug">1 jour sans drogue</span><span class="xp-source-value">+20 XP</span></div>
+    <div class="xp-source-row"><span class="xp-source-label" data-i18n="xp_source_drug">1 jour sans cannabis</span><span class="xp-source-value">+20 XP</span></div>
+    <div class="xp-source-row"><span class="xp-source-label" data-i18n="xp_source_alcool">1 jour sans alcool</span><span class="xp-source-value">+15 XP</span></div>
     <div class="xp-source-row"><span class="xp-source-label" data-i18n="xp_source_caffeine">1 jour sans caféine</span><span class="xp-source-value">+10 XP</span></div>
     <div class="xp-source-row"><span class="xp-source-label" data-i18n="xp_source_walk">1 jour de marche à l'extérieur</span><span class="xp-source-value">+15 XP</span></div>
-    <div class="xp-source-row"><span class="xp-source-label" data-i18n="xp_source_bronze">Trophée Bronze du jour</span><span class="xp-source-value" data-i18n="xp_source_bronze_value">+2 XP</span></div>
-    <div class="xp-source-row"><span class="xp-source-label" data-i18n="xp_source_argent">Trophée Argent du jour</span><span class="xp-source-value" data-i18n="xp_source_argent_value">+5 XP de plus</span></div>
-    <div class="xp-source-row"><span class="xp-source-label" data-i18n="xp_source_or">Trophée Or du jour</span><span class="xp-source-value" data-i18n="xp_source_or_value">+10 XP de plus</span></div>
+    <div class="xp-source-row"><span class="xp-source-label" data-i18n="xp_source_situps">1 jour de 100 sit-ups</span><span class="xp-source-value">+20 XP</span></div>
+    <div class="xp-source-row"><span class="xp-source-label" data-i18n="xp_source_bronze">Trophée Bronze du jour</span><span class="xp-source-value" id="xp-source-bronze-value">+2 XP</span></div>
+    <div class="xp-source-row"><span class="xp-source-label" data-i18n="xp_source_argent">Trophée Argent du jour</span><span class="xp-source-value" id="xp-source-argent-value">+7 XP</span></div>
+    <div class="xp-source-row"><span class="xp-source-label" data-i18n="xp_source_or">Trophée Or du jour</span><span class="xp-source-value" id="xp-source-or-value">+17 XP</span></div>
     <div class="xp-source-row"><span class="xp-source-label" data-i18n="xp_source_platine">Trophée Platine (semaine parfaite)</span><span class="xp-source-value">+50 XP</span></div>
     <div class="xp-source-row"><span class="xp-source-label" data-i18n="xp_source_badges">Badges débloqués</span><span class="xp-source-value"><span data-i18n="xp_source_variable_prefix">variable — </span><a href="#" id="xp-source-badges-link" class="xp-inline-link" data-i18n="xp_source_badges_link">voir Badges</a></span></div>
-    <div class="xp-source-note" data-i18n="xp_source_note">L'XP des trophées s'additionne en montant de palier (Or = 17 XP en tout). Annuler une série retire aussi son XP.</div>
+    <div class="xp-source-note" data-i18n="xp_source_note">Annuler une série retire aussi ton XP.</div>
   </section>
 
   <div class="build-tag"><span data-i18n="version_label">Version</span> <span id="build-version">—</span></div>
@@ -353,6 +435,7 @@
 <!-- Trophy celebration modal -->
 <div class="modal-backdrop" id="trophy-modal" hidden>
   <div class="modal trophy-modal">
+    <button class="modal-close" id="trophy-modal-close-x">×</button>
     <div class="trophy-big" id="trophy-big-icon">🏆</div>
     <div class="trophy-title" id="trophy-title">TROPHÉE!</div>
     <div class="trophy-desc" id="trophy-desc"></div>
@@ -363,6 +446,7 @@
 <!-- Rank up celebration modal -->
 <div class="modal-backdrop" id="rankup-modal" hidden>
   <div class="modal trophy-modal rankup-modal">
+    <button class="modal-close" id="rankup-modal-close-x">×</button>
     <div class="rankup-burst"></div>
     <div class="trophy-big rankup-icon">⭐</div>
     <div class="trophy-title" data-i18n="rankup_title">NOUVEAU RANG!</div>
@@ -373,6 +457,7 @@
       <div class="rankup-detail-row"><span data-i18n="rankup_new_argent">Trophée Argent</span><span id="rankup-argent" class="rankup-detail-value">—</span></div>
       <div class="rankup-detail-row"><span data-i18n="rankup_new_or">Trophée Or</span><span id="rankup-or" class="rankup-detail-value">—</span></div>
     </div>
+    <div class="trophy-desc" id="rankup-items-message" hidden></div>
     <button class="qbtn qbtn-primary" id="rankup-ok" data-i18n="celebration_ok">Merci, continue!</button>
   </div>
 </div>
@@ -380,6 +465,7 @@
 <!-- Badge celebration modal -->
 <div class="modal-backdrop" id="badge-modal" hidden>
   <div class="modal trophy-modal rankup-modal">
+    <button class="modal-close" id="badge-modal-close-x">×</button>
     <div class="rankup-burst"></div>
     <div class="trophy-big rankup-icon" id="badge-modal-icon">🏅</div>
     <div class="trophy-title" data-i18n="badge_modal_title">BADGE DÉBLOQUÉ!</div>
@@ -390,9 +476,138 @@
   </div>
 </div>
 
+<div class="modal-backdrop" id="item-drop-modal" hidden>
+  <div class="modal trophy-modal rankup-modal item-drop-modal">
+    <button class="modal-close" id="item-drop-close-x">×</button>
+    <div class="rankup-burst"></div>
+    <div class="trophy-big rankup-icon" id="item-drop-icon">🔮</div>
+    <div class="trophy-title" id="item-drop-rarity-label" data-i18n="item_drop_title">OBJET TROUVÉ!</div>
+    <div class="trophy-desc"><span id="item-drop-name" class="rankup-name">—</span></div>
+    <div class="trophy-desc" id="item-drop-desc"></div>
+    <button class="qbtn qbtn-primary" id="item-drop-ok" data-i18n="item_drop_ok">Continuer</button>
+  </div>
+</div>
+
+<div class="modal-backdrop modal-backdrop-centered" id="active-item-detail-modal" hidden>
+  <div class="modal trophy-modal rankup-modal item-detail-modal-inner">
+    <button class="modal-close" id="active-item-detail-close-x">×</button>
+    <div class="trophy-big rankup-icon" id="active-item-detail-icon">🔮</div>
+    <div class="trophy-title" id="active-item-detail-name">—</div>
+    <div class="item-detail-type-line" id="active-item-detail-type"></div>
+    <div class="ms-empty-note" id="active-item-detail-desc"></div>
+    <div class="item-detail-footnote" id="active-item-detail-footnote" hidden></div>
+    <div class="active-item-timer-box" id="active-item-detail-timer-box" hidden>
+      <div class="active-item-timer-label" data-i18n="active_item_time_remaining">Temps restant</div>
+      <div class="active-item-timer-value" id="active-item-detail-timer-value">—</div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="item-detail-modal" hidden>
+  <div class="modal trophy-modal rankup-modal item-detail-modal-inner">
+    <button class="modal-close" id="item-detail-close-x">×</button>
+    <div class="trophy-big rankup-icon" id="item-detail-icon">🔮</div>
+    <div class="trophy-title" id="item-detail-name">—</div>
+    <div id="item-detail-chips"></div>
+    <div class="item-detail-type-line" id="item-detail-type-picker"></div>
+    <div class="ms-empty-note" id="item-detail-desc"></div>
+    <div class="item-detail-footnote" id="item-detail-footnote" hidden></div>
+    <div class="item-detail-cap-line" id="item-detail-cap"></div>
+    <button class="qbtn qbtn-primary" id="item-detail-use-btn" hidden data-i18n="item_detail_use_btn">Utiliser</button>
+  </div>
+</div>
+
+<div class="modal-backdrop modal-backdrop-centered" id="mythic-detail-modal" hidden>
+  <div class="modal trophy-modal rankup-modal item-detail-modal-inner">
+    <button class="modal-close" id="mythic-detail-close-x">×</button>
+    <div class="trophy-big rankup-icon" id="mythic-detail-icon">✨</div>
+    <div class="trophy-title" id="mythic-detail-name">—</div>
+    <div class="ms-empty-note" id="mythic-detail-desc"></div>
+    <div class="reminder-row" id="mythic-detail-toggle-row" style="margin-top:18px;">
+      <span class="reminder-text" data-i18n="mythic_detail_toggle_label">Effet activé</span>
+      <button type="button" id="mythic-detail-toggle" class="reminder-switch"><span class="reminder-knob"></span></button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop modal-backdrop-centered" id="item-same-type-active-modal" hidden>
+  <div class="modal trophy-modal">
+    <button class="modal-close" id="item-same-type-active-close-x">×</button>
+    <div class="trophy-big" id="item-same-type-active-icon">🔮</div>
+    <div class="ms-empty-note" data-i18n="item_same_type_active_desc">Un objet similaire du même type est déjà actif. Attendez que son effet se termine avant de pouvoir l'utiliser à nouveau.</div>
+    <button class="qbtn qbtn-primary" id="item-same-type-active-ok" data-i18n="item_same_type_active_ok">D'accord</button>
+  </div>
+</div>
+
+<div class="modal-backdrop modal-backdrop-centered" id="item-replace-active-modal" hidden>
+  <div class="modal trophy-modal">
+    <button class="modal-close" id="item-replace-active-close-x">×</button>
+    <div class="trophy-big" id="item-replace-active-icon">🔮</div>
+    <div class="ms-empty-note" data-i18n="item_replace_active_desc">Vous avez déjà un objet similaire d'actif. Voulez-vous tout de même le remplacer par celui-ci?</div>
+    <button class="qbtn qbtn-primary" id="item-replace-active-yes" data-i18n="item_replace_active_yes">Oui, le remplacer</button>
+    <button class="qbtn" id="item-replace-active-cancel" data-i18n="item_replace_active_cancel">Annuler</button>
+  </div>
+</div>
+
+<div class="modal-backdrop modal-backdrop-centered" id="plume-max-modal" hidden>
+  <div class="modal trophy-modal">
+    <button class="modal-close" id="plume-max-close-x">×</button>
+    <div class="trophy-big">🪶</div>
+    <div class="trophy-title" data-i18n="plume_max_title">Limite atteinte</div>
+    <div class="ms-empty-note" data-i18n="plume_max_desc">Tu ne peux utiliser plus de 2 Plumes légères dans la même journée.</div>
+    <button class="qbtn qbtn-primary" id="plume-max-ok" data-i18n="plume_max_ok">Ok, compris!</button>
+  </div>
+</div>
+
+<div class="modal-backdrop modal-backdrop-centered" id="mood-picker-modal" hidden>
+  <div class="modal">
+    <button class="modal-close" id="mood-picker-close-x">×</button>
+    <div class="trophy-title" data-i18n="mood_picker_title">Comment tu te sens?</div>
+    <div class="mood-row mood-row-popup" id="mood-picker-list">
+      <button type="button" class="mood-chip" data-mood="motive"></button>
+      <button type="button" class="mood-chip" data-mood="energique"></button>
+      <button type="button" class="mood-chip" data-mood="concentre"></button>
+      <button type="button" class="mood-chip" data-mood="fier"></button>
+      <button type="button" class="mood-chip" data-mood="calme"></button>
+      <button type="button" class="mood-chip" data-mood="pensif"></button>
+      <button type="button" class="mood-chip" data-mood="fatigue"></button>
+      <button type="button" class="mood-chip" data-mood="epuise"></button>
+      <button type="button" class="mood-chip" data-mood="stresse"></button>
+      <button type="button" class="mood-chip" data-mood="anxieux"></button>
+      <button type="button" class="mood-chip" data-mood="impatient"></button>
+      <button type="button" class="mood-chip" data-mood="embrouille"></button>
+      <button type="button" class="mood-chip" data-mood="emotionnel"></button>
+      <button type="button" class="mood-chip" data-mood="bougon"></button>
+      <button type="button" class="mood-chip" data-mood="colere"></button>
+    </div>
+    <button class="qbtn qbtn-primary" id="mood-picker-confirm" data-i18n="mood_picker_confirm">Je me sens comme ça</button>
+  </div>
+</div>
+
+<div class="modal-backdrop modal-backdrop-centered" id="undo-item-confirm-modal" hidden>
+  <div class="modal trophy-modal">
+    <div class="trophy-big">⚠️</div>
+    <div class="trophy-title" data-i18n="undo_item_confirm_title">Annuler cette série?</div>
+    <div class="ms-empty-note" id="undo-item-confirm-desc"></div>
+    <button class="qbtn qbtn-primary" id="undo-item-confirm-yes" data-i18n="undo_item_confirm_yes">Oui, annuler quand même</button>
+    <button class="qbtn" id="undo-item-confirm-no" data-i18n="undo_item_confirm_no">Non, garder ma série</button>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="use-item-modal" hidden>
+  <div class="modal trophy-modal rankup-modal">
+    <button class="modal-close" id="use-item-close-x">×</button>
+    <div class="trophy-big rankup-icon" id="use-item-icon">🔮</div>
+    <div class="trophy-title" id="use-item-name">—</div>
+    <div id="use-item-body"></div>
+    <button class="qbtn qbtn-primary" id="use-item-close" data-i18n="celebration_ok">Merci, continue!</button>
+  </div>
+</div>
+
 <!-- Monthly summary popup -->
 <div class="modal-backdrop" id="monthly-summary-modal" hidden>
   <div class="modal">
+    <button class="modal-close" id="monthly-summary-close-x">×</button>
     <div class="modal-date" id="ms-modal-title">—</div>
     <div id="ms-modal-content"></div>
     <button class="qbtn qbtn-primary ms-continue-btn" id="ms-modal-close" data-i18n="ms_continue_btn">Continuer la progression!</button>
@@ -402,6 +617,7 @@
 <!-- Sunday photo popup -->
 <div class="modal-backdrop" id="photo-modal" hidden>
   <div class="modal">
+    <button class="modal-close" id="photo-modal-close-x">×</button>
     <div class="photo-modal-icon">📸</div>
     <div class="trophy-title" data-i18n="photo_modal_title">PHOTO DU DIMANCHE</div>
     <div class="trophy-desc" data-i18n="photo_modal_desc">Capture ton évolution cette semaine.</div>
@@ -415,6 +631,7 @@
         <input type="file" accept="image/*" multiple id="photo-library-input" hidden />
       </label>
       <button class="undo-link" id="photo-skip" data-i18n="photo_skip_btn">Plus tard</button>
+      <button class="undo-link" id="photo-never-today" data-i18n="photo_never_today_btn">Ne plus afficher</button>
     </div>
   </div>
 </div>
@@ -424,17 +641,25 @@
     try {
       var snap = JSON.parse(localStorage.getItem('trackpush_last_snapshot') || 'null');
       if (!snap) return;
-      if (snap.total !== undefined) document.getElementById('today-total').textContent = snap.total;
+      if (snap.total !== undefined) {
+        var totalEl = document.getElementById('today-total');
+        totalEl.textContent = snap.total;
+        totalEl.classList.toggle('big-number-4digits', String(snap.total).length >= 4);
+      }
       if (snap.goal !== undefined) {
         document.getElementById('goal-echo').textContent = snap.goal;
-        document.getElementById('goal-value').textContent = snap.goal;
         var pct = Math.min(1, snap.goal > 0 ? snap.total / snap.goal : 0);
         var RING_CIRC = 2 * Math.PI * 104;
         var ring = document.getElementById('ring-progress');
         ring.style.strokeDasharray = RING_CIRC;
         ring.style.strokeDashoffset = Math.max(0, RING_CIRC - pct * RING_CIRC);
-        ring.style.stroke = pct >= 1 ? 'var(--or)' : (pct >= 0.8 ? 'var(--argent)' : 'var(--fire)');
-        if (pct >= 1) ring.classList.add('ring-complete');
+        if (snap.trophy === 'platine'){
+          ring.style.stroke = 'var(--platine-a)';
+          ring.classList.add('ring-platine');
+        } else {
+          ring.style.stroke = pct >= 1 ? 'var(--or)' : (pct >= 0.8 ? 'var(--argent)' : 'var(--fire)');
+          if (pct >= 1) ring.classList.add('ring-complete');
+        }
       }
       if (snap.rankName) document.getElementById('xp-rank-name').textContent = snap.rankName;
       if (snap.dateText) document.getElementById('today-date').textContent = snap.dateText;
@@ -444,8 +669,9 @@
     } catch (err) { /* ignore, real data will load normally */ }
   })();
 </script>
-<script src="store.js"></script>
-<script src="local-api.js"></script>
-<script src="app.js"></script>
+<script src="./store.js"></script>
+<script src="./local-api.js"></script>
+<script src="./sync.js"></script>
+<script src="./app.js"></script>
 </body>
 </html>

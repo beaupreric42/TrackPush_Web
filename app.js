@@ -1,4 +1,4 @@
-const APP_VERSION = '2026-07-24.73';
+const APP_VERSION = '2026-08.31';
 
 const state = {
   today: null,
@@ -41,7 +41,7 @@ function darken(hex, factor){
   return `#${d(r)}${d(g)}${d(b)}`;
 }
 
-function applyAccent(hex){
+function applyAccent(hex, skipPersist){
   const {r,g,b} = hexToRgb(hex);
   const root = document.documentElement.style;
   root.setProperty('--fire', hex);
@@ -49,7 +49,9 @@ function applyAccent(hex){
   root.setProperty('--fire-r', r);
   root.setProperty('--fire-g', g);
   root.setProperty('--fire-b', b);
-  try { localStorage.setItem('trackpush_last_accent', hex); } catch (err) { /* ignore */ }
+  if (!skipPersist){
+    try { localStorage.setItem('trackpush_last_accent', hex); } catch (err) { /* ignore */ }
+  }
 }
 
 const $ = (sel) => document.querySelector(sel);
@@ -83,8 +85,6 @@ function trophyClass(t){
 // ---------- Translations ----------
 const TRANSLATIONS = {
   fr: {
-    goal_pill_title: "Voir dans Réglages",
-    goal_pill_obj: "OBJ",
     evening_banner_default: "Il te reste du chemin pour atteindre ton objectif aujourd'hui!",
     pushups_word: "push-ups",
     xp_next_default: "Prochain rang: —",
@@ -95,21 +95,26 @@ const TRANSLATIONS = {
     entries_title: "SÉRIES D'AUJOURD'HUI",
     entries_empty: "Aucune série pour l'instant. Fais-en une! 💪",
     notes_title: "PENSÉES DU MOMENT",
+    mood_picker_open: "😶 Humeur du moment",
+    mood_picker_title: "Comment tu te sens?",
+    mood_picker_confirm: "Enregistrer",
+    mood_picker_selected_count: "({n})",
     note_placeholder: "Comment tu te sens? Douleurs, énergie, forme...",
     save_button: "Sauvegarder",
     notes_empty: "Aucune note aujourd'hui.",
     legend_bronze: "Bronze 50%",
     legend_argent: "Argent 80%",
     legend_or: "Or 100%",
-    legend_platine: "Platine — semaine parfaite",
+    legend_platine: "Platine — 7 jours Or consécutifs",
     trend_title: "TENDANCE — 30 DERNIERS JOURS",
     trend_legend_bronze: "Bronze",
     trend_legend_argent: "Argent",
     trend_legend_or: "Or",
     trend_legend_platine: "Platine",
     trend_legend_goal: "Objectif",
-    streak_cannabis: "Jour {n} sans drogue",
+    streak_cannabis: "Jour {n} sans cannabis",
     streak_cafe: "Jour {n} sans caféine",
+    streak_alcool: "Jour {n} sans alcool",
     weekdays_short: ['D','L','M','M','J','V','S'],
     habits_title: "HABITUDES D'AUJOURD'HUI",
     habits_edit_btn: "Modifier",
@@ -123,89 +128,186 @@ const TRANSLATIONS = {
     record_best_day: "Meilleure journée",
     record_best_week: "Meilleure semaine",
     record_best_month: "Meilleur mois",
-    record_streak_drugs: "Plus long streak sans drogue",
-    record_streak_caffeine: "Plus long streak sans caféine",
+    record_streak_drugs: "Plus long streak sans cannabis",
+    record_streak_alcool: "Plus long streak sans alcool",
     record_streak_marche: "Plus long streak de marche",
-    record_platinum_streak: "Semaines Platine d'affilée",
-    record_none: "—",
+    record_platinum_streak: "Platine d'affilée",
+    record_none: "Aucun",
     record_days_suffix: "jours",
     record_weeks_suffix: "semaines",
     record_day_singular: "jour",
     record_week_singular: "semaine",
     stat_start_date_label: "Début du suivi",
     stat_total_pushups_label: "Push-ups au total",
-    stat_best_cannabis_label: "Record — jours consécutifs sans drogue",
-    stat_best_cafe_label: "Record — jours consécutifs sans caféine",
-    stat_best_marche_label: "Record — jours consécutifs de marche",
-    stat_disciplined_days_label: "Jours disciplinés (Or+)",
+    stat_avg_per_day_label: "Moyenne quotidienne",
+    stat_disciplined_days_label: "Jours disciplinés (Or)",
     stat_disciplined_weeks_label: "Semaines disciplinées (Platine)",
     stat_total_photos_label: "Photos prises",
     stat_total_notes_label: "Notes écrites",
-    badges_title: "BADGES",
+    badges_section_unlocked: "Badges débloqués ({n})",
+    badges_section_locked: "Badges non débloqués ({n})",
     badge_secret_placeholder: "Badge secret — débloque-le pour découvrir son secret!",
     lang_title: "LANGUE",
     time_format_title: "FORMAT DE L'HEURE",
     sound_title: "SONS",
-    sound_toggle_label: "Sons de célébration (badge, rang, trophée)",
+    sound_toggle_label: "Sons de célébration (badge, rang, trophée, objets)",
     offline_primary_title: "MODE HORS-LIGNE (CET APPAREIL)",
     offline_primary_toggle_label: "Faire de cet appareil ma copie principale hors ligne",
     offline_primary_warning: "N'active ceci que sur UN SEUL appareil (celui que tu gardes toujours sur toi). Les autres appareils continueront de parler directement au serveur.",
     offline_primary_confirm: "Ceci va faire de cet appareil ta copie principale hors ligne, avec tout ton historique actuel copié ici. N'active ceci que sur un seul appareil. Continuer?",
-    sync_title: "SYNCHRONISATION AVEC LE SERVEUR",
     sync_status_label: "Dernière synchronisation",
     sync_now_btn: "Synchroniser maintenant",
     sync_explainer: "Tes données vivent sur ce téléphone. Une copie est envoyée au serveur automatiquement quand il est accessible.",
-    sync_never: "Jamais encore",
-    sync_just_now: "À l'instant",
-    sync_minutes_ago: "Il y a {n} min",
+    sync_title_native: "SYNCHRONISATION AVEC DOCKER",
+    sync_explainer_native: "Chaque série et chaque photo ajoutée envoie automatiquement une copie à ton serveur Docker (ANONPURP3). Utilise ce bouton pour forcer une synchronisation immédiate et confirmer qu'elle fonctionne.",
+    backup_section_title: "SAUVEGARDE MANUELLE",
+    backup_explainer: "Tes données vivent uniquement dans ce navigateur. Télécharge une copie régulièrement pour ne rien perdre si tu changes d'appareil ou si le navigateur efface ses données.",
+    backup_export_btn: "Exporter mes données",
+    backup_import_btn: "Importer une sauvegarde",
+    backup_import_confirm: "Ceci va REMPLACER toutes les données actuelles sur cet appareil par celles du fichier choisi. Cette action est irréversible. Continuer?",
+    backup_import_success: "Sauvegarde importée avec succès. L'app va se recharger.",
+    backup_import_error: "Ce fichier n'est pas une sauvegarde TrackPush valide.",
+    backup_export_error: "L'exportation a échoué. Réessaie, ou vérifie que ton téléphone a assez d'espace libre.",
     sync_in_progress: "Synchronisation...",
     sync_success: "Synchronisé!",
     sync_failed: "Serveur non accessible — réessai automatique plus tard.",
-    goal_section_title: "OBJECTIF QUOTIDIEN — NOMBRE DE PUSH-UPS PAR JOUR",
-    goal_mode_auto: "Automatique (selon rang)",
+    sync_never: "Jamais",
+    sync_just_now: "À l'instant",
+    sync_minutes_ago: "Il y a {n} min",
+    xp_log_title: "DÉTAIL DE L'XP",
+    xp_log_empty: "Aucune action n'a encore accordé d'XP.",
+    xp_log_error: "Impossible de charger le journal pour l'instant.",
+    xp_log_back_btn: "Retour",
+    goal_section_title: "OBJECTIF DE PUSH-UPS QUOTIDIEN",
+    goal_mode_auto: "Automatique",
+    goal_mode_auto_sub: "(selon le rang)",
     goal_mode_manual: "Manuel",
-    goal_auto_info: "Ton objectif actuel est de {goal} push-ups, basé sur ton rang actuel: {rank}.",
+    goal_auto_info: "L'objectif de ton rang {rank} est actuellement de {goal} push-ups.",
     color_section_title: "COULEUR D'ACCENT",
     color_yellow: "Jaune", color_orange: "Orange", color_red: "Rouge", color_green: "Vert", color_blue: "Bleu", color_purple: "Violet",
     custom_color_label: "Couleur personnalisée",
     ranks_title: "RANGS",
     xp_source_title: "COMMENT GAGNER DE L'XP",
     xp_source_pushup: "1 push-up",
-    xp_source_drug: "1 jour sans drogue",
+    xp_source_drug: "1 jour sans cannabis",
+    xp_source_alcool: "1 jour sans alcool",
     xp_source_caffeine: "1 jour sans caféine",
     xp_source_walk: "1 jour de marche à l'extérieur",
+    xp_source_situps: "1 jour de 100 sit-ups",
     xp_source_bronze: "Trophée Bronze du jour",
-    xp_source_bronze_value: "+2 XP",
     xp_source_argent: "Trophée Argent du jour",
-    xp_source_argent_value: "+5 XP de plus",
     xp_source_or: "Trophée Or du jour",
-    xp_source_or_value: "+10 XP de plus",
     xp_source_platine: "Trophée Platine (semaine parfaite)",
     xp_source_badges: "Badges débloqués",
     xp_source_variable_prefix: "variable — ",
     xp_source_badges_link: "voir Badges",
-    xp_source_note: "L'XP des trophées s'additionne en montant de palier (valeurs pour Débutant, ça grossit avec ton rang). Annuler une série retire aussi son XP.",
+    xp_source_note: "Annuler une série retire aussi son XP.",
+
+    inventory_btn: "🎒 Inventaire",
+    inventory_title: "OBJETS COMMUNS",
+    inventory_mythic_title: "OBJETS MYTHIQUES",
+    inventory_back_btn: "Retour",
+    inventory_undiscovered: "???",
+    inventory_empty_stock: "Épuisé",
+    item_drop_title: "OBJET TROUVÉ!",
+    item_drop_title_mythique: "OBJET MYTHIQUE!!!",
+    item_rank_locked: "Déblocable à partir du rang {rank}",
+    item_locked_echo_passe: "Déblocable à partir du rang Discipliné et après 30 jours d'utilisation de l'app",
+    item_detail_use_btn: "Utiliser",
+    item_detail_type_label: "Type:",
+    item_detail_cap_limited: "Limite d'inventaire : {n}",
+    item_detail_cap_unlimited: "Limite d'inventaire : illimitée",
+    item_footnote_graine_patience: "*L'expérience bonus que procure cet objet est calculé et ajouté lorsque la journée se termine",
+    item_same_type_active_desc: "Un objet similaire du même type est déjà actif. Attendez que son effet se termine avant de pouvoir l'utiliser à nouveau.",
+    item_same_type_active_ok: "D'accord",
+    item_replace_active_desc: "Vous avez déjà un objet similaire d'actif. Voulez-vous tout de même le remplacer par celui-ci?",
+    item_replace_active_yes: "Oui, le remplacer",
+    item_replace_active_cancel: "Annuler",
+    plume_max_title: "Limite atteinte",
+    plume_max_desc: "Tu ne peux utiliser plus de 2 Plumes légères dans la même journée.",
+    plume_max_ok: "Ok, compris!",
+    undo_item_confirm_title: "Annuler cette série?",
+    undo_item_confirm_desc: "Cette série t'a donné {item}. Annuler la série va aussi retirer cet objet de ton inventaire.",
+    undo_item_confirm_yes: "Oui, annuler quand même",
+    undo_item_confirm_no: "Non, garder ma série",
+    item_name_plume_legere: "Plume légère",
+    item_name_amulette_xp: "Amulette d'XP",
+    item_name_don_xp: "Don d'XP",
+    item_name_graine_patience: "Graine de patience",
+    item_name_talisman_pardon: "Talisman du pardon",
+    item_name_echo_passe: "Écho du passé",
+    item_name_detecteur_metal: "Détecteur de métal",
+    item_name_radar_precision: "Radar de précision",
+    item_name_fragment_eternite: "Fragment d'Éternité",
+    item_name_toucher_divin: "Toucher du divin",
+    item_name_poussiere_etoiles: "Poussière d'étoiles",
+    item_name_calendrier_celeste: "Calendrier céleste",
+    item_name_echo_dore: "Écho doré",
+    item_name_mode_arcenciel: "Mode arc-en-ciel",
+    item_desc_plume_legere: "Réduit l'objectif de push-ups pour la journée.",
+    item_desc_plume_legere_specific: "Réduit l'objectif de push-ups de {pct}% pour la journée.",
+    item_desc_amulette_xp: "Multiplie l'XP de chaque push-up pendant 5 minutes.",
+    item_desc_amulette_xp_specific: "Multiplie par {mult} l'XP de chaque push-up pendant 5 minutes.",
+    item_desc_don_xp: "Accorde instantanément de l'XP.",
+    item_desc_don_xp_specific: "Accorde instantanément {xp} XP.",
+    item_desc_graine_patience: "Multiplie l'XP des habitudes d'aujourd'hui",
+    item_desc_graine_patience_specific: "Multiplie par {mult} l'XP des habitudes d'aujourd'hui",
+    item_desc_talisman_pardon: "Protège le compteur d'une habitude de se réinitialiser pour la journée",
+    item_desc_echo_passe: "Fait ressurgir une pensée du passé et procure instantanément 20 XP.",
+    item_desc_detecteur_metal: "Pendant 15 minutes, augmente tes chances de trouver un objet en faisant des séries de push-ups. L'effet de cet objet ne s'applique pas aux objets Mythiques.",
+    item_desc_detecteur_metal_specific: "Pendant 15 minutes, augmente tes chances de {pct}% de trouver un objet en faisant des séries de push-ups. L'effet de cet objet ne s'applique pas aux objets Mythiques.",
+    item_desc_radar_precision: "Garantit l'obtention d'un objet commun aléatoire lors de la prochaine série effectuée",
+    item_desc_fragment_eternite: "Un fragment d'un accomplissement immense — +2000 XP, une fois dans toute ta vie.",
+    item_desc_toucher_divin: "Un halo doré permanent autour de ta barre d'XP. Activable et désactivable à volonté.",
+    item_desc_poussiere_etoiles: "Change la couleur des étincelles d'XP pour un argent/violet scintillant.",
+    item_desc_calendrier_celeste: "Tes journées Or au calendrier scintillent d'un dégradé or et bleu nuit.",
+    item_desc_echo_dore: "Appuie sur TrackPush pour jouer une mélodie qui t'appartient.",
+    item_desc_mode_arcenciel: "Ta couleur d'accent défile lentement à travers toutes les teintes de l'arc-en-ciel. Toucher du divin l'emporte si les deux sont actifs.",
+    rarity_basique: "Commun",
+    rarity_rare: "Rare",
+    rarity_epique: "Épique",
+    rarity_legendaire: "Légendaire",
+    rarity_mythique: "Mythique",
+    active_item_time_remaining: "Temps restant",
+    use_item_talisman_prompt: "Quelle habitude veux-tu protéger?",
+    use_item_talisman_cannabis: "Sans cannabis",
+    use_item_talisman_cafe: "Sans caféine",
+    use_item_talisman_marche: "Marche à l'extérieur",
+    use_item_talisman_result: "Ton streak est protégé pour aujourd'hui.",
+    use_item_echo_result_positive: "Ce sentiment, tu peux le revivre aujourd'hui!",
+    use_item_echo_result_negative: "Tu te souviens de ce jour-là? Regarde le chemin parcouru depuis.",
+    use_item_echo_result_mixed: "Ce jour-là, tu portais plusieurs choses en même temps. Regarde le chemin parcouru depuis.",
+    use_item_echo_result_neutral: "Un souvenir d'il y a longtemps.",
+    use_item_echo_none: "Aucun souvenir assez ancien pour l'instant.",
+    mythic_toggle_on: "Activé",
+    mythic_detail_toggle_label: "Effet activé",
+    mythic_toggle_off: "Désactivé",
     version_label: "Version",
     tab_today: "Aujourd'hui", tab_calendar: "Calendrier", tab_habits: "Historique", tab_badges: "Badges", tab_settings: "Réglages",
     modal_badges_title: "BADGES DÉBLOQUÉS",
     modal_habits_title: "HABITUDES",
     modal_photos_title: "PHOTOS",
     modal_add_photo_btn: "+ Ajouter une photo",
+    cal_camera_fab_title: "Prendre une photo",
+    cal_month_total: "Total du mois : {n} push-ups",
+    today_week_total: "Push-ups cette semaine : {n}",
     modal_entries_title: "SÉRIES",
-    modal_entries_empty: "Aucune série ce jour-là.",
     celebration_ok: "Merci, continue!",
+    item_drop_ok: "Continuer",
     rankup_title: "NOUVEAU RANG!",
     rankup_desc_prefix: "Tu es maintenant",
     rankup_new_goal: "Nouvel objectif",
     rankup_new_bronze: "Trophée Bronze",
     rankup_new_argent: "Trophée Argent",
     rankup_new_or: "Trophée Or",
+    rankup_items_unlock: "Ton engagement porte fruit — de nouveaux objets mystérieux commencent à apparaître sur ton chemin!",
     badge_modal_title: "BADGE DÉBLOQUÉ!",
     photo_modal_title: "PHOTO DU DIMANCHE",
     photo_modal_desc: "Capture ton évolution cette semaine.",
     photo_camera_btn: "Prendre une photo",
     photo_library_btn: "Choisir dans la photothèque",
     photo_skip_btn: "Plus tard",
+    photo_never_today_btn: "Ne plus afficher",
     note_edit_link: "Modifier",
     note_delete_link: "Supprimer",
     note_cancel_link: "Annuler",
@@ -218,10 +320,9 @@ const TRANSLATIONS = {
     trophy_desc_bronze: "50% de l'objectif atteint aujourd'hui. Ça chauffe!",
     trophy_desc_argent: "80% atteint. Presque là!",
     trophy_desc_or: "Objectif du jour complété à 100%!",
-    trophy_desc_platine: "Semaine parfaite — 100%+ chaque jour du dimanche au samedi!",
+    trophy_desc_platine: "Semaine parfaite – Objectif atteint pendant 7 jours consécutifs. Continue d'alimenter cette motivation!",
     trophy_title: "TROPHÉE {name}!",
-    reset_default: "—",
-    monthly_summary_title: "RÉSUMÉ MENSUEL",
+    monthly_summary_title: "RÉSUMÉS MENSUELS",
     ms_continue_btn: "Continuer la progression!",
     ms_next_available: "1er {month} {year}.",
     ms_next_available_prefix: "Le prochain résumé sera disponible le",
@@ -229,12 +330,13 @@ const TRANSLATIONS = {
     ms_mood_label: "HUMEURS RESSENTIES",
     ms_mood_none: "Aucune humeur enregistrée ce mois-ci.",
     ms_photo_label: "ÉVOLUTION PHOTO",
-    ms_photo_before: "Au tout début",
-    ms_photo_after: "Aujourd'hui",
     ms_photo_none: "Aucune photo prise encore.",
     ms_habits_label: "HABITUDES DU MOIS",
-    ms_days_no_drugs: "Jours sans drogue",
+    ms_days_no_drugs: "Jours sans cannabis",
     ms_days_no_caffeine: "Jours sans caféine",
+    ms_days_no_alcool: "Jours sans alcool",
+    ms_days_walked: "Jours de marche à l'extérieur",
+    ms_situps_minimum: "Sit-ups faits (minimum)",
     ms_avg_label: "MOYENNE DES SÉRIES",
     ms_avg_this_month: "Ce mois-ci",
     ms_avg_last_month: "Mois précédent",
@@ -250,8 +352,6 @@ const TRANSLATIONS = {
     ms_render_error: "Une erreur est survenue en affichant le résumé. Réessaie plus tard.",
   },
   en: {
-    goal_pill_title: "View in Settings",
-    goal_pill_obj: "GOAL",
     evening_banner_default: "You still have some way to go to hit today's goal!",
     pushups_word: "push-ups",
     xp_next_default: "Next rank: —",
@@ -262,21 +362,26 @@ const TRANSLATIONS = {
     entries_title: "TODAY'S SETS",
     entries_empty: "No sets yet. Get one in! 💪",
     notes_title: "THOUGHTS OF THE MOMENT",
+    mood_picker_open: "😶 Mood right now",
+    mood_picker_title: "How are you feeling?",
+    mood_picker_confirm: "I feel like this",
+    mood_picker_selected_count: "({n})",
     note_placeholder: "How are you feeling? Soreness, energy, form...",
     save_button: "Save",
     notes_empty: "No notes today.",
     legend_bronze: "Bronze 50%",
     legend_argent: "Silver 80%",
     legend_or: "Gold 100%",
-    legend_platine: "Platinum — perfect week",
+    legend_platine: "Platinum — 7 consecutive Gold days",
     trend_title: "TREND — LAST 30 DAYS",
     trend_legend_bronze: "Bronze",
     trend_legend_argent: "Silver",
     trend_legend_or: "Gold",
     trend_legend_platine: "Platinum",
     trend_legend_goal: "Goal",
-    streak_cannabis: "Day {n} drug-free",
+    streak_cannabis: "Day {n} cannabis-free",
     streak_cafe: "Day {n} caffeine-free",
+    streak_alcool: "Day {n} alcohol-free",
     weekdays_short: ['S','M','T','W','T','F','S'],
     habits_title: "TODAY'S HABITS",
     habits_edit_btn: "Edit",
@@ -290,89 +395,186 @@ const TRANSLATIONS = {
     record_best_day: "Best day",
     record_best_week: "Best week",
     record_best_month: "Best month",
-    record_streak_drugs: "Longest drug-free streak",
-    record_streak_caffeine: "Longest caffeine-free streak",
+    record_streak_drugs: "Longest cannabis-free streak",
+    record_streak_alcool: "Longest alcohol-free streak",
     record_streak_marche: "Longest walking streak",
-    record_platinum_streak: "Platinum weeks in a row",
-    record_none: "—",
+    record_platinum_streak: "Platinum in a row",
+    record_none: "None",
     record_days_suffix: "days",
     record_weeks_suffix: "weeks",
     record_day_singular: "day",
     record_week_singular: "week",
     stat_start_date_label: "Tracking since",
     stat_total_pushups_label: "Total push-ups",
-    stat_best_cannabis_label: "Record — consecutive drug-free days",
-    stat_best_cafe_label: "Record — consecutive caffeine-free days",
-    stat_best_marche_label: "Record — consecutive walking days",
-    stat_disciplined_days_label: "Disciplined days (Gold+)",
+    stat_avg_per_day_label: "Daily average",
+    stat_disciplined_days_label: "Disciplined days (Gold)",
     stat_disciplined_weeks_label: "Disciplined weeks (Platinum)",
     stat_total_photos_label: "Photos taken",
     stat_total_notes_label: "Notes written",
-    badges_title: "BADGES",
+    badges_section_unlocked: "Unlocked badges ({n})",
+    badges_section_locked: "Locked badges ({n})",
     badge_secret_placeholder: "Secret badge — unlock it to discover its secret!",
     lang_title: "LANGUAGE",
     time_format_title: "TIME FORMAT",
     sound_title: "SOUND",
-    sound_toggle_label: "Celebration sounds (badge, rank, trophy)",
+    sound_toggle_label: "Celebration sounds (badge, rank, trophy, items)",
     offline_primary_title: "OFFLINE MODE (THIS DEVICE)",
     offline_primary_toggle_label: "Make this device my main offline copy",
     offline_primary_warning: "Only turn this on for ONE device (the one you always carry). Other devices will keep talking directly to the server.",
     offline_primary_confirm: "This will make this device your main offline copy, with all your current history copied here. Only enable this on one device. Continue?",
-    sync_title: "SERVER SYNC",
     sync_status_label: "Last synced",
     sync_now_btn: "Sync now",
     sync_explainer: "Your data lives on this phone. A copy is sent to the server automatically whenever it's reachable.",
-    sync_never: "Never yet",
-    sync_just_now: "Just now",
-    sync_minutes_ago: "{n} min ago",
+    sync_title_native: "SYNC WITH DOCKER",
+    sync_explainer_native: "Every set and photo you add automatically sends a copy to your Docker server (ANONPURP3). Use this button to force an immediate sync and confirm it's working.",
+    backup_section_title: "MANUAL BACKUP",
+    backup_explainer: "Your data lives only in this browser. Download a copy regularly so you never lose it if you switch devices or the browser clears its data.",
+    backup_export_btn: "Export my data",
+    backup_import_btn: "Import a backup",
+    backup_import_confirm: "This will REPLACE all current data on this device with the data from the chosen file. This action cannot be undone. Continue?",
+    backup_import_success: "Backup imported successfully. The app will reload.",
+    backup_import_error: "This file isn't a valid TrackPush backup.",
+    backup_export_error: "Export failed. Try again, or check that your phone has enough free space.",
     sync_in_progress: "Syncing...",
     sync_success: "Synced!",
     sync_failed: "Server unreachable — will retry automatically.",
-    goal_section_title: "DAILY GOAL — NUMBER OF PUSH-UPS PER DAY",
-    goal_mode_auto: "Automatic (by rank)",
+    sync_never: "Never",
+    sync_just_now: "Just now",
+    sync_minutes_ago: "{n} min ago",
+    xp_log_title: "XP DETAILS",
+    xp_log_empty: "No action has granted XP yet.",
+    xp_log_error: "Couldn't load the log right now.",
+    xp_log_back_btn: "Back",
+    goal_section_title: "DAILY PUSH-UP GOAL",
+    goal_mode_auto: "Automatic",
+    goal_mode_auto_sub: "(by rank)",
     goal_mode_manual: "Manual",
-    goal_auto_info: "Your current goal is {goal} push-ups, based on your current rank: {rank}.",
+    goal_auto_info: "Your {rank} rank's goal is currently {goal} push-ups.",
     color_section_title: "ACCENT COLOR",
     color_yellow: "Yellow", color_orange: "Orange", color_red: "Red", color_green: "Green", color_blue: "Blue", color_purple: "Purple",
     custom_color_label: "Custom color",
     ranks_title: "RANKS",
     xp_source_title: "HOW TO EARN XP",
     xp_source_pushup: "1 push-up",
-    xp_source_drug: "1 drug-free day",
+    xp_source_drug: "1 cannabis-free day",
+    xp_source_alcool: "1 alcohol-free day",
     xp_source_caffeine: "1 caffeine-free day",
     xp_source_walk: "1 day of walking outside",
+    xp_source_situps: "1 day of 100 sit-ups",
     xp_source_bronze: "Bronze trophy for the day",
-    xp_source_bronze_value: "+2 XP",
     xp_source_argent: "Silver trophy for the day",
-    xp_source_argent_value: "+5 more XP",
     xp_source_or: "Gold trophy for the day",
-    xp_source_or_value: "+10 more XP",
     xp_source_platine: "Platinum trophy (perfect week)",
     xp_source_badges: "Unlocked badges",
     xp_source_variable_prefix: "variable — ",
     xp_source_badges_link: "see Badges",
-    xp_source_note: "Trophy XP adds up as you climb tiers (values shown are for Beginner rank — it grows with your rank). Undoing a set also removes its XP.",
+    xp_source_note: "Undoing a set also removes your XP.",
+
+    inventory_btn: "🎒 Inventory",
+    inventory_title: "COMMON ITEMS",
+    inventory_mythic_title: "MYTHIC ITEMS",
+    inventory_back_btn: "Back",
+    inventory_undiscovered: "???",
+    inventory_empty_stock: "Depleted",
+    item_drop_title: "ITEM FOUND!",
+    item_drop_title_mythique: "MYTHIC ITEM!!!",
+    item_rank_locked: "Unlockable at rank {rank}",
+    item_locked_echo_passe: "Unlockable at rank Disciplined and after 30 days of app use",
+    item_detail_use_btn: "Use",
+    item_detail_type_label: "Type:",
+    item_detail_cap_limited: "Inventory limit: {n}",
+    item_detail_cap_unlimited: "Inventory limit: unlimited",
+    item_footnote_graine_patience: "*The bonus experience from this item is calculated and added once the day is over",
+    item_same_type_active_desc: "A similar item of the same type is already active. Wait for its effect to end before you can use it again.",
+    item_same_type_active_ok: "Got it",
+    item_replace_active_desc: "You already have a similar item active. Do you want to replace it with this one anyway?",
+    item_replace_active_yes: "Yes, replace it",
+    item_replace_active_cancel: "Cancel",
+    plume_max_title: "Limit reached",
+    plume_max_desc: "You can't use more than 2 Light Feathers on the same day.",
+    plume_max_ok: "Got it!",
+    undo_item_confirm_title: "Undo this set?",
+    undo_item_confirm_desc: "This set gave you {item}. Undoing it will also remove that item from your inventory.",
+    undo_item_confirm_yes: "Yes, undo anyway",
+    undo_item_confirm_no: "No, keep my set",
+    item_name_plume_legere: "Light Feather",
+    item_name_amulette_xp: "XP Amulet",
+    item_name_don_xp: "XP Gift",
+    item_name_graine_patience: "Seed of Patience",
+    item_name_talisman_pardon: "Talisman of Forgiveness",
+    item_name_echo_passe: "Echo of the Past",
+    item_name_detecteur_metal: "Metal Detector",
+    item_name_radar_precision: "Precision Radar",
+    item_name_fragment_eternite: "Fragment of Eternity",
+    item_name_toucher_divin: "Touch of the Divine",
+    item_name_poussiere_etoiles: "Stardust",
+    item_name_calendrier_celeste: "Celestial Calendar",
+    item_name_echo_dore: "Golden Echo",
+    item_name_mode_arcenciel: "Rainbow Mode",
+    item_desc_plume_legere: "Reduces today's push-up goal.",
+    item_desc_plume_legere_specific: "Reduces today's push-up goal by {pct}%.",
+    item_desc_amulette_xp: "Multiplies the XP of every push-up for 5 minutes.",
+    item_desc_amulette_xp_specific: "Multiplies the XP of every push-up by {mult} for 5 minutes.",
+    item_desc_don_xp: "Instantly grants XP.",
+    item_desc_don_xp_specific: "Instantly grants {xp} XP.",
+    item_desc_graine_patience: "Multiplies today's habit XP",
+    item_desc_graine_patience_specific: "Multiplies today's habit XP by {mult}",
+    item_desc_talisman_pardon: "Protects a habit's streak counter from resetting for the day",
+    item_desc_echo_passe: "Brings back a memory from the past and instantly grants 20 XP.",
+    item_desc_detecteur_metal: "For 15 minutes, increases your chances of finding an item from push-up sets. This item's effect doesn't apply to Mythic items.",
+    item_desc_detecteur_metal_specific: "For 15 minutes, increases your chances by {pct}% of finding an item from push-up sets. This item's effect doesn't apply to Mythic items.",
+    item_desc_radar_precision: "Guarantees a random common item on your next set",
+    item_desc_fragment_eternite: "A fragment of something immense — +2000 XP, once in a lifetime.",
+    item_desc_toucher_divin: "A permanent golden glow around your XP bar. Can be turned on and off anytime.",
+    item_desc_poussiere_etoiles: "Changes your XP sparkles into shimmering silver and purple.",
+    item_desc_calendrier_celeste: "Your Gold calendar days shimmer with a gold and midnight-blue gradient.",
+    item_desc_echo_dore: "Tap TrackPush to play a melody that's yours alone.",
+    item_desc_mode_arcenciel: "Your accent color slowly cycles through every hue of the rainbow. Touch of the Divine takes priority if both are active.",
+    rarity_basique: "Common",
+    rarity_rare: "Rare",
+    rarity_epique: "Epic",
+    rarity_legendaire: "Legendary",
+    rarity_mythique: "Mythic",
+    active_item_time_remaining: "Time remaining",
+    use_item_talisman_prompt: "Which habit do you want to protect?",
+    use_item_talisman_cannabis: "Cannabis-free",
+    use_item_talisman_cafe: "Caffeine-free",
+    use_item_talisman_marche: "Walk outside",
+    use_item_talisman_result: "Your streak is protected for today.",
+    use_item_echo_result_positive: "You can relive this feeling today!",
+    use_item_echo_result_negative: "Remember that day? Look how far you've come since.",
+    use_item_echo_result_mixed: "That day, you were carrying several things at once. Look how far you've come since.",
+    use_item_echo_result_neutral: "A memory from long ago.",
+    use_item_echo_none: "No memory old enough yet.",
+    mythic_toggle_on: "On",
+    mythic_detail_toggle_label: "Effect active",
+    mythic_toggle_off: "Off",
     version_label: "Version",
     tab_today: "Today", tab_calendar: "Calendar", tab_habits: "History", tab_badges: "Badges", tab_settings: "Settings",
     modal_badges_title: "BADGES UNLOCKED",
     modal_habits_title: "HABITS",
     modal_photos_title: "PHOTOS",
     modal_add_photo_btn: "+ Add a photo",
+    cal_camera_fab_title: "Take a photo",
+    cal_month_total: "Month total: {n} push-ups",
+    today_week_total: "Push-ups this week: {n}",
     modal_entries_title: "SETS",
-    modal_entries_empty: "No sets that day.",
     celebration_ok: "Thanks, keep going!",
+    item_drop_ok: "Continue",
     rankup_title: "NEW RANK!",
     rankup_desc_prefix: "You are now",
     rankup_new_goal: "New goal",
     rankup_new_bronze: "Bronze trophy",
     rankup_new_argent: "Silver trophy",
     rankup_new_or: "Gold trophy",
+    rankup_items_unlock: "Your commitment is paying off — new mysterious items are starting to appear on your path!",
     badge_modal_title: "BADGE UNLOCKED!",
     photo_modal_title: "SUNDAY PHOTO",
     photo_modal_desc: "Capture your progress this week.",
     photo_camera_btn: "Take a photo",
     photo_library_btn: "Choose from library",
     photo_skip_btn: "Later",
+    photo_never_today_btn: "Don't show again",
     note_edit_link: "Edit",
     note_delete_link: "Delete",
     note_cancel_link: "Cancel",
@@ -385,10 +587,9 @@ const TRANSLATIONS = {
     trophy_desc_bronze: "50% of today's goal reached. Heating up!",
     trophy_desc_argent: "80% reached. Almost there!",
     trophy_desc_or: "Today's goal fully completed!",
-    trophy_desc_platine: "Perfect week — 100%+ every day from Sunday to Saturday!",
+    trophy_desc_platine: "Perfect week – Goal reached for 7 consecutive days. Keep feeding that motivation!",
     trophy_title: "{name} TROPHY!",
-    reset_default: "—",
-    monthly_summary_title: "MONTHLY SUMMARY",
+    monthly_summary_title: "MONTHLY SUMMARIES",
     ms_continue_btn: "Keep up the progress!",
     ms_next_available: "{month} 1st, {year}.",
     ms_next_available_prefix: "The next summary will be available on",
@@ -396,12 +597,13 @@ const TRANSLATIONS = {
     ms_mood_label: "MOODS FELT",
     ms_mood_none: "No moods logged this month.",
     ms_photo_label: "PHOTO PROGRESS",
-    ms_photo_before: "Right at the start",
-    ms_photo_after: "Today",
     ms_photo_none: "No photos taken yet.",
     ms_habits_label: "HABITS THIS MONTH",
-    ms_days_no_drugs: "Drug-free days",
+    ms_days_no_drugs: "Cannabis-free days",
     ms_days_no_caffeine: "Caffeine-free days",
+    ms_days_no_alcool: "Alcohol-free days",
+    ms_days_walked: "Days walked outside",
+    ms_situps_minimum: "Sit-ups done (minimum)",
     ms_avg_label: "AVERAGE SET SIZE",
     ms_avg_this_month: "This month",
     ms_avg_last_month: "Last month",
@@ -436,10 +638,13 @@ function translateRankName(frName){
 }
 
 const BADGE_TRANSLATIONS_EN = {
+  'premiere-serie': { name: 'First Step', desc: 'Log your very first push-up set' },
+  'mois-brillant': { name: 'A Brilliant Month!', desc: '4 consecutive Platinum weeks' },
   decafeine: { name: 'Decaf!', desc: 'A full month (30 consecutive days) caffeine-free' },
-  clarte: { name: 'Clarity of Mind', desc: 'A full month (30 consecutive days) drug-free' },
-  brillant: { name: 'Brilliant!', desc: 'First perfect week (Platinum trophy)' },
-  motivation100: { name: '100 Motivation?', desc: '100 days of discipline (Gold trophy or better)' },
+  'sans-alcool': { name: 'Alcohol-Free', desc: 'A full month (30 consecutive days) alcohol-free' },
+  clarte: { name: 'Clarity of Mind', desc: 'A full month (30 consecutive days) cannabis-free' },
+  brillant: { name: 'Shine On!', desc: 'First perfect week (Platinum trophy)' },
+  motivation100: { name: '100 Motivation?', desc: 'Reach Gold for 100 days total' },
   'cadeau-noel': { name: 'A Big Gift for the Pecs', desc: '250 push-ups on December 25th' },
   consistance: { name: 'Consistency Pays Off', desc: '50 push-ups in a single set' },
   'rank-discipline': { name: 'Disciplined Rank', desc: 'Reach the Disciplined rank' },
@@ -452,12 +657,24 @@ const BADGE_TRANSLATIONS_EN = {
   'or-streak-5': { name: 'Worth Its Weight in Gold', desc: 'Reach Gold 5 days in a row' },
   'cent-mille': { name: '100k!', desc: 'Reach 100,000 total XP' },
   'force-tot': { name: 'Early Bird!', desc: '150 push-ups between 6am and noon, same day' },
-  'oiseau-nuit': { name: 'Night Owl', desc: '50 push-ups between midnight and 4am, same night' },
+  'oiseau-nuit': { name: 'Night Owl', desc: '100 push-ups between midnight and 4am, same night' },
+  'soiree-motivante': { name: 'Motivated Evening', desc: '150 push-ups between 6pm and 10pm, same evening' },
   'resolution-nouvel-an': { name: "New Year's Resolution", desc: '100 push-ups on January 1st' },
-  'mille-en-cinq': { name: '1000 in 5', desc: 'At least 200 push-ups per day, 5 days in a row' },
-  'semaine-promenades': { name: 'Walking Week', desc: 'Walk outside, 7 days in a row' },
+  'encore-plus': { name: 'Even More!', desc: '200 push-ups in the same day' },
+  'mille-en-cinq': { name: '1000 in 7', desc: 'Do 1000 total push-ups over 7 consecutive days' },
+  'semaine-promenades': { name: 'Walking Week', desc: 'Take a walk outside for 7 consecutive days' },
+  'go-abdo': { name: 'Go Abs Go', desc: 'Complete the 100 sit-ups habit 25 times' },
   'je-note': { name: 'I NOTE!', desc: '100 notes added in total' },
-  'top-modele': { name: 'Top Model', desc: '30 photos added in total' },
+  'top-modele': { name: 'Top Model', desc: '10 photos added in total' },
+  'premier-tresor': { name: 'First Treasure', desc: 'Find your very first item (other than the Metal Detector)' },
+  'petit-coffre': { name: 'Small Chest', desc: 'Discover 3 different items' },
+  'grand-collectionneur': { name: 'Great Collector', desc: 'Discover every existing item' },
+  'legendaire-badge': { name: 'Legendary!', desc: "Unlock an item's legendary version for the first time" },
+  'impossible-devient-reel': { name: 'The Impossible Becomes Real', desc: 'Find your very first Mythic item' },
+  'trente-en-un': { name: '1 is Good, But 30 is Better', desc: 'Do 30 push-ups in a single set' },
+  'objectif-mensuel': { name: 'Monthly Goal', desc: 'Do 3500 push-ups in 1 month' },
+  'plein-dans-le-mille': { name: 'Right on Target!', desc: 'Do 1000 total push-ups' },
+  'over-9000': { name: "It's over 9000!", desc: 'Do 10,000 total push-ups' },
 };
 function translateBadge(id, name, desc){
   if (state.lang !== 'en') return { name, desc };
@@ -469,31 +686,61 @@ function translateBadge(id, name, desc){
 const MOOD_LABELS_BY_LANG = {
   fr: {
     energique: '⚡ Énergique', calme: '🌙 Calme', fatigue: '😴 Fatigué',
-    epuise: '🔋 Épuisé', stresse: '😣 Stressé', anxieux: '😰 Anxieux', embrouille: '🌀 Embrouillé',
-    concentre: '🎯 Concentré', emotionnel: '🥲 Émotif', colere: '😠 En colère', motive: '💪 Motivé', fier: '😤 Fier',
+    epuise: '🔋 Épuisé', stresse: '😣 Stressé', anxieux: '😰 Anxieux', impatient: '🙄 Impatient', embrouille: '🌀 Embrouillé',
+    concentre: '🎯 Concentré', emotionnel: '🥲 Émotif', bougon: '😒 Bougon', colere: '😠 En colère', motive: '💪 Motivé', fier: '😤 Fier', pensif: '🤔 Pensif',
   },
   en: {
     energique: '⚡ Energetic', calme: '🌙 Calm', fatigue: '😴 Tired',
-    epuise: '🔋 Exhausted', stresse: '😣 Stressed', anxieux: '😰 Anxious', embrouille: '🌀 Foggy',
-    concentre: '🎯 Focused', emotionnel: '🥲 Emotional', colere: '😠 Angry', motive: '💪 Motivated', fier: '😤 Proud',
+    epuise: '🔋 Exhausted', stresse: '😣 Stressed', anxieux: '😰 Anxious', impatient: '🙄 Impatient', embrouille: '🌀 Foggy',
+    concentre: '🎯 Focused', emotionnel: '🥲 Emotional', bougon: '😒 Grumpy', colere: '😠 Angry', motive: '💪 Motivated', fier: '😤 Proud', pensif: '🤔 Pensive',
   },
 };
+function updateMoodPickerButtonLabel(){
+  const el = $('#mood-picker-open-label');
+  if (!state.selectedMoods.length){
+    el.textContent = t('mood_picker_open');
+    return;
+  }
+  const emojis = state.selectedMoods.map((m) => (MOOD_LABELS()[m] || '').split(' ')[0]).join(' ');
+  el.textContent = `${emojis} ${t('mood_picker_selected_count', { n: state.selectedMoods.length })}`;
+}
+
 function MOOD_LABELS(){ return MOOD_LABELS_BY_LANG[state.lang] || MOOD_LABELS_BY_LANG.fr; }
+
+const ITEM_META = {
+  plume_legere: { icon: '🪶' },
+  amulette_xp: { icon: '🔮' },
+  don_xp: { icon: '🎁' },
+  graine_patience: { icon: '🌱' },
+  talisman_pardon: { icon: '🙏' },
+  echo_passe: { icon: '📔' },
+  detecteur_metal: { icon: '📡' },
+  radar_precision: { icon: '🎯' },
+  fragment_eternite: { icon: '💠' },
+  toucher_divin: { icon: '✨' },
+  poussiere_etoiles: { icon: '🌠' },
+  calendrier_celeste: { icon: '🌌' },
+  echo_dore: { icon: '🔔' },
+  mode_arcenciel: { icon: '🌈' },
+};
+const RANK_NAMES_FOR_ITEMS = ['Débutant','Discipliné','Professionnel','Élite','Légende','Imbattable','Immortel','Divin'];
 
 const HABIT_META_BY_LANG = {
   fr: {
     cannabis: { icon:'🌿', label:'Cannabis' },
     cafe: { icon:'☕', label:'Café' },
-    creatine: { icon:'💊', label:'Créatine' },
+    alcool: { icon:'🍺', label:'Alcool' },
     marche: { icon:'🚶', label:"Marche à l'extérieur" },
+    situps: { icon:'💪', label:'Faire 100 sit-ups' },
     journeeTravail: { icon:'💼', label:'Journée de travail' },
     journeeConge: { icon:'🏖️', label:'Journée de congé' },
   },
   en: {
     cannabis: { icon:'🌿', label:'Cannabis' },
     cafe: { icon:'☕', label:'Coffee' },
-    creatine: { icon:'💊', label:'Creatine' },
+    alcool: { icon:'🍺', label:'Alcohol' },
     marche: { icon:'🚶', label:'Walk outside' },
+    situps: { icon:'💪', label:'Do 100 sit-ups' },
     journeeTravail: { icon:'💼', label:'Work day' },
     journeeConge: { icon:'🏖️', label:'Day off' },
   },
@@ -540,7 +787,7 @@ function applyTranslations(){
   $$('[data-i18n-title]').forEach((el) => { el.title = t(el.dataset.i18nTitle); });
   const weekdays = t('weekdays_short');
   $$('#cal-weekdays span').forEach((span, i) => { if (weekdays[i]) span.textContent = weekdays[i]; });
-  $$('#mood-row .mood-chip').forEach((chip) => {
+  $$('#mood-picker-list .mood-chip').forEach((chip) => {
     const m = chip.dataset.mood;
     chip.textContent = MOOD_LABELS()[m] || m;
   });
@@ -549,11 +796,30 @@ function applyTranslations(){
   $('#time-format-24h').classList.toggle('active', state.timeFormat === '24h');
   $('#time-format-12h').classList.toggle('active', state.timeFormat === '12h');
   $('#sound-toggle').classList.toggle('active', state.soundEnabled);
+  const isPrimary = typeof isOfflinePrimaryDevice === 'function' && isOfflinePrimaryDevice();
+  const primaryToggle = $('#offline-primary-toggle');
+  if (primaryToggle) primaryToggle.classList.toggle('active', isPrimary);
+  const syncContent = $('#sync-section-content');
+  if (syncContent) syncContent.hidden = !isPrimary;
+  if (typeof isNativeApp === 'function' && isNativeApp()){
+    const toggleBlock = $('#offline-primary-toggle-block');
+    if (toggleBlock) toggleBlock.hidden = true;
+    const titleEl = $('#offline-primary-title');
+    if (titleEl) titleEl.textContent = t('sync_title_native');
+    const explainerEl = $('#sync-explainer');
+    if (explainerEl) explainerEl.textContent = t('sync_explainer_native');
+  }
 }
 
 async function api(path, opts){
-  return localApi(path, opts || {});
+  if (isOfflinePrimaryDevice()){
+    return localApi(path, opts || {});
+  }
+  const res = await fetch(path, opts);
+  if (!res.ok) throw new Error(await res.text());
+  return res.json();
 }
+
 // ---------- Ring math ----------
 const RING_CIRC = 2 * Math.PI * 104;
 
@@ -561,15 +827,19 @@ function easeOutCubic(x){
   return 1 - Math.pow(1 - x, 3);
 }
 
-function updateRing(total, goal){
+function updateRing(total, goal, trophy){
   const pct = Math.min(1, goal > 0 ? total / goal : 0);
   const ring = $('#ring-progress');
   ring.style.strokeDasharray = RING_CIRC;
 
-  if (pct >= 1) ring.style.stroke = 'var(--or)';
+  const rainbowActive = !!(state.mythicActive && state.mythicActive.mode_arcenciel && !state.mythicActive.toucher_divin);
+  if (trophy === 'platine') ring.style.stroke = 'var(--platine-a)';
+  else if (rainbowActive) { /* leave stroke to the rainbow interval */ }
+  else if (pct >= 1) ring.style.stroke = 'var(--or)';
   else if (pct >= 0.8) ring.style.stroke = 'var(--argent)';
   else ring.style.stroke = 'var(--fire)';
-  ring.classList.toggle('ring-complete', pct >= 1);
+  ring.classList.toggle('ring-complete', pct >= 1 && trophy !== 'platine');
+  ring.classList.toggle('ring-platine', trophy === 'platine');
 
   const from = state.ringVisualPct || 0;
   const to = pct;
@@ -607,7 +877,7 @@ function spawnXPSparkles(pushupCount){
   const count = Math.max(6, Math.min(28, pushupCount || 18));
   for (let i = 0; i < count; i++){
     const spark = document.createElement('div');
-    spark.className = 'xp-spark';
+    spark.className = 'xp-spark' + (state.poussiereEtoilesActive ? ' spark-stardust' : '');
     const x = Math.random() * fillWidth;
     const angle = Math.random() * Math.PI * 2;
     const dist = 20 + Math.random() * 34;
@@ -637,11 +907,6 @@ function pulseRing(){
 }
 
 // ---------- Effects ----------
-function flashScreen(){
-  const f = $('#flash');
-  f.classList.remove('hit'); void f.offsetWidth; f.classList.add('hit');
-}
-
 function punchNumber(){
   const n = $('#today-total');
   n.classList.remove('punch'); void n.offsetWidth; n.classList.add('punch');
@@ -685,6 +950,7 @@ function processCelebrationQueue(){
   if (item.type === 'badge') showBadgeModal(item.badge);
   else if (item.type === 'trophy') showTrophyModal(item.trophy);
   else if (item.type === 'rankup') showRankUpModal(item.rankName, item.goal, item.rankIndex);
+  else if (item.type === 'item') showItemDropModal(item.item);
 }
 
 function dismissCelebration(modalId){
@@ -700,6 +966,138 @@ function getAudioCtx(){
   if (!_audioCtx) _audioCtx = new AC();
   if (_audioCtx.state === 'suspended') _audioCtx.resume();
   return _audioCtx;
+}
+
+function playBoom(ctx, startTime, gainPeak){
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = 'sine';
+  osc.frequency.setValueAtTime(110, startTime);
+  osc.frequency.exponentialRampToValueAtTime(38, startTime + 0.22);
+  gain.gain.setValueAtTime(0, startTime);
+  gain.gain.linearRampToValueAtTime(gainPeak, startTime + 0.015);
+  gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.30);
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+  osc.start(startTime);
+  osc.stop(startTime + 0.32);
+}
+
+function playPluck(ctx, freq, startTime, gainPeak){
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = 'triangle';
+  osc.frequency.value = freq;
+  gain.gain.setValueAtTime(0, startTime);
+  gain.gain.linearRampToValueAtTime(gainPeak, startTime + 0.008);
+  gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.11);
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+  osc.start(startTime);
+  osc.stop(startTime + 0.13);
+}
+
+function playWarmTone(ctx, freq, startTime, duration, gainPeak, wave){
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = wave || 'triangle';
+  osc.frequency.value = freq;
+  gain.gain.setValueAtTime(0, startTime);
+  gain.gain.linearRampToValueAtTime(gainPeak, startTime + 0.05);
+  gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+  osc.start(startTime);
+  osc.stop(startTime + duration + 0.05);
+}
+
+function playPadChord(ctx, freqs, startTime, duration, gainPeak){
+  freqs.forEach((f, i) => {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.value = f;
+    gain.gain.setValueAtTime(0, startTime);
+    gain.gain.linearRampToValueAtTime(gainPeak, startTime + 0.35);
+    gain.gain.linearRampToValueAtTime(gainPeak * 0.7, startTime + duration * 0.6);
+    gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(startTime + i * 0.02);
+    osc.stop(startTime + duration + 0.1);
+  });
+}
+
+function playEchoDoreMelody(){
+  const ctx = getAudioCtx();
+  if (!ctx) return;
+  const now = ctx.currentTime;
+  const step = 0.21; // laid-back lo-fi swing grid
+
+  // Soft boom-bass groove — a lazy, swung lo-fi hip-hop pulse (no harsh hats)
+  const booms = [0, 3.5, 6, 9.5, 12, 15.5];
+  booms.forEach((s) => playBoom(ctx, now + s * step, 0.32));
+
+  // Syncopated triangle plucks riding the groove
+  const plucks = [
+    { s: 1.5, f: 440.00 },
+    { s: 4.5, f: 493.88 },
+    { s: 7.5, f: 440.00 },
+    { s: 10.5, f: 587.33 },
+    { s: 13.5, f: 523.25 },
+  ];
+  plucks.forEach((n) => playPluck(ctx, n.f, now + n.s * step, 0.09));
+
+  // Warm rising melodic motif — builds motivation upward, triangle wave for softness
+  const motif = [
+    { s: 2, f: 587.33 },   // D5
+    { s: 5, f: 659.25 },   // E5
+    { s: 8, f: 783.99 },   // G5
+    { s: 11, f: 880.00 },  // A5
+    { s: 14, f: 1046.50 }, // C6
+  ];
+  motif.forEach((n) => playWarmTone(ctx, n.f, now + n.s * step, 0.42, 0.11, 'triangle'));
+
+  // Celestial pad chord finish — a sustained, slowly swelling major-add9 chord
+  const padStart = 17 * step;
+  playPadChord(ctx, [523.25, 659.25, 783.99, 987.77], now + padStart, 1.8, 0.07);
+}
+
+let _rainbowInterval = null;
+function hexFromHue(hue){
+  const h = hue / 360;
+  const s = 0.85, l = 0.55;
+  const hue2rgb = (p, q, t) => {
+    if (t < 0) t += 1;
+    if (t > 1) t -= 1;
+    if (t < 1/6) return p + (q - p) * 6 * t;
+    if (t < 1/2) return q;
+    if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
+    return p;
+  };
+  const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+  const p = 2 * l - q;
+  const r = Math.round(hue2rgb(p, q, h + 1/3) * 255);
+  const g = Math.round(hue2rgb(p, q, h) * 255);
+  const b = Math.round(hue2rgb(p, q, h - 1/3) * 255);
+  return '#' + [r, g, b].map((v) => v.toString(16).padStart(2, '0')).join('');
+}
+function startRainbowMode(){
+  if (_rainbowInterval) return;
+  let hue = 0;
+  _rainbowInterval = setInterval(() => {
+    hue = (hue + 1) % 360;
+    const hex = hexFromHue(hue);
+    applyAccent(hex, true);
+    const ring = $('#ring-progress');
+    if (ring && !ring.classList.contains('ring-platine')) {
+      ring.style.stroke = hex;
+    }
+  }, 120);
+}
+function stopRainbowMode(){
+  if (_rainbowInterval){ clearInterval(_rainbowInterval); _rainbowInterval = null; }
+  if (state.accentColor) applyAccent(state.accentColor);
 }
 
 function playTone(ctx, freq, startTime, duration, gainPeak){
@@ -764,6 +1162,13 @@ function showRankUpModal(rankName, goal, rankIndex){
     $('#rankup-argent').textContent = `+${table.argent} XP`;
     $('#rankup-or').textContent = `+${table.or} XP`;
   }
+  const itemsMsg = $('#rankup-items-message');
+  if (rankName === 'Discipliné'){
+    itemsMsg.textContent = t('rankup_items_unlock');
+    itemsMsg.hidden = false;
+  } else {
+    itemsMsg.hidden = true;
+  }
   $('#rankup-modal').hidden = false;
   burstConfetti(['#F5B942','#FFDD8A', state.accentColor, '#FFFFFF']);
   setTimeout(() => burstConfetti(['#F5B942', state.accentColor, '#FFFFFF']), 400);
@@ -782,6 +1187,37 @@ function showBadgeModal(badge){
   playCelebrationSound('badge');
 }
 
+function rarityLabelHtml(rarity){
+  return `<span class="rarity-label rarity-${rarity}">${t('rarity_' + rarity)}</span>`;
+}
+
+function detailPlaceholders(details){
+  const ph = {};
+  if (!details) return ph;
+  if (details.reduction !== undefined) ph.pct = Math.round(details.reduction * 100);
+  if (details.boost !== undefined) ph.pct = Math.round(details.boost * 100);
+  if (details.mult !== undefined) ph.mult = details.mult;
+  if (details.minutes !== undefined) ph.minutes = details.minutes;
+  if (details.xp !== undefined) ph.xp = details.xp;
+  return ph;
+}
+
+
+function showItemDropModal(item){
+  const meta = ITEM_META[item.itemId] || { icon: '❔' };
+  $('#item-drop-icon').textContent = meta.icon;
+  $('#item-drop-name').textContent = t(`item_name_${item.itemId}`);
+  const typeLine = `${t('item_detail_type_label')} ${rarityLabelHtml(item.rarity)}`;
+  const desc = t(`item_desc_${item.itemId}`, detailPlaceholders(item.details));
+  $('#item-drop-desc').innerHTML = `${typeLine}<div class="ms-empty-note" style="margin-top:4px;">${escapeHtml(desc)}</div>`;
+  $('#item-drop-rarity-label').textContent = item.mythic ? t('item_drop_title_mythique') : t('item_drop_title');
+  $('#item-drop-modal').hidden = false;
+  const colors = item.mythic ? ['#FFFFFF','#F5B942','#9FD8FF','#FF6EC7'] : ['#F5B942', state.accentColor, '#FFFFFF'];
+  burstConfetti(colors);
+  setTimeout(() => burstConfetti(colors.slice().reverse()), 400);
+  playCelebrationSound(item.mythic ? 'rank' : 'badge');
+}
+
 // ---------- Today view ----------
 function restartShimmer(){
   const el = $('.xp-bar-fill');
@@ -795,7 +1231,7 @@ function restartShimmer(){
 }
 
 async function loadToday(){
-  const [settings, xp] = await Promise.all([api('/api/settings'), api('/api/xp')]);
+  const [settings, xp, day] = await Promise.all([api('/api/settings'), api('/api/xp'), api('/api/day/today')]);
   state.goal = settings.goal;
   state.today = settings.today;
   state.accentColor = settings.accentColor || '#FFC800';
@@ -805,7 +1241,6 @@ async function loadToday(){
   state.soundEnabled = settings.soundEnabled !== false;
   applyAccent(state.accentColor);
   applyTranslations();
-  $('#goal-value').textContent = settings.goal;
   $('#goal-echo').textContent = settings.goal;
   cacheDisplaySnapshot({ goal: settings.goal });
   $('#custom-color-input').value = state.accentColor;
@@ -816,7 +1251,6 @@ async function loadToday(){
   $('#today-date').textContent = formatDayHeader(state.today);
   cacheDisplaySnapshot({ dateText: $('#today-date').textContent });
 
-  const day = await api(`/api/day/${state.today}`);
   renderDay(day);
   checkEveningReminder(day);
   maybeShowSundayPhotoPrompt(day);
@@ -826,6 +1260,13 @@ async function loadToday(){
   const customHabitsData = await api('/api/custom-habits');
   state.customHabits = customHabitsData.customHabits || [];
   renderHabitsList(day.habits || {});
+
+  const invData = await api('/api/inventory');
+  state.lastInventoryData = invData;
+  updateActiveBoostDisplay(invData.activeBoosts, invData.dailyItemEffects);
+  invData.mythicItems.forEach((it) => {
+    if (it.cosmetic) applyMythicCosmetic(it.id, it.active);
+  });
 
   setTimeout(prewarmOtherViews, 1500);
 }
@@ -871,6 +1312,7 @@ async function setGoalMode(mode){
     headers:{'Content-Type':'application/json'},
     body: JSON.stringify({ goalMode: mode }),
   });
+  invalidateCalendarCache();
   await loadToday();
 }
 
@@ -938,9 +1380,13 @@ function checkEveningReminder(day){
 
 function renderDay(day){
   $('#today-total').textContent = day.total;
-  updateRing(day.total, day.goal);
+  $('#today-total').classList.toggle('big-number-4digits', String(day.total).length >= 4);
+  updateRing(day.total, day.goal, day.trophy);
   if (day.date === state.today){
-    cacheDisplaySnapshot({ total: day.total, goal: day.goal });
+    cacheDisplaySnapshot({ total: day.total, goal: day.goal, trophy: day.trophy });
+    if (day.weekTotal !== undefined){
+      $('#today-week-total').innerHTML = t('today_week_total', { n: `<span class="today-week-total-num">${day.weekTotal}</span>` });
+    }
   }
 
   const chip = $('#today-trophy');
@@ -1000,9 +1446,10 @@ function renderNotes(notes, listEl, emptyEl, date, onUpdate){
     const moodTagsHtml = moods.length
       ? `<div class="note-mood-tags">${moods.map((m) => `<span class="note-mood-tag">${MOOD_LABELS()[m] || m}</span>`).join('')}</div>`
       : '';
+    const pushupsLabel = n.pushupsAtWrite !== undefined ? ` – ${n.pushupsAtWrite} ${t('pushups_word')}` : '';
     li.innerHTML = `
       <div class="note-card-head">
-        <span class="note-time">${formatTimeDisplay(n.time)}</span>
+        <span class="note-time">${formatTimeDisplay(n.time)}${pushupsLabel}</span>
         <span class="note-actions">
           <button type="button" class="note-edit-link">${t('note_edit_link')}</button>
           <button type="button" class="note-delete-link">${t('note_delete_link')}</button>
@@ -1060,27 +1507,60 @@ async function addReps(count){
     headers:{'Content-Type':'application/json'},
     body: JSON.stringify({ date: state.today, count }),
   });
+  if (typeof isOfflinePrimaryDevice === 'function' && isOfflinePrimaryDevice() && typeof attemptBackgroundSync === 'function'){
+    attemptBackgroundSync(false).catch(() => {});
+  }
   punchNumber();
   pulseRing();
   renderDay(day);
   checkEveningReminder(day);
   await refreshXP();
-  spawnXPSparkles(count);
   const badges = day.newlyUnlockedBadges || [];
   badges.forEach((b) => enqueueCelebration({ type:'badge', badge:b }));
+  invalidateCalendarCache();
+  spawnXPSparkles(count);
   if (day.trophyJustUnlocked){
     enqueueCelebration({ type:'trophy', trophy: day.trophy });
   }
+  (day.itemDrops || []).forEach((item) => {
+    enqueueCelebration({ type:'item', item });
+  });
+}
+
+function showUndoItemConfirm(itemName){
+  return new Promise((resolve) => {
+    $('#undo-item-confirm-desc').textContent = t('undo_item_confirm_desc', { item: itemName });
+    $('#undo-item-confirm-modal').hidden = false;
+    const yesBtn = $('#undo-item-confirm-yes');
+    const noBtn = $('#undo-item-confirm-no');
+    const cleanup = () => {
+      $('#undo-item-confirm-modal').hidden = true;
+      yesBtn.removeEventListener('click', onYes);
+      noBtn.removeEventListener('click', onNo);
+    };
+    const onYes = () => { cleanup(); resolve(true); };
+    const onNo = () => { cleanup(); resolve(false); };
+    yesBtn.addEventListener('click', onYes);
+    noBtn.addEventListener('click', onNo);
+  });
 }
 
 async function undoLast(){
   const day = await api(`/api/day/${state.today}`);
   if (day.entries.length === 0) return;
   const last = day.entries[day.entries.length - 1];
+  const drops = last.itemDrops || (last.itemDrop ? [last.itemDrop] : []);
+  if (drops.length){
+    const itemNames = drops.map((d) => t(`item_name_${d.itemId}`)).join(', ');
+    const proceed = await showUndoItemConfirm(itemNames);
+    if (!proceed) return;
+  }
   const updated = await api(`/api/entries/${last.id}`, { method:'DELETE' });
   renderDay(updated);
   checkEveningReminder(updated);
   refreshXP();
+  invalidateCalendarCache();
+  loadInventory();
 }
 
 async function addNote(text){
@@ -1091,7 +1571,8 @@ async function addNote(text){
     body: JSON.stringify({ text, moods: state.selectedMoods }),
   });
   state.selectedMoods = [];
-  $$('#mood-row .mood-chip').forEach((c) => c.classList.remove('selected'));
+  $$('#mood-picker-list .mood-chip').forEach((c) => c.classList.remove('selected'));
+  updateMoodPickerButtonLabel();
   renderDay(day);
 }
 
@@ -1100,17 +1581,34 @@ function maybeShowSundayPhotoPrompt(day){
   const d = new Date(state.today + 'T00:00:00');
   if (d.getDay() !== 0) return;
   if (day.photos && day.photos.length > 0) return;
-  const dismissedKey = `pt_photo_dismissed_${state.today}`;
-  if (sessionStorage.getItem(dismissedKey)) return;
+  const dismissedKey = `pt_photo_never_${state.today}`;
+  if (localStorage.getItem(dismissedKey)) return;
   $('#photo-modal').hidden = false;
   $('#photo-skip').onclick = () => {
-    sessionStorage.setItem(dismissedKey, '1');
+    $('#photo-modal').hidden = true;
+  };
+  $('#photo-never-today').onclick = () => {
+    localStorage.setItem(dismissedKey, '1');
     $('#photo-modal').hidden = true;
   };
 }
 
 async function uploadPhoto(file, date){
-  return localApi(`/api/photos/${date}`, { method:'POST', file });
+  let result;
+  if (isOfflinePrimaryDevice()){
+    result = await localApi(`/api/photos/${date}`, { method:'POST', file });
+  } else {
+    const fd = new FormData();
+    fd.append('photo', file);
+    const res = await fetch(`/api/photos/${date}`, { method:'POST', body: fd });
+    result = await res.json();
+  }
+  if (typeof isOfflinePrimaryDevice === 'function' && isOfflinePrimaryDevice() && typeof attemptBackgroundSync === 'function'){
+    attemptBackgroundSync(false).catch(() => {});
+  }
+  const badges = result.newlyUnlockedBadges || [];
+  badges.forEach((b) => enqueueCelebration({ type:'badge', badge:b }));
+  return result;
 }
 
 // ---------- Calendar view ----------
@@ -1119,19 +1617,37 @@ function fmtMonth(ym){
   return `${MONTH_NAMES()[m-1]} ${y}`;
 }
 
+const CALENDAR_CACHE_TTL = 45000; // 45 seconds
+
+function invalidateCalendarCache(){
+  state.calendarCache = null;
+}
+
 async function loadCalendar(){
   if (!state.calMonth) state.calMonth = state.today.slice(0,7);
   $('#cal-month-label').textContent = fmtMonth(state.calMonth);
 
   const myToken = (state.calendarLoadToken = (state.calendarLoadToken || 0) + 1);
 
-  const [data, streaks, trendData] = await Promise.all([
-    api(`/api/month/${state.calMonth}`),
-    api('/api/streaks'),
-    api('/api/trend'),
-  ]);
+  const cache = state.calendarCache;
+  const cacheValid = cache && cache.month === state.calMonth && (Date.now() - cache.timestamp) < CALENDAR_CACHE_TTL;
+
+  let data, streaks, trendData;
+  if (cacheValid){
+    ({ data, streaks, trendData } = cache);
+  } else {
+    [data, streaks, trendData] = await Promise.all([
+      api(`/api/month/${state.calMonth}`),
+      api('/api/streaks'),
+      api('/api/trend'),
+    ]);
+    state.calendarCache = { month: state.calMonth, data, streaks, trendData, timestamp: Date.now() };
+  }
 
   if (myToken !== state.calendarLoadToken) return;
+
+  const monthTotal = Object.values(data.days).reduce((sum, d) => sum + d.total, 0);
+  $('#cal-month-total').innerHTML = t('cal_month_total', { n: `<span class="cal-month-total-num">${monthTotal}</span>` });
 
   const [y,m] = state.calMonth.split('-').map(Number);
   const firstDow = new Date(y, m-1, 1).getDay();
@@ -1149,13 +1665,15 @@ async function loadCalendar(){
     const info = data.days[date] || { total:0, trophy:null };
     const cell = document.createElement('div');
     cell.className = 'cal-day ' + trophyClass(info.trophy) + (info.inPlatinumWeek ? ' platinum-week' : '') + (date === state.today ? ' is-today' : '');
-    cell.innerHTML = `<span class="dnum">${d}</span><span class="dtotal">${info.total>0?info.total:''}</span>`;
+    const longClass = info.total >= 1000 ? ' dtotal-long' : '';
+    cell.innerHTML = `<span class="dnum">${d}</span><span class="dtotal${longClass}">${info.total>0?info.total:''}</span>`;
     cell.addEventListener('click', () => openDayModal(date));
     grid.appendChild(cell);
   }
 
   $('#streak-cannabis-text').innerHTML = t('streak_cannabis', { n: `<span id="streak-cannabis">${streaks.cannabis}</span>` });
   $('#streak-cafe-text').innerHTML = t('streak_cafe', { n: `<span id="streak-cafe">${streaks.cafe}</span>` });
+  $('#streak-alcool-text').innerHTML = t('streak_alcool', { n: `<span id="streak-alcool">${streaks.alcool}</span>` });
 
   requestAnimationFrame(() => requestAnimationFrame(() => {
     if (myToken !== state.calendarLoadToken) return;
@@ -1212,6 +1730,7 @@ async function loadHabits(){
   const stats = await api('/api/stats');
   renderStats(stats);
   loadMonthlySummary(false);
+  loadMonthlySummaryMonths();
   loadPersonalRecords();
 }
 
@@ -1222,14 +1741,14 @@ function pluralSuffix(n, singularKey, pluralKey){
 async function loadPersonalRecords(){
   const r = await api('/api/personal-records');
   const cards = [
-    { icon:'🔥', label:t('record_best_set'), value: r.bestSet ? `${r.bestSet.count}` : null, date: r.bestSet ? formatShortDate(r.bestSet.date) : null },
-    { icon:'📅', label:t('record_best_day'), value: r.bestDay ? `${r.bestDay.total}` : null, date: r.bestDay ? formatShortDate(r.bestDay.date) : null },
-    { icon:'📈', label:t('record_best_week'), value: r.bestWeek ? `${r.bestWeek.total}` : null, date: r.bestWeek ? formatShortDate(r.bestWeek.weekStart) : null },
+    { icon:'🔥', label:t('record_best_set'), value: r.bestSet ? `${r.bestSet.count}` : null, date: r.bestSet ? formatFullDate(r.bestSet.date) : null },
+    { icon:'📅', label:t('record_best_day'), value: r.bestDay ? `${r.bestDay.total}` : null, date: r.bestDay ? formatFullDate(r.bestDay.date) : null },
+    { icon:'📈', label:t('record_best_week'), value: r.bestWeek ? `${r.bestWeek.total}` : null, date: r.bestWeek ? formatFullDate(r.bestWeek.weekStart) : null },
     { icon:'🗓️', label:t('record_best_month'), value: r.bestMonth ? `${r.bestMonth.total}` : null, date: r.bestMonth ? fmtMonth(r.bestMonth.monthKey) : null },
-    { icon:'🚭', label:t('record_streak_drugs'), value: r.bestStreakCannabis ? `${r.bestStreakCannabis} ${pluralSuffix(r.bestStreakCannabis, 'record_day_singular', 'record_days_suffix')}` : null, date: null },
-    { icon:'☕', label:t('record_streak_caffeine'), value: r.bestStreakCafe ? `${r.bestStreakCafe} ${pluralSuffix(r.bestStreakCafe, 'record_day_singular', 'record_days_suffix')}` : null, date: null },
-    { icon:'🚶', label:t('record_streak_marche'), value: r.bestStreakMarche ? `${r.bestStreakMarche} ${pluralSuffix(r.bestStreakMarche, 'record_day_singular', 'record_days_suffix')}` : null, date: null },
     { icon:'💎', label:t('record_platinum_streak'), value: r.longestPlatinumStreak ? `${r.longestPlatinumStreak} ${pluralSuffix(r.longestPlatinumStreak, 'record_week_singular', 'record_weeks_suffix')}` : null, date: null },
+    { icon:'🚶', label:t('record_streak_marche'), value: r.bestStreakMarche ? `${r.bestStreakMarche} ${pluralSuffix(r.bestStreakMarche, 'record_day_singular', 'record_days_suffix')}` : null, date: null },
+    { icon:'🚭', label:t('record_streak_drugs'), value: r.bestStreakCannabis ? `${r.bestStreakCannabis} ${pluralSuffix(r.bestStreakCannabis, 'record_day_singular', 'record_days_suffix')}` : null, date: null },
+    { icon:'🍺', label:t('record_streak_alcool'), value: r.bestStreakAlcool ? `${r.bestStreakAlcool} ${pluralSuffix(r.bestStreakAlcool, 'record_day_singular', 'record_days_suffix')}` : null, date: null },
   ];
   $('#records-grid').innerHTML = cards.map((c) => `
     <div class="record-card${c.value ? '' : ' empty'}">
@@ -1302,6 +1821,7 @@ async function moveHabit(idx, dir){
 function renderStats(stats){
   $('#stat-start-date').textContent = stats.startDate ? formatFullDate(stats.startDate) : '—';
   $('#stat-total-pushups').textContent = stats.totalPushups;
+  $('#stat-avg-per-day').textContent = stats.avgPerDay || 0;
   $('#stat-disciplined-days').textContent = stats.disciplinedDays;
   $('#stat-disciplined-weeks').textContent = stats.disciplinedWeeks;
   $('#stat-total-photos').textContent = stats.totalPhotos;
@@ -1315,6 +1835,7 @@ async function saveHabit(key, value){
     body: JSON.stringify({ [key]: value }),
   });
   refreshXP();
+  invalidateCalendarCache();
   (day.newlyUnlockedBadges || []).forEach((b) => enqueueCelebration({ type:'badge', badge:b }));
 }
 
@@ -1349,8 +1870,11 @@ async function openDayModal(date){
   const activeHabits = Object.entries(day.habits || {}).filter(([, v]) => v);
   if (activeHabits.length > 0){
     habitsWrap.hidden = false;
+    const customMap = {};
+    (state.customHabits || []).forEach((ch) => { customMap[ch.id] = ch; });
     $('#modal-habits').innerHTML = activeHabits.map(([k]) => {
-      const meta = HABIT_META()[k];
+      const custom = customMap[k];
+      const meta = custom ? { icon: custom.icon, label: custom.name } : HABIT_META()[k];
       return `<span class="habit-chip">${meta ? meta.icon + ' ' + meta.label : k}</span>`;
     }).join('');
   } else {
@@ -1358,6 +1882,7 @@ async function openDayModal(date){
   }
 
   renderPhotoGrid(day.photos || [], date);
+  $('.add-photo-btn').hidden = date !== state.today;
   $('#modal-add-photo-input').onchange = async (e) => {
     if (e.target.files[0]){
       const updated = await uploadPhoto(e.target.files[0], date);
@@ -1399,29 +1924,84 @@ async function loadMonthlySummary(allowPopup){
     data = await api('/api/monthly-summary');
   } catch (err) { return; }
 
-  try {
-    renderMonthlySummarySection(data);
-  } catch (err) {
-    $('#monthly-summary-section-content').innerHTML = `<div class="ms-empty-note">${t('ms_render_error')}</div>`;
-  }
-
   if (allowPopup && data.available && data.shouldPopup && !state.monthlySummaryPopupShown){
     state.monthlySummaryPopupShown = true;
     try {
       showMonthlySummaryPopup(data.summary);
-    } catch (err) { /* ignore popup render failure, section fallback already handled above */ }
+    } catch (err) { /* ignore popup render failure */ }
   }
 }
 
-function renderMonthlySummarySection(data){
+async function loadMonthlySummaryMonths(){
+  let data;
+  try {
+    data = await api('/api/monthly-summary-months');
+  } catch (err) {
+    $('#monthly-summary-section-content').innerHTML = `<div class="ms-empty-note">${t('ms_render_error')}</div>`;
+    return;
+  }
+  renderMonthlySummaryMonthsList(data.months || []);
+}
+
+function renderMonthlySummaryMonthsList(months){
   const el = $('#monthly-summary-section-content');
-  if (!data.available){
-    const d = new Date(data.nextAvailableYear, data.nextAvailableMonthIndex, 1);
+  if (!months.length){
+    const now = new Date();
+    const d = new Date(now.getFullYear(), now.getMonth() + 1, 1);
     el.innerHTML = `<div class="ms-next-available">${t('ms_next_available_prefix')} ${t('ms_next_available', { month: MONTH_NAMES()[d.getMonth()], year: d.getFullYear() })}</div>`;
     return;
   }
-  el.innerHTML = buildMonthlySummaryHTML(data.summary);
-  wireMonthlySummaryPhotos(el, data.summary);
+
+  const currentYear = state.today ? state.today.slice(0, 4) : String(new Date().getFullYear());
+  const byYear = {};
+  months.forEach((mk) => {
+    const y = mk.slice(0, 4);
+    (byYear[y] = byYear[y] || []).push(mk);
+  });
+  const years = Object.keys(byYear).sort((a, b) => b.localeCompare(a));
+
+  const monthRowsHTML = (monthKeys) => monthKeys.slice().sort((a, b) => b.localeCompare(a)).map((mk) => {
+    const monthIdx = parseInt(mk.slice(5, 7), 10) - 1;
+    const monthName = MONTH_NAMES()[monthIdx];
+    const capitalized = monthName.charAt(0).toUpperCase() + monthName.slice(1);
+    const label = `${capitalized} ${mk.slice(0, 4)}`;
+    return `<button type="button" class="ms-month-row" data-month-key="${mk}">
+      <span>${label}</span><span class="ms-month-chevron">›</span>
+    </button>`;
+  }).join('');
+
+  let html = '';
+  years.forEach((y) => {
+    if (y === currentYear){
+      html += monthRowsHTML(byYear[y]);
+    } else {
+      html += `
+        <button type="button" class="ms-year-toggle" data-year="${y}">
+          <span>${y}</span><span class="ms-year-chevron">▸</span>
+        </button>
+        <div class="ms-year-months" id="ms-year-months-${y}" hidden>${monthRowsHTML(byYear[y])}</div>`;
+    }
+  });
+  el.innerHTML = html;
+
+  el.querySelectorAll('.ms-month-row').forEach((btn) => {
+    btn.addEventListener('click', () => openMonthlySummaryForMonth(btn.dataset.monthKey));
+  });
+  el.querySelectorAll('.ms-year-toggle').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const wrap = $('#ms-year-months-' + btn.dataset.year);
+      wrap.hidden = !wrap.hidden;
+      btn.querySelector('.ms-year-chevron').textContent = wrap.hidden ? '▸' : '▾';
+    });
+  });
+}
+
+async function openMonthlySummaryForMonth(monthKey){
+  let data;
+  try {
+    data = await api(`/api/monthly-summary/${monthKey}`);
+  } catch (err) { return; }
+  showMonthlySummaryPopup(data.summary);
 }
 
 function showMonthlySummaryPopup(summary){
@@ -1475,23 +2055,31 @@ function buildMonthlySummaryHTML(s){
             <img alt="" />
             <div class="photo-reveal-overlay">👁️</div>
           </div>
-          <div class="ms-photo-caption">${t('ms_photo_before')}</div>
+          <div class="ms-photo-caption">${formatShortDate(s.firstPhoto.date)}</div>
         </div>
         <div class="ms-photo-col">
           <div class="modal-photo-item blurred" data-ms-photo="${s.lastPhoto.filename}">
             <img alt="" />
             <div class="photo-reveal-overlay">👁️</div>
           </div>
-          <div class="ms-photo-caption">${t('ms_photo_after')}</div>
+          <div class="ms-photo-caption">${formatShortDate(s.lastPhoto.date)}</div>
         </div>
       </div>`}
     </div>`;
+
+  const customHabitRows = (s.customHabitCounts || []).map((c) =>
+    `<div class="ms-stat-row"><span class="ms-stat-label">${c.icon} ${escapeHtml(c.name)}</span><span class="ms-stat-value">${c.count}</span></div>`
+  ).join('');
 
   const habitsSection = `
     <div class="ms-section">
       <div class="ms-label">${t('ms_habits_label')}</div>
       <div class="ms-stat-row"><span class="ms-stat-label">${t('ms_days_no_drugs')}</span><span class="ms-stat-value">${s.daysWithoutDrugs}</span></div>
       <div class="ms-stat-row"><span class="ms-stat-label">${t('ms_days_no_caffeine')}</span><span class="ms-stat-value">${s.daysWithoutCaffeine}</span></div>
+      <div class="ms-stat-row"><span class="ms-stat-label">${t('ms_days_no_alcool')}</span><span class="ms-stat-value">${s.daysWithoutAlcool}</span></div>
+      <div class="ms-stat-row"><span class="ms-stat-label">${t('ms_days_walked')}</span><span class="ms-stat-value">${s.daysWalked}</span></div>
+      <div class="ms-stat-row"><span class="ms-stat-label">${t('ms_situps_minimum')}</span><span class="ms-stat-value">${s.situpsMinimum}</span></div>
+      ${customHabitRows}
     </div>`;
 
   const avgSection = `
@@ -1524,7 +2112,10 @@ function buildMonthlySummaryHTML(s){
 }
 
 async function resolvePhotoSrc(filename){
-  return getPhotoBlob(filename);
+  if (isOfflinePrimaryDevice()){
+    return getPhotoBlob(filename);
+  }
+  return `/photos/${filename}`;
 }
 
 function wireMonthlySummaryPhotos(container){
@@ -1572,23 +2163,33 @@ function renderPhotoGrid(photos, date){
 // ---------- View switching ----------
 async function loadBadges(){
   const data = await api('/api/badges');
-  const grid = $('#badges-grid');
-  grid.innerHTML = '';
-  data.badges.forEach((b) => {
-    const card = document.createElement('div');
-    card.className = 'badge-card' + (b.unlocked ? '' : ' locked');
-    const dateLabel = b.unlockedDate ? formatShortDate(b.unlockedDate) : '';
-    const tr = translateBadge(b.id, b.name, b.desc);
-    const descText = tr.desc === null ? t('badge_secret_placeholder') : tr.desc;
-    card.innerHTML = `
-      <div class="badge-icon">${b.unlocked ? b.icon : '🔒'}</div>
-      <div class="badge-name">${tr.name}</div>
-      <div class="badge-desc${b.desc === null ? ' secret-desc' : ''}">${descText}</div>
-      <div class="badge-xp-tag">+${b.xp} XP</div>
-      ${b.unlocked ? `<div class="badge-date">${dateLabel}</div>` : ''}
-    `;
-    grid.appendChild(card);
-  });
+  const unlocked = data.badges.filter((b) => b.unlocked);
+  const locked = data.badges.filter((b) => !b.unlocked).sort((a, b) => (a.secret ? 1 : 0) - (b.secret ? 1 : 0));
+
+  $('#badges-unlocked-title').textContent = t('badges_section_unlocked', { n: unlocked.length });
+  $('#badges-locked-title').textContent = t('badges_section_locked', { n: locked.length });
+
+  const renderInto = (gridEl, list) => {
+    gridEl.innerHTML = '';
+    list.forEach((b) => {
+      const card = document.createElement('div');
+      card.className = 'badge-card' + (b.unlocked ? '' : ' locked');
+      const dateLabel = b.unlockedDate ? formatFullDate(b.unlockedDate) : '';
+      const tr = translateBadge(b.id, b.name, b.desc);
+      const descText = tr.desc === null ? t('badge_secret_placeholder') : tr.desc;
+      card.innerHTML = `
+        <div class="badge-icon">${b.unlocked ? b.icon : '🔒'}</div>
+        <div class="badge-name">${tr.name}</div>
+        <div class="badge-desc${b.desc === null ? ' secret-desc' : ''}">${descText}</div>
+        <div class="badge-xp-tag">+${b.xp} XP</div>
+        ${b.unlocked ? `<div class="badge-date">${dateLabel}</div>` : ''}
+      `;
+      gridEl.appendChild(card);
+    });
+  };
+
+  renderInto($('#badges-grid-unlocked'), unlocked);
+  renderInto($('#badges-grid-locked'), locked);
 }
 
 function formatShortDate(dateStr){
@@ -1599,14 +2200,6 @@ function formatShortDate(dateStr){
 function formatFullDate(dateStr){
   const d = new Date(dateStr + 'T00:00:00');
   return `${d.getDate()} ${MONTH_NAMES()[d.getMonth()]} ${d.getFullYear()}`;
-}
-
-function ordinalSuffix(n){
-  const j = n % 10, k = n % 100;
-  if (j === 1 && k !== 11) return 'st';
-  if (j === 2 && k !== 12) return 'nd';
-  if (j === 3 && k !== 13) return 'rd';
-  return 'th';
 }
 
 function formatTimeDisplay(timeStr){
@@ -1632,6 +2225,13 @@ function formatDayHeader(dateStr){
   return `${dow} ${day} ${month}`;
 }
 
+function playCascade(viewEl){
+  if (!viewEl) return;
+  viewEl.classList.remove('cascade-play');
+  void viewEl.offsetWidth;
+  viewEl.classList.add('cascade-play');
+}
+
 function switchView(view){
   if (state.view === view){
     window.scrollTo(0, 0);
@@ -1645,10 +2245,471 @@ function switchView(view){
   $('#view-badges').hidden = view !== 'badges';
   $('#view-settings').hidden = view !== 'settings';
   $$('.tab').forEach((t) => t.classList.toggle('active', t.dataset.view === view));
+  playCascade($(`#view-${view}`));
   if (view === 'calendar') loadCalendar();
   if (view === 'habits') loadHabits();
+  if (view === 'today') updateActiveBoostDisplay();
   if (view === 'badges') loadBadges();
   if (view === 'settings') loadRanks();
+}
+
+const XP_LOG_REASON_ICONS = {
+  pushups: '💪', pushups_amulette: '💪⏳', habits: '📋', habit_marche: '🚶', habit_situps: '🔥', habit_avoidance: '🛡️',
+  trophy_bronze: '🥉', trophy_argent: '🥈', trophy_or: '🥇', badge: '🏅',
+  item: '🎁', platinum_week: '💎', graine_patience: '🌱',
+};
+
+function openXPLog(){
+  $('#xp-log-modal').hidden = false;
+  loadXPLog();
+}
+
+async function loadXPLog(){
+  const listEl = $('#xp-log-list');
+  const emptyEl = $('#xp-log-empty');
+  listEl.innerHTML = '';
+  let data;
+  try {
+    data = await api('/api/xp-log');
+  } catch (err) {
+    emptyEl.hidden = false;
+    emptyEl.textContent = t('xp_log_error');
+    return;
+  }
+  const log = data.log || [];
+  if (log.length === 0){
+    emptyEl.hidden = false;
+    emptyEl.textContent = t('xp_log_empty');
+    return;
+  }
+  emptyEl.hidden = true;
+  listEl.innerHTML = log.map((entry) => {
+    const icon = entry.icon || XP_LOG_REASON_ICONS[entry.reason] || '✨';
+    return `<li>
+      <div class="xp-log-row-left">
+        <span class="xp-log-row-label">${icon} ${escapeHtml(entry.label)}</span>
+        <span class="xp-log-row-date">${formatFullDate(entry.date)}</span>
+      </div>
+      <span class="xp-log-row-amount">+${entry.amount} XP</span>
+    </li>`;
+  }).join('');
+}
+
+function openInventory(){
+  $('#inventory-modal').hidden = false;
+  loadInventory();
+}
+function closeInventory(){
+  $('#inventory-modal').hidden = true;
+}
+
+async function loadInventory(){
+  const data = await api('/api/inventory');
+  state.lastInventoryData = data;
+  const grid = $('#inventory-grid');
+  grid.innerHTML = data.items.map((it) => renderInventoryCard(it)).join('');
+  const mgrid = $('#mythic-grid');
+  mgrid.innerHTML = data.mythicItems.map((it) => renderMythicCard(it)).join('');
+
+  grid.querySelectorAll('.inventory-item.discovered').forEach((el) => {
+    el.addEventListener('click', () => openItemDetail(el.dataset.itemId));
+  });
+  mgrid.querySelectorAll('.inventory-item[data-mythic-item-id]').forEach((el) => {
+    el.addEventListener('click', () => openMythicDetail(el.dataset.mythicItemId));
+  });
+
+  updateActiveBoostDisplay(data.activeBoosts, data.dailyItemEffects);
+}
+
+function renderInventoryCard(it){
+  const iconMeta = ITEM_META[it.id] || { icon: '❔' };
+  const name = it.discovered ? t(`item_name_${it.id}`) : t('inventory_undiscovered');
+  const hasStock = it.stock && it.stock.length > 0;
+  const cls = ['inventory-item'];
+  if (it.discovered) cls.push('discovered');
+  if (hasStock) cls.push('available');
+  const qtyBadge = hasStock && it.stock.length > 1 ? `<div class="inv-qty">×${it.stock.length}</div>` : '';
+  const rankLabel = !it.discovered
+    ? `<div class="inv-rank-lock">${it.id === 'echo_passe' ? t('item_locked_echo_passe') : t('item_rank_locked', { rank: translateRankName(RANK_NAMES_FOR_ITEMS[it.minRank]) })}</div>`
+    : '';
+  return `
+    <div class="${cls.join(' ')}" ${it.discovered ? `data-item-id="${it.id}"` : ''}>
+      ${qtyBadge}
+      <div class="inv-icon">${iconMeta.icon}</div>
+      <div class="inv-name">${name}</div>
+      ${it.discovered && hasStock ? `<div class="inv-rarity-row">${rarityLabelHtml(it.stock[0].rarity)}</div>` : ''}
+      ${it.discovered && !hasStock ? `<div class="inv-rank-lock">${t('inventory_empty_stock')}</div>` : ''}
+      ${rankLabel}
+    </div>
+  `;
+}
+
+function renderMythicCard(it){
+  const iconMeta = ITEM_META[it.id] || { icon: '❔' };
+  const name = it.discovered ? t(`item_name_${it.id}`) : t('inventory_undiscovered');
+  const cls = ['inventory-item'];
+  if (it.discovered) cls.push('discovered', 'available');
+  const toggle = (it.cosmetic && it.discovered) ? `<div class="inv-rank-lock">${it.active ? t('mythic_toggle_on') : t('mythic_toggle_off')}</div>` : '';
+  return `
+    <div class="${cls.join(' ')}" ${it.discovered ? `data-mythic-item-id="${it.id}"` : ''}>
+      <div class="inv-icon">${iconMeta.icon}</div>
+      <div class="inv-name">${name}</div>
+      ${toggle}
+      ${!it.discovered ? `<div class="inv-rank-lock">${t('item_rank_locked', { rank: translateRankName(RANK_NAMES_FOR_ITEMS[it.minRank]) })}</div>` : ''}
+    </div>
+  `;
+}
+
+function openMythicDetail(itemId){
+  const data = state.lastInventoryData;
+  const it = data && data.mythicItems.find((m) => m.id === itemId);
+  if (!it) return;
+  state.selectedMythicId = itemId;
+  $('#mythic-detail-icon').textContent = (ITEM_META[itemId] || { icon: '✨' }).icon;
+  $('#mythic-detail-name').textContent = t(`item_name_${itemId}`);
+  $('#mythic-detail-desc').textContent = t(`item_desc_${itemId}`);
+  const toggleRow = $('#mythic-detail-toggle-row');
+  if (it.cosmetic){
+    toggleRow.hidden = false;
+    $('#mythic-detail-toggle').classList.toggle('active', !!it.active);
+  } else {
+    toggleRow.hidden = true;
+  }
+  $('#mythic-detail-modal').hidden = false;
+}
+
+function applyMythicCosmetic(itemId, active){
+  if (itemId === 'toucher_divin'){
+    $('.xp-card').classList.toggle('aura-active', !!active);
+    if (active) stopRainbowMode();
+    else if (state.mythicActive && state.mythicActive.mode_arcenciel) startRainbowMode();
+  } else if (itemId === 'poussiere_etoiles'){
+    state.poussiereEtoilesActive = !!active;
+  } else if (itemId === 'calendrier_celeste'){
+    state.calendrierCelesteActive = !!active;
+    document.body.classList.toggle('calendrier-celeste-active', !!active);
+  } else if (itemId === 'echo_dore'){
+    state.echoDoreActive = !!active;
+    document.body.classList.toggle('echo-dore-active', !!active);
+  } else if (itemId === 'mode_arcenciel'){
+    if (active && !(state.mythicActive && state.mythicActive.toucher_divin)) startRainbowMode();
+    else stopRainbowMode();
+  }
+  if (!state.mythicActive) state.mythicActive = {};
+  state.mythicActive[itemId] = !!active;
+}
+
+function renderItemTypeAndDesc(itemId, rarity, details){
+  $('#item-detail-type-picker').innerHTML = rarity
+    ? `${t('item_detail_type_label')} ${rarityLabelHtml(rarity)}`
+    : '';
+  const specificKey = `item_desc_${itemId}_specific`;
+  const hasSpecific = TRANSLATIONS.fr[specificKey] !== undefined;
+  $('#item-detail-desc').textContent = rarity
+    ? t(hasSpecific ? specificKey : `item_desc_${itemId}`, detailPlaceholders(details))
+    : t(`item_desc_${itemId}`);
+  const footnoteKey = `item_footnote_${itemId}`;
+  const footnoteEl = $('#item-detail-footnote');
+  if (rarity && TRANSLATIONS.fr[footnoteKey] !== undefined){
+    footnoteEl.textContent = t(footnoteKey);
+    footnoteEl.hidden = false;
+  } else {
+    footnoteEl.hidden = true;
+  }
+  const capEl = $('#item-detail-cap');
+  if (rarity && details && 'maxStack' in details) {
+    const isUnlimited = details.maxStack === null || details.maxStack === Infinity;
+    const capText = isUnlimited ? t('item_detail_cap_unlimited') : t('item_detail_cap_limited', { n: details.maxStack });
+    capEl.textContent = capText;
+  } else {
+    capEl.textContent = '';
+  }
+}
+
+function openItemDetail(itemId){
+  const data = state.lastInventoryData;
+  const it = data && data.items.find((i) => i.id === itemId);
+  if (!it) return;
+  state.selectedItemId = itemId;
+  state.selectedItemInstance = null;
+  $('#item-detail-icon').textContent = (ITEM_META[itemId] || { icon: '❔' }).icon;
+  $('#item-detail-name').textContent = t(`item_name_${itemId}`);
+  const chipsBox = $('#item-detail-chips');
+  const useBtn = $('#item-detail-use-btn');
+  const stock = it.stock || [];
+  const allRarities = it.allRarityDetails || {};
+  const byRarity = {};
+  stock.forEach((s) => { (byRarity[s.rarity] = byRarity[s.rarity] || []).push(s); });
+  const distinctRarities = Object.keys(byRarity).sort((a, b) => RARITY_ORDER.indexOf(a) - RARITY_ORDER.indexOf(b));
+
+  if (stock.length === 0){
+    chipsBox.innerHTML = '';
+    const possibleRarities = Object.keys(allRarities);
+    if (possibleRarities.length === 1){
+      const referenceRarity = possibleRarities[0];
+      renderItemTypeAndDesc(itemId, referenceRarity, allRarities[referenceRarity]);
+    } else {
+      renderItemTypeAndDesc(itemId, null, null);
+    }
+    useBtn.hidden = true;
+  } else if (distinctRarities.length === 1){
+    chipsBox.innerHTML = '';
+    const only = byRarity[distinctRarities[0]][0];
+    renderItemTypeAndDesc(itemId, only.rarity, only.details);
+    state.selectedItemInstance = only;
+    useBtn.hidden = false;
+  } else {
+    chipsBox.innerHTML = `<div class="goal-mode-toggle">${distinctRarities.map((rarity) =>
+      `<button type="button" class="mode-btn item-rarity-chip" data-rarity="${rarity}">${rarityLabelHtml(rarity)} ×${byRarity[rarity].length}</button>`
+    ).join('')}</div>`;
+    renderItemTypeAndDesc(itemId, null, null);
+    useBtn.hidden = true;
+    chipsBox.querySelectorAll('.item-rarity-chip').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        chipsBox.querySelectorAll('.item-rarity-chip').forEach((b) => b.classList.remove('active'));
+        btn.classList.add('active');
+        const chosen = byRarity[btn.dataset.rarity][0];
+        state.selectedItemInstance = chosen;
+        renderItemTypeAndDesc(itemId, chosen.rarity, chosen.details);
+        useBtn.hidden = false;
+      });
+    });
+  }
+  $('#item-detail-modal').hidden = false;
+}
+
+function closeItemDetail(){
+  $('#item-detail-modal').hidden = true;
+}
+
+function showItemSameTypeActiveModal(itemId){
+  $('#item-same-type-active-icon').textContent = ITEM_META[itemId].icon;
+  $('#item-same-type-active-modal').hidden = false;
+}
+
+function showItemReplaceActiveModal(itemId, instanceId){
+  $('#item-replace-active-icon').textContent = ITEM_META[itemId].icon;
+  state.pendingItemUse = { itemId, instanceId };
+  $('#item-replace-active-modal').hidden = false;
+}
+
+async function confirmUseSelectedItem(){
+  const itemId = state.selectedItemId;
+  const instance = state.selectedItemInstance;
+  if (!itemId || !instance) return;
+
+  if (itemId === 'amulette_xp' || itemId === 'detecteur_metal' || itemId === 'graine_patience'){
+    const invData = await api('/api/inventory');
+    let activeRarity = null;
+    if (itemId === 'amulette_xp'){
+      const boosts = invData.activeBoosts;
+      if (boosts && boosts.amuletteEndsAt && new Date(boosts.amuletteEndsAt) > new Date()) activeRarity = boosts.amuletteRarity;
+    } else if (itemId === 'detecteur_metal'){
+      const boosts = invData.activeBoosts;
+      if (boosts && boosts.detecteurEndsAt && new Date(boosts.detecteurEndsAt) > new Date()) activeRarity = boosts.detecteurRarity;
+    } else if (itemId === 'graine_patience'){
+      const todayUse = (invData.dailyItemEffects || []).find((e) => e.itemId === 'graine_patience');
+      if (todayUse) activeRarity = todayUse.rarity;
+    }
+    if (activeRarity){
+      closeItemDetail();
+      if (activeRarity === instance.rarity){
+        showItemSameTypeActiveModal(itemId);
+      } else {
+        showItemReplaceActiveModal(itemId, instance.id);
+      }
+      return;
+    }
+  }
+
+  if (itemId === 'radar_precision'){
+    const invData = await api('/api/inventory');
+    if (invData.radarPending){
+      closeItemDetail();
+      showItemSameTypeActiveModal(itemId);
+      return;
+    }
+  }
+
+  closeItemDetail();
+  openUseItemPicker(itemId, instance.id);
+}
+
+function openUseItemPicker(itemId, instanceId, rarity){
+  if (itemId === 'talisman_pardon'){
+    const body = `
+      <p>${t('use_item_talisman_prompt')}</p>
+      <div class="goal-mode-toggle">
+        <button type="button" class="mode-btn" data-key="cannabis">${t('use_item_talisman_cannabis')}</button>
+        <button type="button" class="mode-btn" data-key="cafe">${t('use_item_talisman_cafe')}</button>
+        <button type="button" class="mode-btn" data-key="marche">${t('use_item_talisman_marche')}</button>
+      </div>
+    `;
+    $('#use-item-icon').textContent = ITEM_META[itemId].icon;
+    $('#use-item-name').textContent = t(`item_name_${itemId}`);
+    $('#use-item-body').innerHTML = body;
+    $('#use-item-modal').hidden = false;
+    $('#use-item-body').querySelectorAll('button').forEach((b) => {
+      b.addEventListener('click', async () => {
+        const res = await api(`/api/inventory/use/${instanceId}`, {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({ habitKey: b.dataset.key }),
+        });
+        $('#use-item-body').innerHTML = `<p>${t('use_item_talisman_result')}</p>`;
+        refreshXP();
+        invalidateCalendarCache();
+        loadInventory();
+      });
+    });
+    return;
+  }
+  useItemDirect(itemId, instanceId);
+}
+
+async function useItemDirect(itemId, instanceId, force){
+  try {
+    const res = await api(`/api/inventory/use/${instanceId}`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(force ? { force: true } : {}) });
+    const r = res.result;
+    if (r.effect === 'echo_passe'){
+      const msg = t('use_item_echo_result_' + r.framing) + `<div class="ms-empty-note" style="margin-top:10px;">"${escapeHtml(r.note.text)}"</div>`;
+      $('#use-item-icon').textContent = ITEM_META[itemId].icon;
+      $('#use-item-name').textContent = t(`item_name_${itemId}`);
+      $('#use-item-body').innerHTML = `<p>${msg}</p>`;
+      $('#use-item-modal').hidden = false;
+    }
+    refreshXP();
+    invalidateCalendarCache();
+    await refreshDay();
+    if (r.effect === 'plume_legere'){
+      $('#goal-echo').textContent = r.newGoal;
+    }
+    loadInventory();
+    updateActiveBoostDisplay();
+  } catch (err) {
+    if (itemId === 'echo_passe') alert(t('use_item_echo_none'));
+    else if (itemId === 'amulette_xp' || itemId === 'detecteur_metal' || itemId === 'graine_patience' || itemId === 'radar_precision') showItemSameTypeActiveModal(itemId);
+    else if (itemId === 'plume_legere') $('#plume-max-modal').hidden = false;
+  }
+}
+
+const RARITY_COLORS = { basique: '#4A9EFF', rare: '#A855F7', epique: '#EC4899', legendaire: '#F97316' };
+
+function formatRemaining(ms){
+  const m = Math.floor(ms / 60000);
+  const s = Math.floor((ms % 60000) / 1000);
+  return `${m}:${String(s).padStart(2,'0')}`;
+}
+
+function findItemRarityDetails(itemId, rarity){
+  const data = state.lastInventoryData;
+  if (!data) return null;
+  const it = (data.items || []).find((x) => x.id === itemId);
+  return it && it.allRarityDetails ? it.allRarityDetails[rarity] : null;
+}
+
+let _boostTimerHandle = null;
+let _boostTimerHandleDetecteur = null;
+async function updateActiveBoostDisplay(boosts, dailyItemEffects){
+  if (!boosts){
+    const data = await api('/api/inventory');
+    boosts = data.activeBoosts;
+    dailyItemEffects = data.dailyItemEffects;
+    state.lastInventoryData = data;
+  }
+
+  const amuCorner = $('#hero-amulette-corner');
+  if (_boostTimerHandle) clearInterval(_boostTimerHandle);
+  if (boosts && boosts.amuletteEndsAt && new Date(boosts.amuletteEndsAt) > new Date()){
+    const color = RARITY_COLORS[boosts.amuletteRarity] || RARITY_COLORS.basique;
+    amuCorner.hidden = false;
+    amuCorner.style.setProperty('--corner-color', color);
+    amuCorner.innerHTML = `<div class="hero-corner-icon-circle">🔮</div><div class="hero-corner-pct">×${boosts.amuletteMult} XP</div><div class="hero-corner-timer" id="hero-amulette-timer">—</div>`;
+    amuCorner.onclick = () => openActiveItemDetail('amulette_xp', boosts.amuletteRarity, boosts.amuletteEndsAt);
+    const tick = () => {
+      const remaining = new Date(boosts.amuletteEndsAt) - new Date();
+      if (remaining <= 0){ amuCorner.hidden = true; clearInterval(_boostTimerHandle); return; }
+      const el = document.getElementById('hero-amulette-timer');
+      if (el) el.textContent = formatRemaining(remaining);
+    };
+    tick();
+    _boostTimerHandle = setInterval(tick, 1000);
+  } else {
+    amuCorner.hidden = true;
+  }
+
+  const detCorner = $('#hero-detecteur-corner');
+  if (_boostTimerHandleDetecteur) clearInterval(_boostTimerHandleDetecteur);
+  if (boosts && boosts.detecteurEndsAt && new Date(boosts.detecteurEndsAt) > new Date()){
+    const color = RARITY_COLORS[boosts.detecteurRarity] || RARITY_COLORS.rare;
+    detCorner.hidden = false;
+    detCorner.style.setProperty('--corner-color', color);
+    detCorner.innerHTML = `<div class="hero-corner-icon-circle">📡</div><div class="hero-corner-pct">+${Math.round((boosts.detecteurBonus||0)*100)}%</div><div class="hero-corner-timer" id="hero-detecteur-timer">—</div>`;
+    detCorner.onclick = () => openActiveItemDetail('detecteur_metal', boosts.detecteurRarity, boosts.detecteurEndsAt);
+    const tickD = () => {
+      const remaining = new Date(boosts.detecteurEndsAt) - new Date();
+      if (remaining <= 0){ detCorner.hidden = true; clearInterval(_boostTimerHandleDetecteur); return; }
+      const el = document.getElementById('hero-detecteur-timer');
+      if (el) el.textContent = formatRemaining(remaining);
+    };
+    tickD();
+    _boostTimerHandleDetecteur = setInterval(tickD, 1000);
+  } else {
+    detCorner.hidden = true;
+  }
+
+  renderDailyItemsCorner(dailyItemEffects || []);
+}
+
+function renderDailyItemsCorner(effects){
+  const stack = $('#hero-daily-items-corner');
+  const sorted = effects.slice().sort((a, b) => {
+    const rarityDiff = RARITY_ORDER.indexOf(b.rarity) - RARITY_ORDER.indexOf(a.rarity);
+    if (rarityDiff !== 0) return rarityDiff;
+    return new Date(a.usedAt) - new Date(b.usedAt);
+  });
+  stack.innerHTML = sorted.map((e) => {
+    const color = RARITY_COLORS[e.rarity] || RARITY_COLORS.basique;
+    const meta = ITEM_META[e.itemId] || { icon: '❔' };
+    return `<div class="hero-corner-icon-circle" style="--corner-color:${color};" data-daily-item-id="${e.itemId}" data-daily-item-rarity="${e.rarity}">${meta.icon}</div>`;
+  }).join('');
+  stack.querySelectorAll('[data-daily-item-id]').forEach((el) => {
+    el.addEventListener('click', () => openActiveItemDetail(el.dataset.dailyItemId, el.dataset.dailyItemRarity, null));
+  });
+}
+
+function openActiveItemDetail(itemId, rarity, endsAt){
+  const color = RARITY_COLORS[rarity] || RARITY_COLORS.basique;
+  const meta = ITEM_META[itemId] || { icon: '❔' };
+  const details = findItemRarityDetails(itemId, rarity);
+  $('#active-item-detail-icon').textContent = meta.icon;
+  $('#active-item-detail-name').textContent = t(`item_name_${itemId}`);
+  $('#active-item-detail-type').innerHTML = `${t('item_detail_type_label')} ${rarityLabelHtml(rarity)}`;
+  const activeSpecificKey = `item_desc_${itemId}_specific`;
+  const activeHasSpecific = TRANSLATIONS.fr[activeSpecificKey] !== undefined;
+  $('#active-item-detail-desc').textContent = t(activeHasSpecific ? activeSpecificKey : `item_desc_${itemId}`, detailPlaceholders(details));
+  const footnoteKey = `item_footnote_${itemId}`;
+  const footnoteEl = $('#active-item-detail-footnote');
+  if (TRANSLATIONS.fr[footnoteKey] !== undefined){
+    footnoteEl.textContent = t(footnoteKey);
+    footnoteEl.hidden = false;
+  } else {
+    footnoteEl.hidden = true;
+  }
+  const modal = $('#active-item-detail-modal');
+  modal.style.setProperty('--corner-color', color);
+  modal.style.setProperty('--corner-bg', color + '1A');
+  const timerBox = $('#active-item-detail-timer-box');
+  if (endsAt){
+    timerBox.hidden = false;
+    const updateTimer = () => {
+      const remaining = new Date(endsAt) - new Date();
+      $('#active-item-detail-timer-value').textContent = remaining > 0 ? formatRemaining(remaining) : '0:00';
+    };
+    updateTimer();
+  } else {
+    timerBox.hidden = true;
+  }
+  modal.hidden = false;
 }
 
 async function loadRanks(){
@@ -1659,6 +2720,11 @@ async function loadRanks(){
     const xpLabel = isCurrent ? `${formatNumber(xp.xp)} XP` : `${formatNumber(r.min)} XP`;
     return `<div class="rank-row${isCurrent ? ' current-rank' : ''}"><span class="rank-row-name">${translateRankName(r.name)}</span><span class="rank-row-xp">${xpLabel}</span></div>`;
   }).join('');
+
+  const table = trophyXPTableClient(xp.rankIndex);
+  $('#xp-source-bronze-value').textContent = `+${table.bronze} XP`;
+  $('#xp-source-argent-value').textContent = `+${table.argent - table.bronze} XP`;
+  $('#xp-source-or-value').textContent = `+${table.or - table.argent} XP`;
 }
 
 function formatNumber(n){
@@ -1687,8 +2753,14 @@ async function saveAccentColor(hex){
 function init(){
   window.scrollTo(0, 0);
   document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'visible') restartShimmer();
+    if (document.visibilityState === 'visible'){
+      restartShimmer();
+      updateActiveBoostDisplay();
+    }
   });
+  setInterval(() => {
+    if (document.visibilityState === 'visible') updateActiveBoostDisplay();
+  }, 15000);
   $$('.qbtn[data-add]').forEach((b) => {
     b.addEventListener('click', () => addReps(parseInt(b.dataset.add,10)));
   });
@@ -1706,16 +2778,30 @@ function init(){
   });
 
   $('#note-input').addEventListener('focus', () => {
-    $('#mood-row').hidden = false;
+    $('#note-form-actions').hidden = false;
   });
   const notesCard = document.querySelector('.notes');
   document.addEventListener('click', (e) => {
-    if (!notesCard.contains(e.target)){
-      $('#mood-row').hidden = true;
+    if (!notesCard.contains(e.target) && !$('#mood-picker-modal').contains(e.target)){
+      $('#note-form-actions').hidden = true;
     }
   });
 
-  $$('#mood-row .mood-chip').forEach((chip) => {
+  $('#mood-picker-open-btn').addEventListener('click', () => {
+    $('#mood-picker-modal').hidden = false;
+  });
+  $$('.modal-backdrop').forEach((backdrop) => {
+    backdrop.addEventListener('click', (e) => {
+      if (e.target !== backdrop) return;
+      const closeBtn = backdrop.querySelector('.modal-close');
+      if (closeBtn) closeBtn.click();
+    });
+  });
+  $('#mood-picker-confirm').addEventListener('click', () => {
+    $('#mood-picker-modal').hidden = true;
+  });
+
+  $$('#mood-picker-list .mood-chip').forEach((chip) => {
     chip.addEventListener('click', () => {
       const m = chip.dataset.mood;
       if (state.selectedMoods.includes(m)){
@@ -1725,6 +2811,7 @@ function init(){
         state.selectedMoods.push(m);
         chip.classList.add('selected');
       }
+      updateMoodPickerButtonLabel();
     });
   });
 
@@ -1733,9 +2820,15 @@ function init(){
     const input = $('#note-input');
     addNote(input.value);
     input.value = '';
+    $('#note-form-actions').hidden = true;
   });
 
-  $$('.tab').forEach((t) => t.addEventListener('click', () => switchView(t.dataset.view)));
+  $$('.tab').forEach((t) => {
+    t.addEventListener('touchstart', () => {
+      switchView(t.dataset.view);
+    }, { passive: true });
+    t.addEventListener('click', () => switchView(t.dataset.view));
+  });
 
   $('#cal-prev').addEventListener('click', () => {
     const [y,m] = state.calMonth.split('-').map(Number);
@@ -1751,23 +2844,93 @@ function init(){
   });
 
   $('#day-modal-close').addEventListener('click', () => { $('#day-modal').hidden = true; });
+  $('#active-item-detail-close-x').addEventListener('click', () => { $('#active-item-detail-modal').hidden = true; });
+  $('#trophy-modal-close-x').addEventListener('click', () => dismissCelebration('#trophy-modal'));
+  $('#rankup-modal-close-x').addEventListener('click', () => dismissCelebration('#rankup-modal'));
+  $('#badge-modal-close-x').addEventListener('click', () => dismissCelebration('#badge-modal'));
+  $('#item-drop-close-x').addEventListener('click', () => dismissCelebration('#item-drop-modal'));
+  $('#item-same-type-active-close-x').addEventListener('click', () => { $('#item-same-type-active-modal').hidden = true; });
+  $('#item-same-type-active-ok').addEventListener('click', () => { $('#item-same-type-active-modal').hidden = true; });
+  $('#item-replace-active-close-x').addEventListener('click', () => { $('#item-replace-active-modal').hidden = true; state.pendingItemUse = null; });
+  $('#item-replace-active-cancel').addEventListener('click', () => { $('#item-replace-active-modal').hidden = true; state.pendingItemUse = null; });
+  $('#item-replace-active-yes').addEventListener('click', () => {
+    $('#item-replace-active-modal').hidden = true;
+    if (state.pendingItemUse){
+      const { itemId, instanceId } = state.pendingItemUse;
+      state.pendingItemUse = null;
+      useItemDirect(itemId, instanceId, true);
+    }
+  });
+  $('#plume-max-close-x').addEventListener('click', () => { $('#plume-max-modal').hidden = true; });
+  $('#mood-picker-close-x').addEventListener('click', () => { $('#mood-picker-modal').hidden = true; });
+  $('#use-item-close-x').addEventListener('click', () => { $('#use-item-modal').hidden = true; });
+  $('#photo-modal-close-x').addEventListener('click', () => { $('#photo-modal').hidden = true; });
+  $('#monthly-summary-close-x').addEventListener('click', async () => {
+    $('#monthly-summary-modal').hidden = true;
+    try { await api('/api/monthly-summary/acknowledge', { method:'POST' }); } catch (err) { /* ignore */ }
+  });
   $('#day-modal').addEventListener('click', (e) => { if (e.target.id === 'day-modal') $('#day-modal').hidden = true; });
 
   $('#trophy-ok').addEventListener('click', () => dismissCelebration('#trophy-modal'));
   $('#rankup-ok').addEventListener('click', () => dismissCelebration('#rankup-modal'));
   $('#badge-modal-ok').addEventListener('click', () => dismissCelebration('#badge-modal'));
+  $('#item-drop-ok').addEventListener('click', () => dismissCelebration('#item-drop-modal'));
+  $('#use-item-close').addEventListener('click', () => { $('#use-item-modal').hidden = true; });
+  $('#item-detail-close-x').addEventListener('click', closeItemDetail);
+  $('#mythic-detail-close-x').addEventListener('click', () => { $('#mythic-detail-modal').hidden = true; });
+  $('#mythic-detail-toggle').addEventListener('click', async () => {
+    const itemId = state.selectedMythicId;
+    if (!itemId) return;
+    const data = await api(`/api/inventory/mythic/${itemId}/toggle`, { method: 'POST' });
+    applyMythicCosmetic(itemId, data.active);
+    $('#mythic-detail-toggle').classList.toggle('active', !!data.active);
+    loadInventory();
+  });
+  $('#item-detail-use-btn').addEventListener('click', confirmUseSelectedItem);
+  $('#plume-max-ok').addEventListener('click', () => { $('#plume-max-modal').hidden = true; });
+  $('#inventory-header-btn').addEventListener('click', openInventory);
+  $('#app-wordmark').addEventListener('click', () => {
+    if (state.echoDoreActive) playEchoDoreMelody();
+  });
+  $('#inventory-back-btn').addEventListener('click', closeInventory);
+  $('#inventory-close-x').addEventListener('click', closeInventory);
+
+  $('#xp-card-btn').addEventListener('click', openXPLog);
+  $('#xp-card-btn').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openXPLog(); }
+  });
+  $('#xp-log-close-x').addEventListener('click', () => { $('#xp-log-modal').hidden = true; });
+  $('#xp-log-back-btn').addEventListener('click', () => { $('#xp-log-modal').hidden = true; });
+
+  const setupBadgesSectionToggle = (toggleId, chevronId, gridId) => {
+    $(toggleId).addEventListener('click', () => {
+      const grid = $(gridId);
+      grid.hidden = !grid.hidden;
+      $(chevronId).classList.toggle('is-expanded', !grid.hidden);
+      $(toggleId).closest('.card').classList.toggle('is-collapsed', grid.hidden);
+    });
+  };
+  setupBadgesSectionToggle('#badges-unlocked-toggle', '#badges-unlocked-chevron', '#badges-grid-unlocked');
+  setupBadgesSectionToggle('#badges-locked-toggle', '#badges-locked-chevron', '#badges-grid-locked');
 
   $('#ms-modal-close').addEventListener('click', async () => {
     $('#monthly-summary-modal').hidden = true;
     try { await api('/api/monthly-summary/acknowledge', { method:'POST' }); } catch (err) { /* ignore */ }
   });
 
-  $('#goal-pill').addEventListener('click', () => switchView('settings'));
 
   $('#photo-camera-input').addEventListener('change', async (e) => {
     if (e.target.files[0]){
       await uploadPhoto(e.target.files[0], state.today);
       $('#photo-modal').hidden = true;
+    }
+  });
+  $('#cal-camera-input').addEventListener('change', async (e) => {
+    if (e.target.files[0]){
+      await uploadPhoto(e.target.files[0], state.today);
+      e.target.value = '';
+      invalidateCalendarCache();
+      loadCalendar();
     }
   });
   $('#photo-library-input').addEventListener('change', async (e) => {
@@ -1791,6 +2954,7 @@ function init(){
       headers:{'Content-Type':'application/json'},
       body: JSON.stringify({ manualGoal }),
     });
+    invalidateCalendarCache();
     await loadToday();
   });
 
@@ -1866,14 +3030,114 @@ function init(){
     if (state.soundEnabled) playCelebrationSound('trophy');
   });
 
+  $('#sync-now-btn').addEventListener('click', async () => {
+    $('#sync-status').textContent = t('sync_in_progress');
+    await attemptBackgroundSync(true);
+    const last = parseInt(localStorage.getItem('trackpush_last_synced') || '0', 10);
+    const justSynced = Date.now() - last < 5000;
+    if (justSynced){
+      $('#sync-status').textContent = t('sync_success');
+    } else {
+      const detail = (typeof getLastSyncError === 'function' && getLastSyncError()) || '';
+      $('#sync-status').textContent = detail ? `${t('sync_failed')} (${detail})` : t('sync_failed');
+    }
+    setTimeout(updateSyncIndicator, 4000);
+  });
+
+  $('#offline-primary-toggle').addEventListener('click', async () => {
+    const currentlyPrimary = isOfflinePrimaryDevice();
+    if (!currentlyPrimary){
+      if (!confirm(t('offline_primary_confirm'))) return;
+      localStorage.setItem('trackpush_offline_primary', '1');
+      await migrateFromServerIfNeeded();
+    } else {
+      localStorage.setItem('trackpush_offline_primary', '0');
+    }
+    location.reload();
+  });
+
+  $('#backup-export-btn').addEventListener('click', async () => {
+    const dateStr = new Date().toISOString().slice(0, 10);
+    const filename = `trackpush-sauvegarde-${dateStr}.json`;
+
+    if (typeof isNativeApp === 'function' && isNativeApp()){
+      try {
+        const payload = await exportAllData();
+        const { Filesystem, Share } = window.Capacitor.Plugins;
+        const written = await Filesystem.writeFile({
+          path: filename,
+          data: JSON.stringify(payload),
+          directory: 'CACHE',
+          encoding: 'utf8',
+        });
+        await Share.share({ title: filename, url: written.uri, dialogTitle: t('backup_export_btn') });
+      } catch (err) {
+        alert(t('backup_export_error'));
+      }
+      return;
+    }
+
+    if (isOfflinePrimaryDevice()){
+      const payload = await exportAllData();
+      const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } else {
+      window.location.href = '/api/export';
+    }
+  });
+
+  $('#backup-import-btn').addEventListener('click', () => {
+    $('#backup-import-input').click();
+  });
+
+  $('#backup-import-input').addEventListener('change', async (e) => {
+    const file = e.target.files && e.target.files[0];
+    e.target.value = '';
+    if (!file) return;
+    if (!confirm(t('backup_import_confirm'))) return;
+    try {
+      const text = await file.text();
+      const payload = JSON.parse(text);
+      await importAllData(payload);
+      alert(t('backup_import_success'));
+      location.reload();
+    } catch (err) {
+      alert(t('backup_import_error'));
+    }
+  });
+
   $('#xp-source-badges-link').addEventListener('click', (e) => {
     e.preventDefault();
     switchView('badges');
   });
 
-  loadToday();
+  const revealApp = () => { document.body.classList.add('app-ready'); playCascade($('#view-today')); };
+  const revealTimeout = setTimeout(revealApp, 5000);
+  loadToday().finally(() => { clearTimeout(revealTimeout); revealApp(); });
+  if (typeof initBackgroundSync === 'function' && typeof isOfflinePrimaryDevice === 'function' && isOfflinePrimaryDevice()){
+    initBackgroundSync();
+  }
 
   $('#build-version').textContent = APP_VERSION;
+
+  if ('serviceWorker' in navigator){
+    navigator.serviceWorker.register('/sw.js').catch(()=>{});
+  }
 }
 
-document.addEventListener('DOMContentLoaded', init);
+document.addEventListener('DOMContentLoaded', async () => {
+  try {
+    if (typeof isOfflinePrimaryDevice === 'function' && isOfflinePrimaryDevice()
+        && typeof migrateFromServerIfNeeded === 'function'){
+      await migrateFromServerIfNeeded();
+    }
+  } catch (err) { /* migration best-effort only, never block startup */ }
+  init();
+});
