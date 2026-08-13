@@ -1,4 +1,4 @@
-const CACHE = 'trackpush-web-v2';
+const CACHE = 'trackpush-web-v3';
 const SHELL = [
   './', './styles.css', './app.js', './manifest.json', './store.js', './local-api.js', './sync.js',
   './inventory-icon-medium.png', './inventory-icon-small.png',

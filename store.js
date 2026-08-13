@@ -436,6 +436,10 @@ function loadDB() {
     });
     db.xpLogBadgeIconFixed = true;
   }
+  if (!db.xpLogReconcileBugFixed) {
+    db.xpLogLastDate = null;
+    db.xpLogReconcileBugFixed = true;
+  }
 
   _db = db;
   return _db;
@@ -585,16 +589,17 @@ function reconcileXPLog(db) {
 
     logTrophyProgressForDate(db, ds);
 
-    if (isPlatinumCompletionDate(db, ds)) pushXPLog(db, ds, 'platinum_week', 50, 'Semaine Platine complétée');
+    if (isPlatinumCompletionDate(db, ds) && !hasXPLogReason(db, ds, 'platinum_week')) pushXPLog(db, ds, 'platinum_week', 50, 'Semaine Platine complétée');
 
     (db.graineUses || []).filter((u) => u.date === ds).forEach((u) => {
+      if (hasXPLogReason(db, ds, 'graine_patience')) return;
       const bonus = Math.round(habitXPForDate(db, ds) * (u.mult - 1));
       if (bonus > 0) pushXPLog(db, ds, 'graine_patience', bonus, 'Graine de patience');
     });
 
+    db.xpLogLastDate = ds;
     cursor.setDate(cursor.getDate() + 1);
   }
-  db.xpLogLastDate = today;
 }
 
 function cleanDaysCount(db, key) {
@@ -1126,6 +1131,7 @@ const BADGES = [
   { id: 'grand-collectionneur', name: 'Grand collectionneur', desc: 'Découvrir tous les objets existants', xp: 400, icon: '🏆', secret: true, check: (db) => nthItemDiscoveryDate(db, ITEMS.length) },
   { id: 'legendaire-badge', name: 'Légendaire!', desc: "Débloque la version légendaire d'un objet pour la première fois", xp: 125, icon: '✨', secret: true, check: (db) => firstLegendaryDate(db) },
   { id: 'impossible-devient-reel', name: "L'impossible devient réel", desc: 'Trouve ton tout premier objet Mythique', xp: 800, icon: '🌟', secret: true, check: (db) => firstMythicDiscoveryDate(db) },
+  { id: 'look-debutant', name: 'Look du débutant', desc: 'Prends ta toute première photo', xp: 15, icon: '🪞', check: (db) => firstDateAtNthPhoto(db, 1) },
   { id: 'top-modele', name: 'Top modèle', desc: '10 photos ajoutées au total', xp: 50, icon: '📸', secret: true, check: (db) => firstDateAtNthPhoto(db, 10) },
   { id: 'je-note', name: 'Je NOTE!', desc: '100 notes ajoutées au total', xp: 100, icon: '📝', secret: true, check: (db) => firstDateAtNthNote(db, 100) },
 ];;
@@ -1267,6 +1273,8 @@ function dayPayload(db, date) {
     habits: habitsForDate(db, date),
     badges: badgesUnlockedForDate(db, date),
     weekTotal,
+    totalPhotosEver: allPhotosSorted(db).length,
+    isFirstEverDay: (() => { const first = earliestAnyDataDate(db); return !first || first === date; })(),
   };
 }
 

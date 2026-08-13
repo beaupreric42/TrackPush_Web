@@ -66,6 +66,10 @@
     ⏰ <span id="evening-banner-text" data-i18n="evening_banner_default">Il te reste du chemin pour atteindre ton objectif aujourd'hui!</span>
   </div>
 
+  <button type="button" id="sunday-photo-banner" class="evening-banner sunday-photo-banner" hidden>
+    📸 <span data-i18n="sunday_banner_text">N'oublie pas ta photo de la semaine!</span>
+  </button>
+
   <section class="hero card">
     <div class="hero-corner-stack hero-corner-tl" id="hero-daily-items-corner"></div>
     <div class="hero-corner hero-corner-tr" id="hero-detecteur-corner" hidden></div>
@@ -632,6 +636,28 @@
       </label>
       <button class="undo-link" id="photo-skip" data-i18n="photo_skip_btn">Plus tard</button>
       <button class="undo-link" id="photo-never-today" data-i18n="photo_never_today_btn">Ne plus afficher</button>
+    </div>
+  </div>
+</div>
+
+<!-- Day 1 photo popup -->
+<div class="modal-backdrop" id="day1-photo-modal" hidden>
+  <div class="modal">
+    <button class="modal-close" id="day1-photo-modal-close-x">×</button>
+    <div class="photo-modal-icon">🪞</div>
+    <div class="trophy-title" data-i18n="day1_photo_title">TA PHOTO DU JOUR 1</div>
+    <div class="trophy-desc" data-i18n="day1_photo_desc">Prends une photo de toi aujourd'hui — elle te servira de point de départ dans ton résumé mensuel, pour voir ta progression physique à chaque début de mois.</div>
+    <div class="photo-modal-actions">
+      <label class="qbtn qbtn-primary photo-btn">
+        <span data-i18n="photo_camera_btn">Prendre une photo</span>
+        <input type="file" accept="image/*" capture="environment" id="day1-photo-camera-input" hidden />
+      </label>
+      <label class="qbtn photo-btn">
+        <span data-i18n="photo_library_btn">Choisir dans la photothèque</span>
+        <input type="file" accept="image/*" id="day1-photo-library-input" hidden />
+      </label>
+      <button class="undo-link" id="day1-photo-skip" data-i18n="day1_photo_skip_btn">Me le rappeler plus tard</button>
+      <button class="undo-link" id="day1-photo-never" data-i18n="photo_never_today_btn">Ne plus afficher</button>
     </div>
   </div>
 </div>

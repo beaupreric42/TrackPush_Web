@@ -996,6 +996,11 @@ body.calendrier-celeste-active .cal-day.tr-or{
   display:flex;align-items:center;gap:8px;
 }
 .evening-banner[hidden]{display:none;}
+.sunday-photo-banner{
+  width:100%;border:1px solid rgba(255,255,255,0.08);cursor:pointer;text-align:left;
+  -webkit-appearance:none;appearance:none;font:inherit;
+  background:var(--steel-dim);color:var(--text);
+}
 
 /* ---------- Rank up celebration ---------- */
 .rankup-modal{position:relative;overflow:hidden;}

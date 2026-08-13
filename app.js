@@ -1,4 +1,4 @@
-const APP_VERSION = '2026-08.31';
+const APP_VERSION = '2026-08.36';
 
 const state = {
   today: null,
@@ -308,6 +308,10 @@ const TRANSLATIONS = {
     photo_library_btn: "Choisir dans la photothèque",
     photo_skip_btn: "Plus tard",
     photo_never_today_btn: "Ne plus afficher",
+    sunday_banner_text: "N'oublie pas de prendre ta photo de la semaine!",
+    day1_photo_title: "TA PHOTO DU JOUR 1",
+    day1_photo_desc: "Prends une photo de toi aujourd'hui — elle te servira de point de départ dans ton résumé mensuel, pour voir ta progression physique à chaque début de mois.",
+    day1_photo_skip_btn: "Me le rappeler plus tard",
     note_edit_link: "Modifier",
     note_delete_link: "Supprimer",
     note_cancel_link: "Annuler",
@@ -575,6 +579,10 @@ const TRANSLATIONS = {
     photo_library_btn: "Choose from library",
     photo_skip_btn: "Later",
     photo_never_today_btn: "Don't show again",
+    sunday_banner_text: "Don't forget your weekly photo!",
+    day1_photo_title: "YOUR DAY ONE PHOTO",
+    day1_photo_desc: "Take a photo of yourself today — it'll be your starting point in your monthly summary, so you can see your physical progress at the start of every month.",
+    day1_photo_skip_btn: "Remind me later",
     note_edit_link: "Edit",
     note_delete_link: "Delete",
     note_cancel_link: "Cancel",
@@ -665,6 +673,7 @@ const BADGE_TRANSLATIONS_EN = {
   'semaine-promenades': { name: 'Walking Week', desc: 'Take a walk outside for 7 consecutive days' },
   'go-abdo': { name: 'Go Abs Go', desc: 'Complete the 100 sit-ups habit 25 times' },
   'je-note': { name: 'I NOTE!', desc: '100 notes added in total' },
+  'look-debutant': { name: 'Day One Look', desc: 'Take your very first photo' },
   'top-modele': { name: 'Top Model', desc: '10 photos added in total' },
   'premier-tresor': { name: 'First Treasure', desc: 'Find your very first item (other than the Metal Detector)' },
   'petit-coffre': { name: 'Small Chest', desc: 'Discover 3 different items' },
@@ -1254,6 +1263,7 @@ async function loadToday(){
   renderDay(day);
   checkEveningReminder(day);
   maybeShowSundayPhotoPrompt(day);
+  maybeShowDay1PhotoPrompt(day);
   loadMonthlySummary(true);
 
   state.habitOrder = settings.habitOrder || Object.keys(HABIT_META());
@@ -1578,19 +1588,51 @@ async function addNote(text){
 
 // ---------- Sunday photo prompt ----------
 function maybeShowSundayPhotoPrompt(day){
+  const banner = $('#sunday-photo-banner');
   const d = new Date(state.today + 'T00:00:00');
-  if (d.getDay() !== 0) return;
-  if (day.photos && day.photos.length > 0) return;
   const dismissedKey = `pt_photo_never_${state.today}`;
-  if (localStorage.getItem(dismissedKey)) return;
-  $('#photo-modal').hidden = false;
+  const shouldShow = d.getDay() === 0 && !(day.photos && day.photos.length > 0) && !localStorage.getItem(dismissedKey);
+  banner.hidden = !shouldShow;
+  if (!shouldShow) return;
+
+  banner.onclick = () => { $('#photo-modal').hidden = false; };
   $('#photo-skip').onclick = () => {
     $('#photo-modal').hidden = true;
   };
   $('#photo-never-today').onclick = () => {
     localStorage.setItem(dismissedKey, '1');
     $('#photo-modal').hidden = true;
+    banner.hidden = true;
   };
+}
+
+// ---------- Day 1 photo prompt ----------
+// Encourage a brand-new user to take a "before" photo, useful later for
+// comparing physical progress in the monthly summary. Keeps gently
+// resurfacing (once, at 18h, per "remind later" tap) until the user either
+// takes a photo, or dismisses it permanently — never once they've ever
+// taken any photo at all.
+function maybeShowDay1PhotoPrompt(day){
+  if (day.totalPhotosEver > 0 || !day.isFirstEverDay) return false;
+  if (localStorage.getItem('pt_day1_photo_never')) return false;
+  const snoozeUntil = parseInt(localStorage.getItem('pt_day1_photo_snooze_until') || '0', 10);
+  if (Date.now() < snoozeUntil) return false;
+
+  $('#day1-photo-modal').hidden = false;
+  const closeModal = () => { $('#day1-photo-modal').hidden = true; };
+  $('#day1-photo-modal-close-x').onclick = closeModal;
+  $('#day1-photo-skip').onclick = () => {
+    const now = new Date();
+    const today6pm = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 18, 0, 0, 0);
+    const target = now < today6pm ? today6pm : new Date(today6pm.getTime() + 24 * 60 * 60 * 1000);
+    localStorage.setItem('pt_day1_photo_snooze_until', String(target.getTime()));
+    closeModal();
+  };
+  $('#day1-photo-never').onclick = () => {
+    localStorage.setItem('pt_day1_photo_never', '1');
+    closeModal();
+  };
+  return true;
 }
 
 async function uploadPhoto(file, date){
@@ -2939,6 +2981,18 @@ function init(){
         await uploadPhoto(file, state.today);
       }
       $('#photo-modal').hidden = true;
+    }
+  });
+  $('#day1-photo-camera-input').addEventListener('change', async (e) => {
+    if (e.target.files[0]){
+      await uploadPhoto(e.target.files[0], state.today);
+      $('#day1-photo-modal').hidden = true;
+    }
+  });
+  $('#day1-photo-library-input').addEventListener('change', async (e) => {
+    if (e.target.files[0]){
+      await uploadPhoto(e.target.files[0], state.today);
+      $('#day1-photo-modal').hidden = true;
     }
   });
 
