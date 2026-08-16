@@ -517,9 +517,10 @@ body.calendrier-celeste-active .cal-day.tr-or{
 .trophy-modal{text-align:center;align-items:center;display:flex;flex-direction:column;border-radius:22px;margin:auto;}
 .trophy-big{font-size:72px;margin-bottom:6px;animation:trophy-pop 0.6s cubic-bezier(.2,.8,.3,1.4);}
 @keyframes trophy-pop{0%{transform:scale(0) rotate(-15deg);}70%{transform:scale(1.15) rotate(4deg);}100%{transform:scale(1) rotate(0);}}
-.trophy-title{font-family:'Manrope',sans-serif;font-weight:700;font-size:22px;letter-spacing:1px;margin-bottom:6px;}
+.trophy-title{font-family:'Manrope',sans-serif;font-weight:700;font-size:22px;letter-spacing:1px;margin-bottom:6px;text-align:center;}
 .trophy-desc{color:var(--text-muted);font-size:14px;margin-bottom:20px;text-align:center;}
 #trophy-ok{width:100%;}
+#inventory-back-btn,#item-odds-back-btn{width:100%;}
 
 /* Sunday photo modal */
 .photo-modal-icon{font-size:56px;text-align:center;margin-bottom:6px;}
@@ -907,6 +908,39 @@ body.calendrier-celeste-active .cal-day.tr-or{
   border-radius:22px;
 }
 #inventory-modal{align-items:center;}
+.inventory-odds-trigger{cursor:pointer;}
+
+.item-odds-modal-inner{border-radius:22px;}
+#item-odds-modal{align-items:center;}
+#item-odds-rank-note{text-align:center;margin-bottom:14px;}
+.item-odds-slider-row{margin:10px 0 18px;}
+.item-odds-slider-row input[type="range"]{width:100%;accent-color:var(--fire);}
+.item-odds-slider-label{text-align:center;font-family:'Manrope',sans-serif;font-size:13px;color:var(--text-muted);margin-top:4px;}
+.item-odds-headline{
+  background:rgba(255,255,255,0.04);border-radius:14px;padding:14px 16px;
+  display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;
+}
+.item-odds-headline-label{font-family:'Manrope',sans-serif;font-size:13.5px;color:var(--text-muted);}
+.item-odds-headline-value{font-family:'Manrope',sans-serif;font-weight:700;font-size:20px;color:var(--fire);}
+.item-odds-subtitle{font-family:'Manrope',sans-serif;font-size:11.5px;font-weight:700;letter-spacing:0.5px;color:var(--text-muted);text-transform:uppercase;margin-bottom:8px;}
+.item-odds-rarity-row{display:flex;align-items:center;gap:8px;margin-bottom:7px;font-family:'Manrope',sans-serif;font-size:12.5px;}
+.item-odds-rarity-name{width:76px;flex:none;color:var(--text-muted);}
+.item-odds-rarity-track{flex:1;min-width:0;background:rgba(255,255,255,0.08);border-radius:5px;height:8px;overflow:hidden;}
+.item-odds-rarity-fill{height:100%;border-radius:5px;background:var(--fire);}
+.item-odds-rarity-pct{width:42px;flex:none;text-align:right;color:var(--text);}
+.item-odds-details-list[hidden]{display:none;}
+.item-odds-details-list{margin-top:10px;}
+.item-odds-detail-row{display:flex;justify-content:space-between;font-family:'Manrope',sans-serif;font-size:12.5px;padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.05);}
+.item-odds-detail-name{color:var(--text-muted);}
+.item-odds-detail-value{color:var(--text);}
+.item-odds-other-row[hidden]{display:none;}
+.item-odds-other-row{
+  display:flex;justify-content:space-between;font-family:'Manrope',sans-serif;font-size:12px;color:var(--text-muted);
+  margin:16px 0 18px;padding-top:14px;border-top:1px solid rgba(255,255,255,0.06);
+}
+.item-odds-other-row strong{color:var(--text);}
+.item-odds-headline[hidden]{display:none;}
+
 @keyframes inventory-open{
   0%{opacity:0;transform:scale(0.82) translateY(10px);}
   60%{opacity:1;}
@@ -914,7 +948,9 @@ body.calendrier-celeste-active .cal-day.tr-or{
 }
 .inventory-modal-inner .section-title{text-align:center;}
 .inventory-modal-inner #inventory-back-btn{width:100%;margin-top:18px;}
+.item-odds-modal-inner #item-odds-back-btn{width:100%;margin-top:18px;}
 .inventory-modal-inner .inventory-grid{margin-bottom:6px;}
+#mythic-odds-trigger{margin-top:34px;}
 
 .xp-log-modal-inner{
   animation:inventory-open 0.38s cubic-bezier(.2,.85,.25,1.15) !important;

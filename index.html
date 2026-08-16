@@ -162,13 +162,59 @@
 <div class="modal-backdrop" id="inventory-modal" hidden>
   <div class="modal inventory-modal-inner">
     <button class="modal-close" id="inventory-close-x">×</button>
-    <img src="./inventory-icon-medium.png" alt="" class="inventory-section-icon" />
+    <img src="./inventory-icon-medium.png" alt="" class="inventory-section-icon inventory-odds-trigger" id="item-odds-trigger" />
     <div class="section-title" data-i18n="inventory_title">INVENTAIRE</div>
     <div id="inventory-grid" class="inventory-grid"></div>
-    <img src="./inventory-mythic-icon-medium.png" alt="" class="inventory-section-icon" style="margin-top:16px;" />
+    <img src="./inventory-mythic-icon-medium.png" alt="" class="inventory-section-icon inventory-odds-trigger" id="mythic-odds-trigger" />
     <div class="section-title" id="mythic-section" data-i18n="inventory_mythic_title" style="margin-top:4px;">OBJETS MYTHIQUES</div>
     <div id="mythic-grid" class="inventory-grid"></div>
     <button type="button" class="qbtn qbtn-primary" id="inventory-back-btn" data-i18n="inventory_back_btn">Retour</button>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="item-odds-modal" hidden>
+  <div class="modal item-odds-modal-inner">
+    <button class="modal-close" id="item-odds-close-x">×</button>
+    <div class="section-title" id="item-odds-title" data-i18n="item_odds_title">CHANCES — OBJETS</div>
+    <div class="ms-empty-note" id="item-odds-rank-note"></div>
+
+    <div class="item-odds-slider-row">
+      <input type="range" id="item-odds-slider" min="5" max="50" step="1" value="25" />
+      <div class="item-odds-slider-label"><span id="item-odds-count">25</span> <span data-i18n="pushups_word">push-ups</span></div>
+    </div>
+
+    <div class="item-odds-headline" id="item-odds-drop-headline">
+      <div class="item-odds-headline-label" data-i18n="item_odds_drop_label">Chance qu'un objet apparaisse</div>
+      <div class="item-odds-headline-value" id="item-odds-drop-value">—</div>
+    </div>
+
+    <div id="item-odds-rarity-block">
+      <div class="item-odds-subtitle" data-i18n="item_odds_rarity_label">Répartition des raretés (si un objet apparaît)</div>
+      <div id="item-odds-rarity-bars"></div>
+
+      <button type="button" class="badges-section-toggle" id="item-odds-details-toggle" style="margin-top:16px;">
+        <span class="section-title" data-i18n="item_odds_details_toggle">DÉTAILS PAR OBJET</span>
+        <span class="badges-section-chevron" id="item-odds-details-chevron"></span>
+      </button>
+      <div id="item-odds-details-list" class="item-odds-details-list" hidden></div>
+    </div>
+
+    <div id="item-odds-mythic-block" hidden>
+      <div class="item-odds-headline" style="margin-top:6px;">
+        <div class="item-odds-headline-label" data-i18n="item_odds_mythic_label">Chance mythique ✨</div>
+        <div class="item-odds-headline-value" id="item-odds-mythic-value">—</div>
+      </div>
+      <div class="ms-empty-note" id="item-odds-mythic-found-note" style="margin-top:14px;"></div>
+      <div class="item-odds-subtitle" style="margin-top:10px;" data-i18n="item_odds_mythic_details_label">Répartition entre les objets mythiques</div>
+      <div id="item-odds-mythic-list" class="item-odds-details-list"></div>
+    </div>
+
+    <div class="item-odds-other-row" id="item-odds-other-row">
+      <div><span data-i18n="item_odds_detecteur_label">Détecteur de métal</span> <strong id="item-odds-detecteur-value">—</strong></div>
+      <div><span data-i18n="item_odds_radar_label">Radar de précision</span> <strong id="item-odds-radar-value">—</strong></div>
+    </div>
+
+    <button type="button" class="qbtn qbtn-primary" id="item-odds-back-btn" data-i18n="inventory_back_btn">Retour</button>
   </div>
 </div>
 
@@ -646,7 +692,7 @@
         <span data-i18n="photo_library_btn">Choisir dans la photothèque</span>
         <input type="file" accept="image/*" multiple id="photo-library-input" hidden />
       </label>
-      <button class="undo-link" id="photo-skip" data-i18n="photo_skip_btn">Plus tard</button>
+      <button class="undo-link" id="photo-skip" data-i18n="day1_photo_skip_btn">Me le rappeler plus tard</button>
       <button class="undo-link" id="photo-never-today" data-i18n="photo_never_today_btn">Ne plus afficher</button>
     </div>
   </div>

@@ -171,7 +171,7 @@ function rollRarity(count, rankIdx, rng) {
 // set. Fixed odds by set size, gated only by rank (Discipliné+).
 function mythiqueChance(count) {
   if (count <= 10) return 1 / 1000;
-  if (count <= 34) return 0.0013;
+  if (count <= 24) return 0.0013;
   if (count <= 49) return 1 / 600;
   return 0.0022;
 }
@@ -287,13 +287,13 @@ const VALID_MOODS = ['energique', 'calme', 'fatigue', 'epuise', 'stresse', 'anxi
 
 const RANKS = [
   { name: 'Débutant', min: 0, max: 1999, goal: 100 },
-  { name: 'Discipliné', min: 2000, max: 4099, goal: 110 },
-  { name: 'Professionnel', min: 4100, max: 8399, goal: 120 },
-  { name: 'Élite', min: 8400, max: 17299, goal: 130 },
-  { name: 'Légende', min: 17300, max: 35599, goal: 140 },
-  { name: 'Imbattable', min: 35600, max: 73499, goal: 150 },
-  { name: 'Immortel', min: 73500, max: 149999, goal: 160 },
-  { name: 'Divin', min: 150000, max: Infinity, goal: 170 },
+  { name: 'Discipliné', min: 2000, max: 4099, goal: 105 },
+  { name: 'Professionnel', min: 4100, max: 8399, goal: 110 },
+  { name: 'Élite', min: 8400, max: 17299, goal: 115 },
+  { name: 'Légende', min: 17300, max: 35599, goal: 120 },
+  { name: 'Imbattable', min: 35600, max: 73499, goal: 130 },
+  { name: 'Immortel', min: 73500, max: 149999, goal: 140 },
+  { name: 'Divin', min: 150000, max: Infinity, goal: 150 },
 ];
 
 const TROPHY_XP_BASE = { bronze: 2, argent: 7, or: 17 };

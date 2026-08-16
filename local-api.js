@@ -391,6 +391,42 @@ async function localApi(path, opts) {
   }
 
   // ---- Badges ----
+  // ---- Item odds ----
+  if (path.startsWith('/api/item-odds') && method === 'GET') {
+    const qs = path.includes('?') ? path.slice(path.indexOf('?') + 1) : '';
+    const params = new URLSearchParams(qs);
+    const count = Math.max(1, Math.min(200, parseInt(params.get('count'), 10) || 25));
+    const { xp } = computeXP(db);
+    const rankIdx = rankIndex(rankForXP(xp));
+    const dropChance = itemDropChance(count, rankIdx, db);
+    const rarityBreakdown = rarityDistribution(count, rankIdx);
+    const mythicChance = rankIdx >= 1 ? mythiqueChance(count) : 0;
+    const perItem = [];
+    for (const tier of Object.keys(rarityBreakdown)) {
+      const eligible = eligibleItemsForRarity(tier, rankIdx, db);
+      const totalWeight = eligible.reduce((s, it) => s + ((it.rarities[tier] && it.rarities[tier].weight) || 1), 0);
+      eligible.forEach((it) => {
+        const w = (it.rarities[tier] && it.rarities[tier].weight) || 1;
+        const share = totalWeight > 0 ? w / totalWeight : 0;
+        perItem.push({ id: it.id, name: it.name, rarity: tier, chance: rarityBreakdown[tier] * share });
+      });
+    }
+    const eligibleMythics = MYTHIC_ITEMS.filter((it) => it.minRank <= rankIdx && !(db.mythicDiscovered || {})[it.id]);
+    const totalMythicWeight = eligibleMythics.reduce((s, it) => s + (it.weight || 1), 0);
+    const perMythic = eligibleMythics.map((it) => ({
+      id: it.id, name: it.name,
+      chance: totalMythicWeight > 0 ? mythicChance * ((it.weight || 1) / totalMythicWeight) : 0,
+    }));
+    const mythicDiscoveredCount = Object.keys(db.mythicDiscovered || {}).length;
+    const mythicTotalCount = MYTHIC_ITEMS.length;
+    return {
+      count, rankIdx,
+      dropChance, rarityBreakdown, mythicChance, perItem, perMythic,
+      mythicDiscoveredCount, mythicTotalCount,
+      detecteurChance: DETECTEUR_CHANCE,
+      radarChance: RADAR_PRECISION_CHANCE,
+    };
+  }
   // ---- Inventory / Items ----
   if (path === '/api/inventory' && method === 'GET') {
     const items = ITEMS.map((it) => {

@@ -1,4 +1,4 @@
-const APP_VERSION = '2026-08.46';
+const APP_VERSION = '2026-08.54';
 
 const state = {
   today: null,
@@ -209,6 +209,22 @@ const TRANSLATIONS = {
     inventory_title: "OBJETS COMMUNS",
     inventory_mythic_title: "OBJETS MYTHIQUES",
     inventory_back_btn: "Retour",
+    item_odds_title: "CHANCES — OBJETS",
+    item_odds_mythic_title: "CHANCES — MYTHIQUES",
+    item_odds_rank_note: "Selon ton rang actuel : {rank}",
+    item_odds_drop_label: "Chance qu'un objet apparaisse",
+    item_odds_rarity_label: "Répartition des raretés (si un objet apparaît)",
+    item_odds_details_toggle: "DÉTAILS PAR OBJET",
+    item_odds_mythic_label: "Chance mythique ✨",
+    item_odds_mythic_details_label: "Répartition entre les objets mythiques",
+    item_odds_mythic_locked: "Pas encore accessible à ton rang actuel.",
+    item_odds_mythic_remaining: "{found} objet(s) mythique(s) déjà trouvé(s) sur {total} — répartition ci-dessous entre les {remaining} restants.",
+    item_odds_detecteur_label: "Détecteur de métal",
+    item_odds_radar_label: "Radar de précision",
+    rarity_basique: "Commun",
+    rarity_rare: "Rare",
+    rarity_epique: "Épique",
+    rarity_legendaire: "Légendaire",
     inventory_undiscovered: "???",
     inventory_empty_stock: "Épuisé",
     item_drop_title: "OBJET TROUVÉ!",
@@ -482,6 +498,22 @@ const TRANSLATIONS = {
     inventory_title: "COMMON ITEMS",
     inventory_mythic_title: "MYTHIC ITEMS",
     inventory_back_btn: "Back",
+    item_odds_title: "ODDS — ITEMS",
+    item_odds_mythic_title: "ODDS — MYTHICS",
+    item_odds_rank_note: "Based on your current rank: {rank}",
+    item_odds_drop_label: "Chance an item appears",
+    item_odds_rarity_label: "Rarity breakdown (if an item appears)",
+    item_odds_details_toggle: "DETAILS BY ITEM",
+    item_odds_mythic_label: "Mythic chance ✨",
+    item_odds_mythic_details_label: "Breakdown among mythic items",
+    item_odds_mythic_locked: "Not yet accessible at your current rank.",
+    item_odds_mythic_remaining: "{found} mythic item(s) already found out of {total} — breakdown below among the {remaining} remaining.",
+    item_odds_detecteur_label: "Metal detector",
+    item_odds_radar_label: "Precision radar",
+    rarity_basique: "Common",
+    rarity_rare: "Rare",
+    rarity_epique: "Epic",
+    rarity_legendaire: "Legendary",
     inventory_undiscovered: "???",
     inventory_empty_stock: "Depleted",
     item_drop_title: "ITEM FOUND!",
@@ -1639,14 +1671,24 @@ function maybeShowSundayPhotoPrompt(day){
   const banner = $('#sunday-photo-banner');
   const d = new Date(state.today + 'T00:00:00');
   const dismissedKey = `pt_photo_never_${state.today}`;
-  const shouldShow = d.getDay() === 0 && !(day.photos && day.photos.length > 0) && !localStorage.getItem(dismissedKey);
+  const snoozeKey = `pt_photo_snooze_${state.today}`;
+  const snoozeUntil = parseInt(localStorage.getItem(snoozeKey) || '0', 10);
+  const isSnoozed = Date.now() < snoozeUntil;
+  const shouldShow = d.getDay() === 0 && !(day.photos && day.photos.length > 0) && !localStorage.getItem(dismissedKey) && !isSnoozed;
   banner.hidden = !shouldShow;
   if (!shouldShow) return;
   fitTextToOneLine(banner, 13.5, 10, 0.5);
 
-  banner.onclick = () => { $('#photo-modal').hidden = false; };
+  banner.onclick = () => {
+    $('#photo-modal').hidden = false;
+    $('#photo-skip').hidden = new Date().getHours() >= 18;
+  };
   $('#photo-skip').onclick = () => {
+    const now = new Date();
+    const today6pm = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 18, 0, 0, 0);
+    if (now < today6pm) localStorage.setItem(snoozeKey, String(today6pm.getTime()));
     $('#photo-modal').hidden = true;
+    banner.hidden = true;
   };
   $('#photo-never-today').onclick = () => {
     localStorage.setItem(dismissedKey, '1');
@@ -3024,6 +3066,100 @@ function init(){
   });
   $('#inventory-back-btn').addEventListener('click', closeInventory);
   $('#inventory-close-x').addEventListener('click', closeInventory);
+
+  let itemOddsIsMythic = false;
+  const RARITY_ORDER_CLIENT = ['basique', 'rare', 'epique', 'legendaire'];
+
+  function renderRarityBars(breakdown){
+    const el = $('#item-odds-rarity-bars');
+    el.innerHTML = RARITY_ORDER_CLIENT.map((tier) => {
+      const pct = Math.round((breakdown[tier] || 0) * 1000) / 10;
+      return `
+        <div class="item-odds-rarity-row">
+          <span class="item-odds-rarity-name">${t('rarity_' + tier)}</span>
+          <div class="item-odds-rarity-track"><div class="item-odds-rarity-fill" style="width:${pct}%"></div></div>
+          <span class="item-odds-rarity-pct">${pct}%</span>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function renderPerItemDetails(perItem){
+    const el = $('#item-odds-details-list');
+    const sorted = [...perItem].sort((a, b) => b.chance - a.chance);
+    el.innerHTML = sorted.map((it) => {
+      const tr = t(`item_name_${it.id}`);
+      const pct = Math.round(it.chance * 1000) / 10;
+      return `<div class="item-odds-detail-row"><span class="item-odds-detail-name">${tr} (${t('rarity_' + it.rarity)})</span><span class="item-odds-detail-value">${pct}%</span></div>`;
+    }).join('');
+  }
+
+  function renderMythicDetails(perMythic){
+    const el = $('#item-odds-mythic-list');
+    if (!perMythic.length){
+      el.innerHTML = `<div class="ms-empty-note">${t('item_odds_mythic_locked')}</div>`;
+      return;
+    }
+    const sorted = [...perMythic].sort((a, b) => b.chance - a.chance);
+    el.innerHTML = sorted.map((it) => {
+      const tr = t(`item_name_${it.id}`);
+      const pct = Math.round(it.chance * 10000) / 100;
+      return `<div class="item-odds-detail-row"><span class="item-odds-detail-name">${tr}</span><span class="item-odds-detail-value">${pct}%</span></div>`;
+    }).join('');
+  }
+
+  async function refreshItemOdds(){
+    const count = parseInt($('#item-odds-slider').value, 10);
+    $('#item-odds-count').textContent = count;
+    const data = await api(`/api/item-odds?count=${count}`);
+    $('#item-odds-drop-value').textContent = Math.round(data.dropChance * 1000) / 10 + '%';
+    $('#item-odds-rank-note').textContent = t('item_odds_rank_note', { rank: translateRankName(RANK_NAMES_FR[data.rankIdx]) });
+    if (itemOddsIsMythic){
+      $('#item-odds-mythic-value').textContent = Math.round(data.mythicChance * 1000) / 10 + '%';
+      const remaining = data.mythicTotalCount - data.mythicDiscoveredCount;
+      const foundNote = $('#item-odds-mythic-found-note');
+      if (data.mythicDiscoveredCount > 0 && remaining > 0){
+        foundNote.hidden = false;
+        foundNote.textContent = t('item_odds_mythic_remaining', {
+          found: data.mythicDiscoveredCount, total: data.mythicTotalCount, remaining,
+        });
+      } else {
+        foundNote.hidden = true;
+      }
+      renderMythicDetails(data.perMythic);
+    } else {
+      renderRarityBars(data.rarityBreakdown);
+      renderPerItemDetails(data.perItem);
+      $('#item-odds-detecteur-value').textContent = Math.round(data.detecteurChance * 1000) / 10 + '%';
+      $('#item-odds-radar-value').textContent = Math.round(data.radarChance * 1000) / 10 + '%';
+    }
+  }
+
+  function openItemOddsModal(isMythic){
+    itemOddsIsMythic = isMythic;
+    $('#item-odds-title').textContent = t(isMythic ? 'item_odds_mythic_title' : 'item_odds_title');
+    $('#item-odds-drop-headline').hidden = isMythic;
+    $('#item-odds-rarity-block').hidden = isMythic;
+    $('#item-odds-mythic-block').hidden = !isMythic;
+    $('#item-odds-other-row').hidden = isMythic;
+    $('#item-odds-details-list').hidden = true;
+    $('#item-odds-details-chevron').classList.remove('is-expanded');
+    $('#item-odds-modal').hidden = false;
+    refreshItemOdds();
+  }
+
+  $('#item-odds-trigger').addEventListener('click', () => openItemOddsModal(false));
+  $('#mythic-odds-trigger').addEventListener('click', () => openItemOddsModal(true));
+  $('#item-odds-slider').addEventListener('input', refreshItemOdds);
+  $('#item-odds-details-toggle').addEventListener('click', () => {
+    const list = $('#item-odds-details-list');
+    const chevron = $('#item-odds-details-chevron');
+    list.hidden = !list.hidden;
+    chevron.classList.toggle('is-expanded', !list.hidden);
+  });
+  const closeItemOdds = () => { $('#item-odds-modal').hidden = true; };
+  $('#item-odds-back-btn').addEventListener('click', closeItemOdds);
+  $('#item-odds-close-x').addEventListener('click', closeItemOdds);
 
   $('#xp-card-btn').addEventListener('click', openXPLog);
   $('#xp-card-btn').addEventListener('keydown', (e) => {
