@@ -266,6 +266,11 @@ body.echo-dore-active .wordmark:active{opacity:0.75;}
   margin-top:4px;color:var(--text-muted);font-size:12px;
 }
 .today-week-total .today-week-total-num{color:var(--fire);font-weight:700;}
+.today-bestday{
+  margin-top:4px;font-size:12.5px;font-weight:600;color:var(--fire);
+  font-family:'Manrope',sans-serif;
+}
+.today-bestday[hidden]{display:none;}
 
 /* trophy color chips shared */
 .tr-bronze{background:rgba(205,127,50,0.18);color:var(--bronze);border:1px solid var(--bronze);}
@@ -835,6 +840,13 @@ body.calendrier-celeste-active .cal-day.tr-or{
 .active-item-timer-label{font-size:12px;color:var(--text-muted);margin-bottom:4px;font-family:'Manrope',sans-serif;}
 .active-item-timer-value{font-size:22px;font-weight:700;color:var(--corner-color, var(--text));font-variant-numeric:tabular-nums;font-family:'Manrope',sans-serif;}
 
+#ring-wrap.divine-halo-active .ring{
+  animation:ring-divine-halo 2.6s ease-in-out infinite;
+}
+@keyframes ring-divine-halo{
+  0%,100%{filter:drop-shadow(0 0 6px rgba(245,185,66,0.45));}
+  50%{filter:drop-shadow(0 0 18px rgba(255,215,120,0.9));}
+}
 .xp-card.aura-active{
   animation:xp-card-aura 2.6s ease-in-out infinite;
 }
@@ -929,6 +941,7 @@ body.calendrier-celeste-active .cal-day.tr-or{
 .goal-mode-toggle{display:flex;gap:8px;margin-bottom:14px;}
 
 .reminder-row{display:flex;justify-content:space-between;align-items:center;gap:14px;}
+#mythic-detail-toggle-row[hidden]{display:none;}
 .reminder-text{font-size:14px;color:var(--text);flex:1;}
 .reminder-switch{
   width:48px;height:28px;border-radius:999px;background:var(--steel-dim);
@@ -995,11 +1008,14 @@ body.calendrier-celeste-active .cal-day.tr-or{
   color:var(--fire);font-size:13.5px;font-weight:600;
   display:flex;align-items:center;gap:8px;
 }
+.evening-banner span{flex:1;min-width:0;}
 .evening-banner[hidden]{display:none;}
 .sunday-photo-banner{
-  width:100%;border:1px solid rgba(255,255,255,0.08);cursor:pointer;text-align:left;
-  -webkit-appearance:none;appearance:none;font:inherit;
+  width:calc(100% - 32px);border:1px solid rgba(var(--fire-r),var(--fire-g),var(--fire-b),0.4);cursor:pointer;
+  justify-content:center;text-align:center;
+  -webkit-appearance:none;appearance:none;font-family:inherit;
   background:var(--steel-dim);color:var(--text);
+  box-shadow:0 0 10px rgba(var(--fire-r),var(--fire-g),var(--fire-b),0.25);
 }
 
 /* ---------- Rank up celebration ---------- */
@@ -1064,6 +1080,23 @@ body.calendrier-celeste-active .cal-day.tr-or{
 }
 .badge-card.locked .badge-xp-tag{color:var(--text-muted);}
 .badge-date{font-size:9.5px;color:var(--text-muted);}
+.badge-progress-track{background:rgba(255,255,255,0.08);border-radius:5px;height:5px;overflow:hidden;margin-top:8px;width:100%;}
+.badge-progress-fill{background:var(--fire);height:100%;border-radius:5px;}
+
+.nudge-card{
+  background:linear-gradient(135deg, rgba(255,200,0,0.14), rgba(255,200,0,0.04));
+  border:1px solid rgba(255,200,0,0.35);border-radius:var(--radius);
+  padding:16px 18px;margin:14px 16px;
+}
+.nudge-card[hidden]{display:none;}
+.nudge-title{font-family:'Manrope',sans-serif;font-weight:700;font-size:12px;letter-spacing:1.5px;color:var(--fire);margin-bottom:10px;}
+.nudge-row{display:flex;align-items:center;gap:12px;}
+.nudge-icon{font-size:28px;}
+.nudge-info{flex:1;min-width:0;}
+.nudge-name{font-family:'Manrope',sans-serif;font-weight:700;font-size:15px;color:var(--text);margin-bottom:4px;}
+.nudge-progress-track{background:rgba(255,255,255,0.08);border-radius:6px;height:7px;overflow:hidden;margin-top:6px;}
+.nudge-progress-fill{background:var(--fire);height:100%;border-radius:6px;}
+.nudge-count{font-family:'Manrope',sans-serif;font-size:12.5px;color:var(--text-muted);margin-top:5px;}
 
 @media (prefers-reduced-motion: reduce){
   *{animation-duration:0.001ms !important;transition-duration:0.001ms !important;}

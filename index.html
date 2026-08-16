@@ -67,7 +67,7 @@
   </div>
 
   <button type="button" id="sunday-photo-banner" class="evening-banner sunday-photo-banner" hidden>
-    📸 <span data-i18n="sunday_banner_text">N'oublie pas ta photo de la semaine!</span>
+    📸 <span data-i18n="sunday_banner_text">N'oublie pas de prendre ta photo de la semaine!</span>
   </button>
 
   <section class="hero card">
@@ -87,6 +87,7 @@
       </div>
     </div>
     <div class="today-date" id="today-date">—</div>
+    <div class="today-bestday" id="today-bestday" hidden></div>
     <div class="today-week-total" id="today-week-total"></div>
   </section>
 
@@ -262,6 +263,17 @@
 </main>
 
 <main id="view-badges" class="view" hidden>
+  <div class="nudge-card" id="nudge-card" hidden>
+    <div class="nudge-title" data-i18n="nudge_title">PRESQUE LÀ!</div>
+    <div class="nudge-row">
+      <span class="nudge-icon" id="nudge-icon"></span>
+      <div class="nudge-info">
+        <div class="nudge-name" id="nudge-name"></div>
+        <div class="nudge-progress-track"><div class="nudge-progress-fill" id="nudge-progress-fill"></div></div>
+        <div class="nudge-count" id="nudge-count"></div>
+      </div>
+    </div>
+  </div>
   <section class="card">
     <button type="button" class="badges-section-toggle" id="badges-unlocked-toggle">
       <span class="section-title" id="badges-unlocked-title">BADGES DÉBLOQUÉS</span>
@@ -319,6 +331,22 @@
     </div>
   </section>
 
+  <section class="card">
+    <div class="section-title" data-i18n="color_section_title">COULEUR D'ACCENT</div>
+    <div class="swatch-row" id="swatch-row">
+      <button class="swatch" data-color="#FFC800" style="--sw:#FFC800" data-i18n-title="color_yellow" title="Jaune"></button>
+      <button class="swatch" data-color="#FF5A2E" style="--sw:#FF5A2E" data-i18n-title="color_orange" title="Orange"></button>
+      <button class="swatch" data-color="#FF3B3B" style="--sw:#FF3B3B" data-i18n-title="color_red" title="Rouge"></button>
+      <button class="swatch" data-color="#2ED573" style="--sw:#2ED573" data-i18n-title="color_green" title="Vert"></button>
+      <button class="swatch" data-color="#3FA9F5" style="--sw:#3FA9F5" data-i18n-title="color_blue" title="Bleu"></button>
+      <button class="swatch" data-color="#B26EFF" style="--sw:#B26EFF" data-i18n-title="color_purple" title="Violet"></button>
+    </div>
+    <div class="custom-color-row">
+      <input type="color" id="custom-color-input" value="#FFC800" />
+      <label for="custom-color-input" data-i18n="custom_color_label">Couleur personnalisée</label>
+    </div>
+  </section>
+
   <section class="card" id="offline-primary-section" hidden>
     <div class="section-title" id="offline-primary-title" data-i18n="offline_primary_title">MODE HORS-LIGNE (CET APPAREIL)</div>
     <div id="offline-primary-toggle-block">
@@ -342,22 +370,6 @@
     <button type="button" class="qbtn" id="backup-export-btn" data-i18n="backup_export_btn">Exporter mes données</button>
     <button type="button" class="qbtn" id="backup-import-btn" data-i18n="backup_import_btn">Importer une sauvegarde</button>
     <input type="file" id="backup-import-input" accept="application/json,.json" hidden />
-  </section>
-
-  <section class="card">
-    <div class="section-title" data-i18n="color_section_title">COULEUR D'ACCENT</div>
-    <div class="swatch-row" id="swatch-row">
-      <button class="swatch" data-color="#FFC800" style="--sw:#FFC800" data-i18n-title="color_yellow" title="Jaune"></button>
-      <button class="swatch" data-color="#FF5A2E" style="--sw:#FF5A2E" data-i18n-title="color_orange" title="Orange"></button>
-      <button class="swatch" data-color="#FF3B3B" style="--sw:#FF3B3B" data-i18n-title="color_red" title="Rouge"></button>
-      <button class="swatch" data-color="#2ED573" style="--sw:#2ED573" data-i18n-title="color_green" title="Vert"></button>
-      <button class="swatch" data-color="#3FA9F5" style="--sw:#3FA9F5" data-i18n-title="color_blue" title="Bleu"></button>
-      <button class="swatch" data-color="#B26EFF" style="--sw:#B26EFF" data-i18n-title="color_purple" title="Violet"></button>
-    </div>
-    <div class="custom-color-row">
-      <input type="color" id="custom-color-input" value="#FFC800" />
-      <label for="custom-color-input" data-i18n="custom_color_label">Couleur personnalisée</label>
-    </div>
   </section>
 
   <section class="card">

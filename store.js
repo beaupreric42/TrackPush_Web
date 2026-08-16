@@ -97,7 +97,7 @@ const ITEMS = [
 // Mythic items: their own separate, much rarer pool. One-time-only per
 // account, never re-obtainable once discovered (regardless of use).
 const MYTHIC_ITEMS = [
-  { id: 'fragment_eternite', name: "Fragment d'Éternité", minRank: 1, xp: 2000, weight: 1.3 },
+  { id: 'fragment_eternite', name: "Fragment d'Éternité", minRank: 1, xp: 5000, weight: 1.3 },
   { id: 'toucher_divin', name: 'Toucher du divin', minRank: 1, cosmetic: true, weight: 1 },
   { id: 'poussiere_etoiles', name: "Poussière d'étoiles", minRank: 1, cosmetic: true, weight: 1 },
   { id: 'calendrier_celeste', name: 'Calendrier céleste', minRank: 1, cosmetic: true, weight: 1 },
@@ -631,6 +631,23 @@ function weekDatesFor(date) {
   return dates;
 }
 
+function isBestWeekdayEver(db, date) {
+  const todayTotal = totalForDate(db, date);
+  if (todayTotal <= 0) return false;
+  const targetDow = new Date(date + 'T00:00:00').getDay();
+  const distinctDates = [...new Set(db.entries.map((e) => e.date))].filter((d) => d !== date);
+  let maxPast = 0;
+  let found = false;
+  for (const d of distinctDates) {
+    if (new Date(d + 'T00:00:00').getDay() !== targetDow) continue;
+    found = true;
+    const t = totalForDate(db, d);
+    if (t > maxPast) maxPast = t;
+  }
+  if (!found) return false;
+  return todayTotal > maxPast;
+}
+
 function safeGoalForDate(db, date) {
   return db.goalSnapshots[date] || db.settings.manualGoal || 100;
 }
@@ -873,6 +890,141 @@ function firstDateAtPlatinumStreak(db, target) {
   return null;
 }
 
+// ---------- Badge progress (for "presque là" nudges + progress bars) ----------
+
+function currentCleanStreak(db, key) {
+  const floorStr = earliestHabitDate(db);
+  if (!floorStr) return 0;
+  let cursor = new Date(floorStr + 'T00:00:00');
+  const today = new Date(todayStr() + 'T00:00:00');
+  let run = 0;
+  while (cursor <= today) {
+    const ds = cursor.toLocaleDateString('en-CA');
+    const h = db.habits[ds];
+    if (h && h[key]) run = 0; else run++;
+    cursor.setDate(cursor.getDate() + 1);
+  }
+  return run;
+}
+
+function currentGoalStreak(db) {
+  const datesWithEntries = [...new Set(db.entries.map((e) => e.date))];
+  if (!datesWithEntries.length) return 0;
+  const floorStr = datesWithEntries.sort()[0];
+  let cursor = new Date(floorStr + 'T00:00:00');
+  const today = new Date(todayStr() + 'T00:00:00');
+  let run = 0;
+  while (cursor <= today) {
+    const ds = cursor.toLocaleDateString('en-CA');
+    const total = totalForDate(db, ds);
+    const goal = goalForDate(db, ds);
+    if (goal > 0 && total >= goal) run++; else run = 0;
+    cursor.setDate(cursor.getDate() + 1);
+  }
+  return run;
+}
+
+function currentPlatinumStreak(db) {
+  const info = platinumWeekInfo(db, todayStr());
+  let current = 0, prevCompletion = null;
+  for (const completionDate of info.completions) {
+    if (prevCompletion) {
+      const diffDays = (new Date(completionDate + 'T00:00:00') - new Date(prevCompletion + 'T00:00:00')) / 86400000;
+      current = diffDays === 7 ? current + 1 : 1;
+    } else {
+      current = 1;
+    }
+    prevCompletion = completionDate;
+  }
+  return current;
+}
+
+function bestSingleEntry(db) {
+  return db.entries.reduce((max, e) => Math.max(max, e.count), 0);
+}
+
+function bestDailyTotal(db) {
+  const dates = [...new Set(db.entries.map((e) => e.date))];
+  return dates.reduce((max, d) => Math.max(max, totalForDate(db, d)), 0);
+}
+
+function bestMonthlyTotal(db) {
+  const byMonth = {};
+  db.entries.forEach((e) => {
+    const mk = e.date.slice(0, 7);
+    byMonth[mk] = (byMonth[mk] || 0) + e.count;
+  });
+  return Object.values(byMonth).reduce((max, v) => Math.max(max, v), 0);
+}
+
+function bestConsecutiveDaySum(db, windowDays) {
+  const datesWithEntries = [...new Set(db.entries.map((e) => e.date))];
+  if (datesWithEntries.length === 0) return 0;
+  const floorStr = datesWithEntries.sort()[0];
+  let cursor = new Date(floorStr + 'T00:00:00');
+  const today = new Date(todayStr() + 'T00:00:00');
+  const window = [];
+  let best = 0;
+  while (cursor <= today) {
+    const ds = cursor.toLocaleDateString('en-CA');
+    window.push(totalForDate(db, ds));
+    if (window.length > windowDays) window.shift();
+    if (window.length === windowDays) {
+      const sum = window.reduce((a, b) => a + b, 0);
+      if (sum > best) best = sum;
+    }
+    cursor.setDate(cursor.getDate() + 1);
+  }
+  return best;
+}
+
+const TIME_WINDOW_BADGES = {
+  'force-tot': { startHour: 6, endHour: 12, target: 150 },
+  'oiseau-nuit': { startHour: 0, endHour: 4, target: 100 },
+  'soiree-motivante': { startHour: 18, endHour: 22, target: 150 },
+};
+
+function computeTimeWindowProgress(db, badgeId) {
+  const cfg = TIME_WINDOW_BADGES[badgeId];
+  if (!cfg) return null;
+  const nowHour = new Date().getHours();
+  if (nowHour < cfg.startHour || nowHour >= cfg.endHour) return null;
+  const today = todayStr();
+  const sumInWindow = db.entries
+    .filter((e) => e.date === today)
+    .filter((e) => {
+      const h = parseHour(e.time);
+      return h !== null && h >= cfg.startHour && h < cfg.endHour;
+    })
+    .reduce((sum, e) => sum + e.count, 0);
+  return { current: sumInWindow, target: cfg.target };
+}
+
+function computeBadgeProgress(db, badgeId) {
+  const rankBadgeMap = {
+    'rank-discipline': 1, 'rank-pro': 2, 'rank-elite': 3, 'rank-legende': 4,
+    'rank-imbattable': 5, 'rank-immortel': 6, 'rank-divin': 7,
+  };
+  if (rankBadgeMap[badgeId] !== undefined) {
+    const { xp } = computeXP(db);
+    return { current: xp, target: RANKS[rankBadgeMap[badgeId]].min };
+  }
+  if (badgeId === 'or-streak-5') return { current: currentGoalStreak(db), target: 5 };
+  if (badgeId === 'mois-brillant') return { current: currentPlatinumStreak(db), target: 4 };
+  if (badgeId === 'decafeine') return { current: currentCleanStreak(db, 'cafe'), target: 30 };
+  if (badgeId === 'sans-alcool') return { current: currentCleanStreak(db, 'alcool'), target: 30 };
+  if (badgeId === 'clarte') return { current: currentCleanStreak(db, 'cannabis'), target: 30 };
+  if (badgeId === 'go-abdo') return { current: countTrueDays(db, 'situps'), target: 25 };
+  if (badgeId === 'consistance') return { current: bestSingleEntry(db), target: 50 };
+  if (badgeId === 'trente-en-un') return { current: bestSingleEntry(db), target: 30 };
+  if (badgeId === 'encore-plus') return { current: bestDailyTotal(db), target: 200 };
+  if (badgeId === 'objectif-mensuel') return { current: bestMonthlyTotal(db), target: 3500 };
+  if (badgeId === 'over-9000') return { current: db.entries.reduce((s, e) => s + e.count, 0), target: 10000 };
+  if (badgeId === 'mille-en-cinq') return { current: bestConsecutiveDaySum(db, 7), target: 1000 };
+  if (TIME_WINDOW_BADGES[badgeId]) return computeTimeWindowProgress(db, badgeId);
+  return null;
+}
+
 // ---------- Badges ----------
 
 function parseHour(timeStr) {
@@ -1036,6 +1188,12 @@ function firstDateAtNthPhoto(db, n) {
   return all.length >= n ? all[n - 1].date : null;
 }
 
+function totalXPFromEntriesForDate(db, date) {
+  return db.entries
+    .filter((e) => e.date === date)
+    .reduce((sum, e) => sum + e.count + (e.bonusXP || 0), 0);
+}
+
 function simulateXPTimeline(db) {
   const entryDates = db.entries.map((e) => e.date);
   const minEntryDate = entryDates.length ? entryDates.sort()[0] : null;
@@ -1051,8 +1209,7 @@ function simulateXPTimeline(db) {
   const platinumCompletions = new Set(platinumWeekInfo(db, todayStrVal).completions);
   while (cursor <= today) {
     const ds = cursor.toLocaleDateString('en-CA');
-    const dayTotal = totalForDate(db, ds);
-    cumulative += dayTotal;
+    cumulative += totalXPFromEntriesForDate(db, ds);
     if (habitFloorStr && ds >= habitFloorStr) {
       const h = db.habits[ds];
       if (ds !== todayStrVal) {
@@ -1106,7 +1263,7 @@ const BADGES = [
   { id: 'rank-divin', name: 'Rang Divin', desc: 'Atteindre le rang Divin', xp: Math.round(RANKS[7].min * 0.01), icon: '⭐', check: (db) => firstDateReachingXP(db, RANKS[7].min) },
   { id: 'or-streak-5', name: "Ça vaut de l'or", desc: "Atteint l'or 5 jours de suite", xp: 25, icon: '🏅', check: (db) => firstDateGoalStreakReaches(db, 5) },
   { id: 'brillant', name: 'Brillant!', desc: 'Première semaine parfaite (trophée Platine)', xp: 100, icon: '💎', check: (db) => firstPlatinumWeekDate(db) },
-  { id: 'mois-brillant', name: 'Un mois brillant!', desc: '4 semaines Platines consécutives', xp: 240, icon: '🌟', check: (db) => firstDateAtPlatinumStreak(db, 4) },
+  { id: 'mois-brillant', name: 'Un mois brillant!', desc: '4 semaines Platines consécutives', xp: 400, icon: '🌟', check: (db) => firstDateAtPlatinumStreak(db, 4) },
   { id: 'motivation100', name: '100 Motivation?', desc: "Atteindre l'Or pendant 100 jours au total", xp: 300, icon: '🥇', secret: true, check: (db) => nthDisciplinedDayDate(db, 100) },
   { id: 'decafeine', name: 'Décaféiné!', desc: '1 mois complet (30 jours consécutifs) sans caféine', xp: 300, icon: '☕', check: (db) => firstDateStreakReaches(db, 'cafe', 30) },
   { id: 'sans-alcool', name: 'Sans alcool', desc: '1 mois complet (30 jours consécutifs) sans alcool', xp: 300, icon: '🍷', check: (db) => firstDateStreakReaches(db, 'alcool', 30) },
@@ -1274,6 +1431,7 @@ function dayPayload(db, date) {
     badges: badgesUnlockedForDate(db, date),
     weekTotal,
     totalPhotosEver: allPhotosSorted(db).length,
+    isBestWeekdayEver: isBestWeekdayEver(db, date),
     isFirstEverDay: (() => { const first = earliestAnyDataDate(db); return !first || first === date; })(),
   };
 }

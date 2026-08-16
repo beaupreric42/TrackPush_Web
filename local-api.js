@@ -536,9 +536,11 @@ async function localApi(path, opts) {
       badges: BADGES.map((b) => {
         const unlocked = db.badges[b.id];
         const isSecretLocked = b.secret && !unlocked;
+        const progress = (!unlocked && !b.secret) ? computeBadgeProgress(db, b.id) : null;
         return {
           id: b.id, name: b.name, desc: isSecretLocked ? null : b.desc, xp: b.xp, icon: b.icon,
           secret: !!b.secret, unlocked: !!unlocked, unlockedDate: unlocked ? unlocked.unlockedDate : null,
+          progress,
         };
       }),
     };

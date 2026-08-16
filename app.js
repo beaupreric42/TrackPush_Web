@@ -1,4 +1,4 @@
-const APP_VERSION = '2026-08.36';
+const APP_VERSION = '2026-08.46';
 
 const state = {
   today: null,
@@ -86,6 +86,8 @@ function trophyClass(t){
 const TRANSLATIONS = {
   fr: {
     evening_banner_default: "Il te reste du chemin pour atteindre ton objectif aujourd'hui!",
+    bestday_record: "🌟 Nouveau record du {day}!",
+    nudge_title: "PRESQUE LÀ!",
     pushups_word: "push-ups",
     xp_next_default: "Prochain rang: —",
     quickadd_title: "AJOUTER DES PUSH-UPS",
@@ -257,7 +259,7 @@ const TRANSLATIONS = {
     item_desc_detecteur_metal: "Pendant 15 minutes, augmente tes chances de trouver un objet en faisant des séries de push-ups. L'effet de cet objet ne s'applique pas aux objets Mythiques.",
     item_desc_detecteur_metal_specific: "Pendant 15 minutes, augmente tes chances de {pct}% de trouver un objet en faisant des séries de push-ups. L'effet de cet objet ne s'applique pas aux objets Mythiques.",
     item_desc_radar_precision: "Garantit l'obtention d'un objet commun aléatoire lors de la prochaine série effectuée",
-    item_desc_fragment_eternite: "Un fragment d'un accomplissement immense — +2000 XP, une fois dans toute ta vie.",
+    item_desc_fragment_eternite: "Le fragment d'un accomplissement immense qui te récompense avec 5000 XP instantanément !",
     item_desc_toucher_divin: "Un halo doré permanent autour de ta barre d'XP. Activable et désactivable à volonté.",
     item_desc_poussiere_etoiles: "Change la couleur des étincelles d'XP pour un argent/violet scintillant.",
     item_desc_calendrier_celeste: "Tes journées Or au calendrier scintillent d'un dégradé or et bleu nuit.",
@@ -357,6 +359,8 @@ const TRANSLATIONS = {
   },
   en: {
     evening_banner_default: "You still have some way to go to hit today's goal!",
+    bestday_record: "🌟 New {day} record!",
+    nudge_title: "ALMOST THERE!",
     pushups_word: "push-ups",
     xp_next_default: "Next rank: —",
     quickadd_title: "ADD PUSH-UPS",
@@ -528,7 +532,7 @@ const TRANSLATIONS = {
     item_desc_detecteur_metal: "For 15 minutes, increases your chances of finding an item from push-up sets. This item's effect doesn't apply to Mythic items.",
     item_desc_detecteur_metal_specific: "For 15 minutes, increases your chances by {pct}% of finding an item from push-up sets. This item's effect doesn't apply to Mythic items.",
     item_desc_radar_precision: "Guarantees a random common item on your next set",
-    item_desc_fragment_eternite: "A fragment of something immense — +2000 XP, once in a lifetime.",
+    item_desc_fragment_eternite: "A fragment of something immense that instantly rewards you with 5000 XP!",
     item_desc_toucher_divin: "A permanent golden glow around your XP bar. Can be turned on and off anytime.",
     item_desc_poussiere_etoiles: "Changes your XP sparkles into shimmering silver and purple.",
     item_desc_calendrier_celeste: "Your Gold calendar days shimmer with a gold and midnight-blue gradient.",
@@ -837,6 +841,9 @@ function easeOutCubic(x){
 }
 
 function updateRing(total, goal, trophy){
+  state.ringTotal = total;
+  state.ringGoal = goal;
+  state.ringTrophy = trophy;
   const pct = Math.min(1, goal > 0 ? total / goal : 0);
   const ring = $('#ring-progress');
   ring.style.strokeDasharray = RING_CIRC;
@@ -1094,19 +1101,24 @@ function hexFromHue(hue){
 function startRainbowMode(){
   if (_rainbowInterval) return;
   let hue = 0;
-  _rainbowInterval = setInterval(() => {
+  const myInterval = setInterval(() => {
+    if (_rainbowInterval !== myInterval) return; // arrêté entre-temps — ignorer ce coup fantôme
     hue = (hue + 1) % 360;
     const hex = hexFromHue(hue);
     applyAccent(hex, true);
-    const ring = $('#ring-progress');
-    if (ring && !ring.classList.contains('ring-platine')) {
-      ring.style.stroke = hex;
+    if (!(state.mythicActive && state.mythicActive.toucher_divin)) {
+      const ring = $('#ring-progress');
+      if (ring && !ring.classList.contains('ring-platine')) {
+        ring.style.stroke = hex;
+      }
     }
   }, 120);
+  _rainbowInterval = myInterval;
 }
 function stopRainbowMode(){
   if (_rainbowInterval){ clearInterval(_rainbowInterval); _rainbowInterval = null; }
   if (state.accentColor) applyAccent(state.accentColor);
+  if (state.ringGoal !== undefined) updateRing(state.ringTotal, state.ringGoal, state.ringTrophy);
 }
 
 function playTone(ctx, freq, startTime, duration, gainPeak){
@@ -1260,6 +1272,8 @@ async function loadToday(){
   $('#today-date').textContent = formatDayHeader(state.today);
   cacheDisplaySnapshot({ dateText: $('#today-date').textContent });
 
+  updateBestdayBanner(day);
+
   renderDay(day);
   checkEveningReminder(day);
   maybeShowSundayPhotoPrompt(day);
@@ -1367,10 +1381,23 @@ function renderXPBar(xp){
   });
 }
 
+function updateBestdayBanner(day){
+  const bestdayEl = $('#today-bestday');
+  if (!bestdayEl) return;
+  if (day.isBestWeekdayEver){
+    const dow = new Date(state.today + 'T00:00:00').getDay();
+    bestdayEl.textContent = t('bestday_record', { day: DOW_NAMES()[dow] });
+    bestdayEl.hidden = false;
+  } else {
+    bestdayEl.hidden = true;
+  }
+}
+
 async function refreshDay(){
   const day = await api(`/api/day/${state.today}`);
   renderDay(day);
   checkEveningReminder(day);
+  updateBestdayBanner(day);
   return day;
 }
 
@@ -1587,6 +1614,27 @@ async function addNote(text){
 }
 
 // ---------- Sunday photo prompt ----------
+// Mesure le texte RÉELLEMENT rendu sur cet appareil (pas une supposition) et
+// réduit la police par petits pas jusqu'à ce que le texte tienne sur une
+// seule ligne, sans jamais descendre sous minSize. Fonctionne peu importe
+// les particularités de police/rendu du navigateur puisqu'elle vérifie le
+// résultat réel à chaque étape plutôt qu'une valeur fixe devinée à l'avance.
+function fitTextToOneLine(containerEl, maxSize, minSize, step){
+  const span = containerEl.querySelector('span');
+  if (!span) return;
+  const isWrapped = () => {
+    const range = document.createRange();
+    range.selectNodeContents(span);
+    return range.getClientRects().length > 1;
+  };
+  let size = maxSize;
+  span.style.fontSize = size + 'px';
+  while (size > minSize && isWrapped()){
+    size -= step;
+    span.style.fontSize = size + 'px';
+  }
+}
+
 function maybeShowSundayPhotoPrompt(day){
   const banner = $('#sunday-photo-banner');
   const d = new Date(state.today + 'T00:00:00');
@@ -1594,6 +1642,7 @@ function maybeShowSundayPhotoPrompt(day){
   const shouldShow = d.getDay() === 0 && !(day.photos && day.photos.length > 0) && !localStorage.getItem(dismissedKey);
   banner.hidden = !shouldShow;
   if (!shouldShow) return;
+  fitTextToOneLine(banner, 13.5, 10, 0.5);
 
   banner.onclick = () => { $('#photo-modal').hidden = false; };
   $('#photo-skip').onclick = () => {
@@ -2219,12 +2268,14 @@ async function loadBadges(){
       const dateLabel = b.unlockedDate ? formatFullDate(b.unlockedDate) : '';
       const tr = translateBadge(b.id, b.name, b.desc);
       const descText = tr.desc === null ? t('badge_secret_placeholder') : tr.desc;
+      const pct = b.progress ? Math.min(100, Math.round((b.progress.current / b.progress.target) * 100)) : null;
       card.innerHTML = `
         <div class="badge-icon">${b.unlocked ? b.icon : '🔒'}</div>
         <div class="badge-name">${tr.name}</div>
         <div class="badge-desc${b.desc === null ? ' secret-desc' : ''}">${descText}</div>
         <div class="badge-xp-tag">+${b.xp} XP</div>
         ${b.unlocked ? `<div class="badge-date">${dateLabel}</div>` : ''}
+        ${pct !== null ? `<div class="badge-progress-track"><div class="badge-progress-fill" style="width:${pct}%"></div></div>` : ''}
       `;
       gridEl.appendChild(card);
     });
@@ -2232,6 +2283,41 @@ async function loadBadges(){
 
   renderInto($('#badges-grid-unlocked'), unlocked);
   renderInto($('#badges-grid-locked'), locked);
+
+  updateNudgeCard(locked);
+}
+
+const BADGE_PROGRESS_UNIT = {
+  'rank-discipline': 'XP', 'rank-pro': 'XP', 'rank-elite': 'XP', 'rank-legende': 'XP',
+  'rank-imbattable': 'XP', 'rank-immortel': 'XP', 'rank-divin': 'XP',
+  'or-streak-5': 'jours', 'mois-brillant': 'semaines',
+  'decafeine': 'jours', 'sans-alcool': 'jours', 'clarte': 'jours', 'go-abdo': 'jours',
+  'consistance': 'push-ups', 'trente-en-un': 'push-ups', 'encore-plus': 'push-ups',
+  'objectif-mensuel': 'push-ups', 'over-9000': 'push-ups', 'mille-en-cinq': 'push-ups',
+  'force-tot': 'push-ups', 'oiseau-nuit': 'push-ups', 'soiree-motivante': 'push-ups',
+};
+
+function updateNudgeCard(locked){
+  const card = $('#nudge-card');
+  const candidates = locked.filter((b) => !b.secret && b.progress && b.progress.target > 0);
+  if (!candidates.length){
+    card.hidden = true;
+    return;
+  }
+  let best = candidates[0];
+  let bestPct = best.progress.current / best.progress.target;
+  candidates.forEach((b) => {
+    const pct = b.progress.current / b.progress.target;
+    if (pct > bestPct){ best = b; bestPct = pct; }
+  });
+  const pct = Math.min(100, Math.round(bestPct * 100));
+  const tr = translateBadge(best.id, best.name, best.desc);
+  $('#nudge-icon').textContent = best.icon;
+  $('#nudge-name').textContent = tr.name;
+  $('#nudge-progress-fill').style.width = pct + '%';
+  const unit = BADGE_PROGRESS_UNIT[best.id] || '';
+  $('#nudge-count').textContent = `${formatNumber(best.progress.current)} / ${formatNumber(best.progress.target)} ${unit}`;
+  card.hidden = false;
 }
 
 function formatShortDate(dateStr){
@@ -2296,7 +2382,7 @@ function switchView(view){
 }
 
 const XP_LOG_REASON_ICONS = {
-  pushups: '💪', pushups_amulette: '💪⏳', habits: '📋', habit_marche: '🚶', habit_situps: '🔥', habit_avoidance: '🛡️',
+  pushups: '💪', pushups_amulette: '💪🔮', habits: '📋', habit_marche: '🚶', habit_situps: '🔥', habit_avoidance: '🛡️',
   trophy_bronze: '🥉', trophy_argent: '🥈', trophy_or: '🥇', badge: '🏅',
   item: '🎁', platinum_week: '💎', graine_patience: '🌱',
 };
@@ -2421,10 +2507,14 @@ function openMythicDetail(itemId){
 }
 
 function applyMythicCosmetic(itemId, active){
+  if (!state.mythicActive) state.mythicActive = {};
+  state.mythicActive[itemId] = !!active;
   if (itemId === 'toucher_divin'){
+    $('#ring-wrap').classList.toggle('divine-halo-active', !!active);
     $('.xp-card').classList.toggle('aura-active', !!active);
-    if (active) stopRainbowMode();
-    else if (state.mythicActive && state.mythicActive.mode_arcenciel) startRainbowMode();
+    if (!active && !(state.mythicActive && state.mythicActive.mode_arcenciel) && state.ringGoal !== undefined) {
+      updateRing(state.ringTotal, state.ringGoal, state.ringTrophy);
+    }
   } else if (itemId === 'poussiere_etoiles'){
     state.poussiereEtoilesActive = !!active;
   } else if (itemId === 'calendrier_celeste'){
@@ -2434,11 +2524,9 @@ function applyMythicCosmetic(itemId, active){
     state.echoDoreActive = !!active;
     document.body.classList.toggle('echo-dore-active', !!active);
   } else if (itemId === 'mode_arcenciel'){
-    if (active && !(state.mythicActive && state.mythicActive.toucher_divin)) startRainbowMode();
+    if (active) startRainbowMode();
     else stopRainbowMode();
   }
-  if (!state.mythicActive) state.mythicActive = {};
-  state.mythicActive[itemId] = !!active;
 }
 
 function renderItemTypeAndDesc(itemId, rarity, details){
