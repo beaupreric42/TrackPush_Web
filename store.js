@@ -59,7 +59,7 @@ const ITEMS = [
       basique: { xp: 25, maxStack: Infinity, weight: 1 },
       rare: { xp: 35, maxStack: Infinity, weight: 1 },
       epique: { xp: 50, maxStack: Infinity, weight: 1 },
-      legendaire: { xp: 100, maxStack: Infinity, weight: 0.9 },
+      legendaire: { xp: 100, maxStack: Infinity, weight: 1 },
     },
   },
   {
@@ -84,8 +84,8 @@ const ITEMS = [
   {
     id: 'detecteur_metal', name: 'Détecteur de métal', minRank: 0,
     rarities: {
-      rare: { boost: 0.10, minutes: 15, maxStack: 3 },
-      legendaire: { boost: 0.15, minutes: 15, maxStack: 3 },
+      rare: { boost: 0.15, minutes: 15, maxStack: 3 },
+      legendaire: { boost: 0.20, minutes: 15, maxStack: 3 },
     },
   },
   {
@@ -109,7 +109,7 @@ const MYTHIC_ITEMS = [
 const DROP_CHANCE_FLOOR = 0.03;
 const DROP_CHANCE_CEIL = 0.08;
 const DROP_CHANCE_SET_CAP = 50;
-const DROP_CHANCE_RANK_GROWTH = 1.15;
+const DROP_CHANCE_RANK_GROWTH = 1.079215;
 const DROP_CHANCE_ABS_CEILING = 0.30;
 
 function itemDropChance(count, rankIdx, db) {
@@ -126,15 +126,15 @@ function itemDropChance(count, rankIdx, db) {
 // Rarity distribution (regular, non-mythic, non-detecteur items) interpolates
 // between a "floor" (small sets) and a "ceiling" (50 push-ups, a deliberately
 // hidden cap) — never revealed to the user.
-const RARITY_FLOOR = { basique: 0.45, rare: 0.38, epique: 0.12, legendaire: 0.05 };
-const RARITY_CEIL = { basique: 0.15, rare: 0.40, epique: 0.30, legendaire: 0.15 };
+const RARITY_FLOOR = { basique: 0.42, rare: 0.36, epique: 0.15, legendaire: 0.07 };
+const RARITY_CEIL = { basique: 0.12, rare: 0.35, epique: 0.35, legendaire: 0.18 };
 const RARITY_SET_CAP = 50;
 
 // From Légende onward, Basique gets capped and eventually eliminated — its
 // share is redistributed proportionally across the remaining tiers.
 function basiqueCapForRank(rankIdx) {
-  if (rankIdx >= 5) return 0;      // Imbattable and beyond: no more Basique
-  if (rankIdx >= 4) return 0.05;   // Légende: 5% max
+  if (rankIdx >= 9) return 0;      // Imbattable and beyond: no more Basique
+  if (rankIdx >= 8) return 0.05;   // Légende: 5% max
   return 1;                         // no cap below Légende
 }
 
@@ -179,15 +179,15 @@ function mythiqueChance(count) {
 // Détecteur de métal: also a fully independent roll, available from any
 // rank, flat 7% per set regardless of size. 70% Rare / 30% Épique.
 const DETECTEUR_CHANCE = 0.05;
-const RADAR_PRECISION_CHANCE = 0.01;
-const DETECTEUR_RARE_SHARE = 0.80;
+const RADAR_PRECISION_CHANCE = 0.02;
+const DETECTEUR_RARE_SHARE = 0.75;
 
 function currentInventoryCount(db, itemId, rarity) {
   return (db.inventory || []).filter((inst) => inst.itemId === itemId && (rarity === undefined || inst.rarity === rarity)).length;
 }
 
 function eligibleItemsForRarity(rarity, rankIdx, db) {
-  return ITEMS.filter((it) => it.id !== 'detecteur_metal' && it.minRank <= rankIdx && it.rarities[rarity] &&
+  return ITEMS.filter((it) => it.id !== 'detecteur_metal' && it.id !== 'radar_precision' && it.minRank <= rankIdx && it.rarities[rarity] &&
     (!it.minAppDays || appHasBeenUsedForDays(db, it.minAppDays)) &&
     currentInventoryCount(db, it.id, rarity) < (it.rarities[rarity].maxStack ?? 2));
 }
@@ -287,19 +287,25 @@ const VALID_MOODS = ['energique', 'calme', 'fatigue', 'epuise', 'stresse', 'anxi
 
 const RANKS = [
   { name: 'Débutant', min: 0, max: 1999, goal: 100 },
-  { name: 'Discipliné', min: 2000, max: 4099, goal: 105 },
-  { name: 'Professionnel', min: 4100, max: 8399, goal: 110 },
-  { name: 'Élite', min: 8400, max: 17299, goal: 115 },
-  { name: 'Légende', min: 17300, max: 35599, goal: 120 },
-  { name: 'Imbattable', min: 35600, max: 73499, goal: 130 },
-  { name: 'Immortel', min: 73500, max: 149999, goal: 140 },
-  { name: 'Divin', min: 150000, max: Infinity, goal: 150 },
+  { name: 'Discipliné', min: 2000, max: 4199, goal: 105 },
+  { name: 'Déterminé', min: 4200, max: 6959, goal: 105 },
+  { name: 'Expert', min: 6960, max: 10719, goal: 110 },
+  { name: 'Professionnel', min: 10720, max: 16079, goal: 110 },
+  { name: 'Maître', min: 16080, max: 23759, goal: 115 },
+  { name: 'Élite', min: 23760, max: 34599, goal: 120 },
+  { name: 'Champion', min: 34600, max: 49599, goal: 125 },
+  { name: 'Légende', min: 49600, max: 69839, goal: 130 },
+  { name: 'Imbattable', min: 69840, max: 96559, goal: 135 },
+  { name: 'Invincible', min: 96560, max: 131119, goal: 140 },
+  { name: 'Immortel', min: 131120, max: 174999, goal: 145 },
+  { name: 'Divin', min: 175000, max: Infinity, goal: 150 },
 ];
 
 const TROPHY_XP_BASE = { bronze: 2, argent: 7, or: 17 };
-const TROPHY_XP_GROWTH = 1.15;
+const TROPHY_XP_GROWTH = 1.079215;
+const TROPHY_XP_RANK_MULT = 1.065589;
 function trophyXPTable(rankIdx) {
-  const g = Math.pow(TROPHY_XP_GROWTH, rankIdx);
+  const g = TROPHY_XP_RANK_MULT * Math.pow(TROPHY_XP_GROWTH, rankIdx);
   return {
     bronze: Math.round(TROPHY_XP_BASE.bronze * g),
     argent: Math.round(TROPHY_XP_BASE.argent * g),
@@ -389,6 +395,29 @@ function loadDB() {
   if (db.monthlySummaryAcknowledged === undefined) db.monthlySummaryAcknowledged = null;
   if (!db.customHabits) db.customHabits = [];
   if (!db.badges) db.badges = {};
+  if (!db.appOpenDatesBackfilled) {
+    if (!db.appOpenDates) db.appOpenDates = {};
+    const activityDates = new Set();
+    db.entries.forEach((e) => activityDates.add(e.date));
+    Object.keys(db.habits || {}).forEach((d) => activityDates.add(d));
+    db.notes.forEach((n) => activityDates.add(n.date));
+    activityDates.forEach((d) => { db.appOpenDates[d] = true; });
+    db.appOpenDatesBackfilled = true;
+  }
+  if (!db.rankBadgesRevalidatedAug2026) {
+    const { xp: currentXPForRankCheck } = computeXP(db);
+    const rankBadgeCheckMap = {
+      'rank-discipline': 1, 'rank-determine': 2, 'rank-expert': 3, 'rank-pro': 4,
+      'rank-maitre': 5, 'rank-elite': 6, 'rank-champion': 7, 'rank-legende': 8,
+      'rank-imbattable': 9, 'rank-invincible': 10, 'rank-immortel': 11, 'rank-divin': 12,
+    };
+    Object.keys(rankBadgeCheckMap).forEach((badgeId) => {
+      if (db.badges[badgeId] && currentXPForRankCheck < RANKS[rankBadgeCheckMap[badgeId]].min) {
+        delete db.badges[badgeId];
+      }
+    });
+    db.rankBadgesRevalidatedAug2026 = true;
+  }
   if (!db.inventory) db.inventory = [];
   if (!db.itemDiscoveries) db.itemDiscoveries = {};
   if (!db.mythicDiscovered) db.mythicDiscovered = {};
@@ -445,7 +474,9 @@ function loadDB() {
   return _db;
 }
 
+let _badgesCache = null;
 function saveDB(db) {
+  _badgesCache = null;
   _db = db;
   localStorage.setItem(DB_KEY, JSON.stringify(db));
 }
@@ -470,10 +501,10 @@ function isProtectedHabitDay(db, key, ds) {
 function habitXPForDate(db, date) {
   const h = db.habits[date] || {};
   let xp = 0;
-  if (!h.cannabis) xp += 20;
-  if (!h.cafe) xp += 10;
+  if (!h.cannabis) xp += 15;
+  if (!h.cafe) xp += 15;
   if (!h.alcool) xp += 15;
-  if (h.marche) xp += 15;
+  if (h.marche) xp += 20;
   if (h.situps) xp += 20;
   return xp;
 }
@@ -542,7 +573,7 @@ function logHabitProgressForDate(db, date) {
   const today = todayStr();
 
   if (h.marche && !hasXPLogReason(db, date, 'habit_marche')) {
-    pushXPLog(db, date, 'habit_marche', 15, 'Marche à l\'extérieur');
+    pushXPLog(db, date, 'habit_marche', 20, 'Marche à l\'extérieur');
   }
   if (h.situps && !hasXPLogReason(db, date, 'habit_situps')) {
     pushXPLog(db, date, 'habit_situps', 20, '100 sit-ups');
@@ -551,9 +582,9 @@ function logHabitProgressForDate(db, date) {
   if (date < today && !hasXPLogReason(db, date, 'habit_avoidance')) {
     const avoided = [];
     let xp = 0;
-    if (!h.cannabis || isProtectedHabitDay(db, 'cannabis', date)) { avoided.push('Cannabis'); xp += 20; }
+    if (!h.cannabis || isProtectedHabitDay(db, 'cannabis', date)) { avoided.push('Cannabis'); xp += 15; }
     if (!h.alcool || isProtectedHabitDay(db, 'alcool', date)) { avoided.push('Alcool'); xp += 15; }
-    if (!h.cafe || isProtectedHabitDay(db, 'cafe', date)) { avoided.push('Café'); xp += 10; }
+    if (!h.cafe || isProtectedHabitDay(db, 'cafe', date)) { avoided.push('Café'); xp += 15; }
     if (avoided.length > 0) {
       pushXPLog(db, date, 'habit_avoidance', xp, `Journée sans ${avoided.join(' & ')}`);
     }
@@ -740,7 +771,7 @@ function computeXP(db) {
   const badgeXP = badgeBonusXP(db);
   const itemBonusXP = db.bonusXP || 0;
   const graineXP = graineBonusXP(db);
-  const xp = totalPushups * 1 + cleanCannabisDays * 20 + cleanCafeDays * 10 + cleanAlcoolDays * 15 + marcheDays * 15 + situpsDays * 20
+  const xp = totalPushups * 1 + cleanCannabisDays * 15 + cleanCafeDays * 15 + cleanAlcoolDays * 15 + marcheDays * 20 + situpsDays * 20
     + platinumWeeks * 50 + trophyXP + badgeXP + itemBonusXP + graineXP;
   return { xp, totalPushups, cleanCannabisDays, cleanCafeDays, cleanAlcoolDays, marcheDays, situpsDays, platinumWeeks, trophyXP, badgeXP, itemBonusXP, graineXP };
 }
@@ -841,6 +872,17 @@ function bestDayRecord(db) {
   dates.forEach((d) => { const t = totalForDate(db, d); if (t > bestTotal) { bestTotal = t; bestDate = d; } });
   return bestTotal > 0 ? { total: bestTotal, date: bestDate } : null;
 }
+function bestDayByWeekday(db) {
+  const dates = [...new Set(db.entries.map((e) => e.date))];
+  const best = [0, 1, 2, 3, 4, 5, 6].map(() => ({ total: 0, date: null }));
+  dates.forEach((d) => {
+    const t = totalForDate(db, d);
+    const jsDay = new Date(d + 'T00:00:00').getDay();
+    const idx = (jsDay + 6) % 7;
+    if (t > best[idx].total) { best[idx] = { total: t, date: d }; }
+  });
+  return best;
+}
 function bestWeekRecord(db) {
   const dates = [...new Set(db.entries.map((e) => e.date))];
   const weekStarts = new Set(dates.map((d) => weekDatesFor(d)[0]));
@@ -907,6 +949,21 @@ function currentCleanStreak(db, key) {
   return run;
 }
 
+function currentTrueStreak(db, key) {
+  const floorStr = earliestHabitDate(db);
+  if (!floorStr) return 0;
+  let cursor = new Date(floorStr + 'T00:00:00');
+  const today = new Date(todayStr() + 'T00:00:00');
+  let run = 0;
+  while (cursor <= today) {
+    const ds = cursor.toLocaleDateString('en-CA');
+    const h = db.habits[ds];
+    if (h && h[key]) run++; else run = 0;
+    cursor.setDate(cursor.getDate() + 1);
+  }
+  return run;
+}
+
 function currentGoalStreak(db) {
   const datesWithEntries = [...new Set(db.entries.map((e) => e.date))];
   if (!datesWithEntries.length) return 0;
@@ -922,6 +979,29 @@ function currentGoalStreak(db) {
     cursor.setDate(cursor.getDate() + 1);
   }
   return run;
+}
+
+function bestGoalStreak(db) {
+  const datesWithEntries = [...new Set(db.entries.map((e) => e.date))];
+  if (!datesWithEntries.length) return 0;
+  const floorStr = datesWithEntries.sort()[0];
+  let cursor = new Date(floorStr + 'T00:00:00');
+  const today = new Date(todayStr() + 'T00:00:00');
+  let current = 0;
+  let best = 0;
+  while (cursor <= today) {
+    const ds = cursor.toLocaleDateString('en-CA');
+    const total = totalForDate(db, ds);
+    const goal = goalForDate(db, ds);
+    if (goal > 0 && total >= goal) {
+      current++;
+      if (current > best) best = current;
+    } else {
+      current = 0;
+    }
+    cursor.setDate(cursor.getDate() + 1);
+  }
+  return best;
 }
 
 function currentPlatinumStreak(db) {
@@ -1000,27 +1080,109 @@ function computeTimeWindowProgress(db, badgeId) {
   return { current: sumInWindow, target: cfg.target };
 }
 
-function computeBadgeProgress(db, badgeId) {
+function currentAppOpenStreak(db) {
+  const dates = Object.keys(db.appOpenDates || {}).sort();
+  if (!dates.length) return 0;
+  let cursor = new Date(dates[0] + 'T00:00:00');
+  const today = new Date(todayStr() + 'T00:00:00');
+  let run = 0;
+  while (cursor <= today) {
+    const ds = cursor.toLocaleDateString('en-CA');
+    if (db.appOpenDates && db.appOpenDates[ds]) run++; else run = 0;
+    cursor.setDate(cursor.getDate() + 1);
+  }
+  return run;
+}
+
+function daysSinceStart(db) {
+  const start = earliestAnyDataDate(db);
+  if (!start) return 0;
+  const diff = (new Date(todayStr() + 'T00:00:00') - new Date(start + 'T00:00:00')) / 86400000;
+  return Math.max(0, Math.floor(diff));
+}
+
+function countPerfectHabitDays(db) {
+  return Object.keys(db.habits || {}).filter((d) => {
+    const h = db.habits[d];
+    return h && h.marche && h.situps && !h.cannabis && !h.alcool && !h.cafe;
+  }).length;
+}
+
+function computeAllBadgeStats(db) {
+  return {
+    // Enveloppe RANGS (12 badges) — un seul calcul de XP total pour tous
+    xp: computeXP(db).xp,
+
+    // Enveloppe STREAKS D'HABITUDES — chaque habitude calculée une fois,
+    // réutilisée par tous ses paliers (30/90 jours, etc.)
+    cleanStreakCafe: currentCleanStreak(db, 'cafe'),
+    cleanStreakAlcool: currentCleanStreak(db, 'alcool'),
+    cleanStreakCannabis: currentCleanStreak(db, 'cannabis'),
+    trueStreakMarche: currentTrueStreak(db, 'marche'),
+    trueDaysSitups: countTrueDays(db, 'situps'),
+
+    // Enveloppe TROPHÉES/PLATINE
+    currentGoalStreak: currentGoalStreak(db),
+    currentPlatinumStreak: currentPlatinumStreak(db),
+
+    // Enveloppe VOLUME DE PUSH-UPS
+    bestSingleEntry: bestSingleEntry(db),
+    bestDailyTotal: bestDailyTotal(db),
+    bestConsecutive7DaySum: bestConsecutiveDaySum(db, 7),
+    bestMonthlyTotal: bestMonthlyTotal(db),
+    totalPushupsEver: db.entries.reduce((s, e) => s + e.count, 0),
+
+    // Enveloppe CONTENU PERSONNEL (photos/notes)
+    totalPhotos: allPhotosSorted(db).length,
+    totalNotes: db.notes.length,
+
+    // Enveloppe FIDÉLITÉ D'OUVERTURE
+    appOpenStreak: currentAppOpenStreak(db),
+
+    // Enveloppe ANCIENNETÉ
+    daysSinceStart: daysSinceStart(db),
+
+    perfectHabitDays: countPerfectHabitDays(db),
+  };
+}
+
+function computeBadgeProgress(badgeId, stats, db) {
   const rankBadgeMap = {
-    'rank-discipline': 1, 'rank-pro': 2, 'rank-elite': 3, 'rank-legende': 4,
-    'rank-imbattable': 5, 'rank-immortel': 6, 'rank-divin': 7,
+    'rank-discipline': 1, 'rank-determine': 2, 'rank-expert': 3, 'rank-pro': 4,
+    'rank-maitre': 5, 'rank-elite': 6, 'rank-champion': 7, 'rank-legende': 8,
+    'rank-imbattable': 9, 'rank-invincible': 10, 'rank-immortel': 11, 'rank-divin': 12,
   };
   if (rankBadgeMap[badgeId] !== undefined) {
-    const { xp } = computeXP(db);
-    return { current: xp, target: RANKS[rankBadgeMap[badgeId]].min };
+    return { current: stats.xp, target: RANKS[rankBadgeMap[badgeId]].min };
   }
-  if (badgeId === 'or-streak-5') return { current: currentGoalStreak(db), target: 5 };
-  if (badgeId === 'mois-brillant') return { current: currentPlatinumStreak(db), target: 4 };
-  if (badgeId === 'decafeine') return { current: currentCleanStreak(db, 'cafe'), target: 30 };
-  if (badgeId === 'sans-alcool') return { current: currentCleanStreak(db, 'alcool'), target: 30 };
-  if (badgeId === 'clarte') return { current: currentCleanStreak(db, 'cannabis'), target: 30 };
-  if (badgeId === 'go-abdo') return { current: countTrueDays(db, 'situps'), target: 25 };
-  if (badgeId === 'consistance') return { current: bestSingleEntry(db), target: 50 };
-  if (badgeId === 'trente-en-un') return { current: bestSingleEntry(db), target: 30 };
-  if (badgeId === 'encore-plus') return { current: bestDailyTotal(db), target: 200 };
-  if (badgeId === 'objectif-mensuel') return { current: bestMonthlyTotal(db), target: 3500 };
-  if (badgeId === 'over-9000') return { current: db.entries.reduce((s, e) => s + e.count, 0), target: 10000 };
-  if (badgeId === 'mille-en-cinq') return { current: bestConsecutiveDaySum(db, 7), target: 1000 };
+  if (badgeId === 'or-streak-5') return { current: stats.currentGoalStreak, target: 5 };
+  if (badgeId === 'mois-brillant') return { current: stats.currentPlatinumStreak, target: 4 };
+  if (badgeId === 'decafeine') return { current: stats.cleanStreakCafe, target: 30 };
+  if (badgeId === 'sans-alcool') return { current: stats.cleanStreakAlcool, target: 30 };
+  if (badgeId === 'clarte') return { current: stats.cleanStreakCannabis, target: 30 };
+  if (badgeId === 'decafeine90') return { current: stats.cleanStreakCafe, target: 90 };
+  if (badgeId === 'sans-alcool90') return { current: stats.cleanStreakAlcool, target: 90 };
+  if (badgeId === 'clarte90') return { current: stats.cleanStreakCannabis, target: 90 };
+  if (badgeId === 'go-abdo') return { current: stats.trueDaysSitups, target: 25 };
+  if (badgeId === 'semaine-promenades') return { current: stats.trueStreakMarche, target: 7 };
+  if (badgeId === 'consistance') return { current: stats.bestSingleEntry, target: 50 };
+  if (badgeId === 'trente-en-un') return { current: stats.bestSingleEntry, target: 30 };
+  if (badgeId === 'encore-plus') return { current: stats.bestDailyTotal, target: 200 };
+  if (badgeId === 'journee-chargee') return { current: stats.bestDailyTotal, target: 300 };
+  if (badgeId === 'objectif-mensuel') return { current: stats.bestMonthlyTotal, target: 3500 };
+  if (badgeId === 'over-9000') return { current: stats.totalPushupsEver, target: 10000 };
+  if (badgeId === 'mille-en-cinq') return { current: stats.bestConsecutive7DaySum, target: 1000 };
+  if (badgeId === 'deux-mille-en-7') return { current: stats.bestConsecutive7DaySum, target: 2000 };
+  if (badgeId === 'album-complet') return { current: stats.totalPhotos, target: 50 };
+  if (badgeId === 'je-note-encore') return { current: stats.totalNotes, target: 100 };
+  if (badgeId === 'je-note-encore-plus') return { current: stats.totalNotes, target: 250 };
+  if (badgeId === 'je-note-toujours-plus') return { current: stats.totalNotes, target: 500 };
+  if (badgeId === 'bonne-habitude') return { current: stats.appOpenStreak, target: 7 };
+  if (badgeId === 'fidele-au-poste') return { current: stats.appOpenStreak, target: 30 };
+  if (badgeId === 'toujours-fidele') return { current: stats.appOpenStreak, target: 100 };
+  if (badgeId === 'six-mois') return { current: stats.daysSinceStart, target: 182 };
+  if (badgeId === 'un-an') return { current: stats.daysSinceStart, target: 365 };
+  if (badgeId === 'la-totale') return { current: stats.perfectHabitDays, target: 10 };
   if (TIME_WINDOW_BADGES[badgeId]) return computeTimeWindowProgress(db, badgeId);
   return null;
 }
@@ -1058,6 +1220,39 @@ function nthDisciplinedDayDate(db, n) {
   });
   return qualifying.length >= n ? qualifying[n - 1] : null;
 }
+
+function firstDateAppOpenStreakReaches(db, target) {
+  const dates = Object.keys(db.appOpenDates || {}).sort();
+  if (!dates.length) return null;
+  let cursor = new Date(dates[0] + 'T00:00:00');
+  const today = new Date(todayStr() + 'T00:00:00');
+  let run = 0;
+  while (cursor <= today) {
+    const ds = cursor.toLocaleDateString('en-CA');
+    if (db.appOpenDates && db.appOpenDates[ds]) run++; else run = 0;
+    if (run >= target) return ds;
+    cursor.setDate(cursor.getDate() + 1);
+  }
+  return null;
+}
+
+function firstDateAtAnniversary(db, days) {
+  const start = earliestAnyDataDate(db);
+  if (!start) return null;
+  const target = new Date(start + 'T00:00:00');
+  target.setDate(target.getDate() + days);
+  const targetStr = target.toLocaleDateString('en-CA');
+  return todayStr() >= targetStr ? targetStr : null;
+}
+
+function firstDateAtNthPerfectHabitDay(db, n) {
+  const dates = Object.keys(db.habits || {}).filter((d) => {
+    const h = db.habits[d];
+    return h && h.marche && h.situps && !h.cannabis && !h.alcool && !h.cafe;
+  }).sort();
+  return dates.length >= n ? dates[n - 1] : null;
+}
+
 function dec25DateReaching(db, minTotal) {
   const years = new Set(db.entries.map((e) => e.date.slice(0, 4)));
   for (const y of years) { const d = `${y}-12-25`; if (totalForDate(db, d) >= minTotal) return d; }
@@ -1213,11 +1408,11 @@ function simulateXPTimeline(db) {
     if (habitFloorStr && ds >= habitFloorStr) {
       const h = db.habits[ds];
       if (ds !== todayStrVal) {
-        if (!(h && h.cannabis)) cumulative += 20;
-        if (!(h && h.cafe)) cumulative += 10;
+        if (!(h && h.cannabis)) cumulative += 15;
+        if (!(h && h.cafe)) cumulative += 15;
         if (!(h && h.alcool)) cumulative += 15;
       }
-      if (h && h.marche) cumulative += 15;
+      if (h && h.marche) cumulative += 20;
       if (h && h.situps) cumulative += 20;
     }
     cumulative += dailyTrophyXP(db, ds);
@@ -1254,13 +1449,18 @@ function firstLegendaryDate(db) {
 
 const BADGES = [
   { id: 'premiere-serie', name: 'Premier pas', desc: 'Enregistre ta toute première série de push-ups', xp: 10, icon: '👣', check: (db) => firstDateAtTotalPushups(db, 1) },
-  { id: 'rank-discipline', name: 'Rang Discipliné', desc: 'Atteindre le rang Discipliné', xp: Math.round(RANKS[1].min * 0.01), icon: '⭐', check: (db) => firstDateReachingXP(db, RANKS[1].min) },
-  { id: 'rank-pro', name: 'Rang Professionnel', desc: 'Atteindre le rang Professionnel', xp: Math.round(RANKS[2].min * 0.01 / 10) * 10, icon: '⭐', check: (db) => firstDateReachingXP(db, RANKS[2].min) },
-  { id: 'rank-elite', name: 'Rang Élite', desc: 'Atteindre le rang Élite', xp: Math.round(RANKS[3].min * 0.01 / 10) * 10, icon: '⭐', check: (db) => firstDateReachingXP(db, RANKS[3].min) },
-  { id: 'rank-legende', name: 'Rang Légende', desc: 'Atteindre le rang Légende', xp: Math.round(RANKS[4].min * 0.01 / 10) * 10, icon: '⭐', check: (db) => firstDateReachingXP(db, RANKS[4].min) },
-  { id: 'rank-imbattable', name: 'Rang Imbattable', desc: 'Atteindre le rang Imbattable', xp: Math.round(RANKS[5].min * 0.01 / 10) * 10, icon: '⭐', check: (db) => firstDateReachingXP(db, RANKS[5].min) },
-  { id: 'rank-immortel', name: 'Rang Immortel', desc: 'Atteindre le rang Immortel', xp: Math.round(RANKS[6].min * 0.01), icon: '⭐', check: (db) => firstDateReachingXP(db, RANKS[6].min) },
-  { id: 'rank-divin', name: 'Rang Divin', desc: 'Atteindre le rang Divin', xp: Math.round(RANKS[7].min * 0.01), icon: '⭐', check: (db) => firstDateReachingXP(db, RANKS[7].min) },
+  { id: 'rank-discipline', name: 'Discipliné', desc: 'Atteindre le rang Discipliné', xp: Math.round(RANKS[1].min * 0.01 / 10) * 10, icon: '⭐', secret: true, check: (db) => firstDateReachingXP(db, RANKS[1].min) },
+  { id: 'rank-determine', name: 'Déterminé', desc: 'Atteindre le rang Déterminé', xp: Math.round(RANKS[2].min * 0.01 / 10) * 10, icon: '⭐', secret: true, check: (db) => firstDateReachingXP(db, RANKS[2].min) },
+  { id: 'rank-expert', name: 'Expert', desc: 'Atteindre le rang Expert', xp: Math.round(RANKS[3].min * 0.01 / 10) * 10, icon: '⭐', secret: true, check: (db) => firstDateReachingXP(db, RANKS[3].min) },
+  { id: 'rank-pro', name: 'Professionnel', desc: 'Atteindre le rang Professionnel', xp: Math.round(RANKS[4].min * 0.01 / 10) * 10, icon: '⭐', secret: true, check: (db) => firstDateReachingXP(db, RANKS[4].min) },
+  { id: 'rank-maitre', name: 'Maître', desc: 'Atteindre le rang Maître', xp: Math.round(RANKS[5].min * 0.01 / 10) * 10, icon: '⭐', secret: true, check: (db) => firstDateReachingXP(db, RANKS[5].min) },
+  { id: 'rank-elite', name: 'Élite', desc: 'Atteindre le rang Élite', xp: Math.round(RANKS[6].min * 0.01 / 10) * 10, icon: '⭐', secret: true, check: (db) => firstDateReachingXP(db, RANKS[6].min) },
+  { id: 'rank-champion', name: 'Champion', desc: 'Atteindre le rang Champion', xp: Math.round(RANKS[7].min * 0.01 / 10) * 10, icon: '⭐', secret: true, check: (db) => firstDateReachingXP(db, RANKS[7].min) },
+  { id: 'rank-legende', name: 'Légende', desc: 'Atteindre le rang Légende', xp: Math.round(RANKS[8].min * 0.01 / 10) * 10, icon: '⭐', secret: true, check: (db) => firstDateReachingXP(db, RANKS[8].min) },
+  { id: 'rank-imbattable', name: 'Imbattable', desc: 'Atteindre le rang Imbattable', xp: Math.round(RANKS[9].min * 0.01 / 10) * 10, icon: '⭐', secret: true, check: (db) => firstDateReachingXP(db, RANKS[9].min) },
+  { id: 'rank-invincible', name: 'Invincible', desc: 'Atteindre le rang Invincible', xp: Math.round(RANKS[10].min * 0.01 / 10) * 10, icon: '⭐', secret: true, check: (db) => firstDateReachingXP(db, RANKS[10].min) },
+  { id: 'rank-immortel', name: 'Immortel', desc: 'Atteindre le rang Immortel', xp: Math.round(RANKS[11].min * 0.01 / 10) * 10, icon: '⭐', secret: true, check: (db) => firstDateReachingXP(db, RANKS[11].min) },
+  { id: 'rank-divin', name: 'Divin', desc: 'Atteindre le rang Divin', xp: Math.round(RANKS[12].min * 0.01 / 10) * 10, icon: '⭐', secret: true, check: (db) => firstDateReachingXP(db, RANKS[12].min) },
   { id: 'or-streak-5', name: "Ça vaut de l'or", desc: "Atteint l'or 5 jours de suite", xp: 25, icon: '🏅', check: (db) => firstDateGoalStreakReaches(db, 5) },
   { id: 'brillant', name: 'Brillant!', desc: 'Première semaine parfaite (trophée Platine)', xp: 100, icon: '💎', check: (db) => firstPlatinumWeekDate(db) },
   { id: 'mois-brillant', name: 'Un mois brillant!', desc: '4 semaines Platines consécutives', xp: 400, icon: '🌟', check: (db) => firstDateAtPlatinumStreak(db, 4) },
@@ -1268,7 +1468,10 @@ const BADGES = [
   { id: 'decafeine', name: 'Décaféiné!', desc: '1 mois complet (30 jours consécutifs) sans caféine', xp: 300, icon: '☕', check: (db) => firstDateStreakReaches(db, 'cafe', 30) },
   { id: 'sans-alcool', name: 'Sans alcool', desc: '1 mois complet (30 jours consécutifs) sans alcool', xp: 300, icon: '🍷', check: (db) => firstDateStreakReaches(db, 'alcool', 30) },
   { id: 'clarte', name: "Clarté d'esprit", desc: '1 mois complet (30 jours consécutifs) sans cannabis', xp: 300, icon: '🧠', check: (db) => firstDateStreakReaches(db, 'cannabis', 30) },
-  { id: 'semaine-promenades', name: 'Semaine de promenades', desc: "Prendre une marche à l'extérieur pendant 7 jours consécutifs", xp: 200, icon: '🚶', secret: true, check: (db) => firstDateTrueStreakReaches(db, 'marche', 7) },
+  { id: 'decafeine90', name: 'Décaféiné pour de bon', desc: '3 mois complets (90 jours consécutifs) sans caféine', xp: 650, icon: '☕', check: (db) => firstDateStreakReaches(db, 'cafe', 90) },
+  { id: 'sans-alcool90', name: 'Sobriété de fer', desc: '3 mois complets (90 jours consécutifs) sans alcool', xp: 650, icon: '🍷', check: (db) => firstDateStreakReaches(db, 'alcool', 90) },
+  { id: 'clarte90', name: 'Clarté durable', desc: '3 mois complets (90 jours consécutifs) sans cannabis', xp: 650, icon: '🧠', check: (db) => firstDateStreakReaches(db, 'cannabis', 90) },
+  { id: 'semaine-promenades', name: 'Semaine de promenades', desc: "Prendre une marche à l'extérieur pendant 7 jours consécutifs", xp: 200, icon: '🚶', check: (db) => firstDateTrueStreakReaches(db, 'marche', 7) },
   { id: 'go-abdo', name: 'Go Abdo!', desc: "Accomplir l'habitude des 100 sit-ups 25 fois", xp: 150, icon: '💪', check: (db) => firstDateAtTrueCount(db, 'situps', 25) },
   { id: 'consistance', name: 'La consistance porte fruits', desc: '50 push-ups en une seule série', xp: 75, icon: '💪', check: (db) => firstEntryDateWithMinCount(db, 50) },
   { id: 'trente-en-un', name: "1 c'est bien, mais 30 c'est mieux", desc: 'Effectue 30 push-ups en une seule série', xp: 30, icon: '💥', check: (db) => firstDateAtSingleSet(db, 30) },
@@ -1276,7 +1479,9 @@ const BADGES = [
   { id: 'oiseau-nuit', name: 'Oiseau de nuit', desc: '100 push-ups entre minuit et 4h du matin, dans la même nuit', xp: 120, icon: '🦉', check: (db) => firstDateWithHourRangeTotal(db, 100, 0, 4) },
   { id: 'soiree-motivante', name: 'Soirée motivante', desc: '150 push-ups entre 18h et 22h, dans la même soirée', xp: 100, icon: '🌆', check: (db) => firstDateWithHourRangeTotal(db, 150, 18, 22) },
   { id: 'encore-plus', name: 'Encore plus!', desc: '200 push-ups dans la même journée', xp: 150, icon: '🚀', check: (db) => firstDateWithDailyTotal(db, 200) },
+  { id: 'journee-chargee', name: 'Journée chargée', desc: '300 push-ups dans la même journée', xp: 250, icon: '🏋️', check: (db) => firstDateWithDailyTotal(db, 300) },
   { id: 'mille-en-cinq', name: '1000 en 7', desc: 'Effectue 1000 push-ups au total sur 7 jours consécutifs', xp: 300, icon: '🔥', check: (db) => firstDateOfConsecutiveDaySum(db, 1000, 7) },
+  { id: 'deux-mille-en-7', name: '2000 en 7', desc: 'Effectue 2000 push-ups au total sur 7 jours consécutifs', xp: 550, icon: '🔥', secret: true, check: (db) => firstDateOfConsecutiveDaySum(db, 2000, 7) },
   { id: 'objectif-mensuel', name: 'Objectif mensuel', desc: 'Effectue 3500 push-ups en 1 mois', xp: 300, icon: '📅', check: (db) => firstDateAtMonthlyTotal(db, 3500) },
   { id: 'plein-dans-le-mille', name: 'En plein dans le mille!', desc: 'Effectue 1000 push-ups au total', xp: 100, icon: '🎯', secret: true, check: (db) => firstDateAtTotalPushups(db, 1000) },
   { id: 'over-9000', name: "Au-dessus de 9000!", desc: 'Effectue 10 000 push-ups au total', xp: 500, icon: '⚡', check: (db) => firstDateAtTotalPushups(db, 10000) },
@@ -1290,7 +1495,17 @@ const BADGES = [
   { id: 'impossible-devient-reel', name: "L'impossible devient réel", desc: 'Trouve ton tout premier objet Mythique', xp: 800, icon: '🌟', secret: true, check: (db) => firstMythicDiscoveryDate(db) },
   { id: 'look-debutant', name: 'Look du débutant', desc: 'Prends ta toute première photo', xp: 15, icon: '🪞', check: (db) => firstDateAtNthPhoto(db, 1) },
   { id: 'top-modele', name: 'Top modèle', desc: '10 photos ajoutées au total', xp: 50, icon: '📸', secret: true, check: (db) => firstDateAtNthPhoto(db, 10) },
-  { id: 'je-note', name: 'Je NOTE!', desc: '100 notes ajoutées au total', xp: 100, icon: '📝', secret: true, check: (db) => firstDateAtNthNote(db, 100) },
+  { id: 'album-complet', name: 'Album photos', desc: '50 photos ajoutées au total', xp: 150, icon: '📸', secret: true, check: (db) => firstDateAtNthPhoto(db, 50) },
+  { id: 'je-note', name: 'Je note!', desc: '50 notes ajoutées au total', xp: 50, icon: '📝', secret: true, check: (db) => firstDateAtNthNote(db, 50) },
+  { id: 'je-note-encore', name: 'Je note encore!', desc: '100 notes ajoutées au total', xp: 100, icon: '📝', secret: true, check: (db) => firstDateAtNthNote(db, 100) },
+  { id: 'je-note-encore-plus', name: 'Je note encore plus!', desc: '250 notes ajoutées au total', xp: 250, icon: '📝', secret: true, check: (db) => firstDateAtNthNote(db, 250) },
+  { id: 'je-note-toujours-plus', name: 'Je note toujours plus!', desc: '500 notes ajoutées au total', xp: 500, icon: '📝', secret: true, check: (db) => firstDateAtNthNote(db, 500) },
+  { id: 'bonne-habitude', name: 'Bonne habitude!', desc: "Ouvrir l'app 7 jours consécutifs", xp: 30, icon: '📅', check: (db) => firstDateAppOpenStreakReaches(db, 7) },
+  { id: 'fidele-au-poste', name: 'Fidèle au poste', desc: "Ouvrir l'app 30 jours consécutifs", xp: 75, icon: '📅', check: (db) => firstDateAppOpenStreakReaches(db, 30) },
+  { id: 'toujours-fidele', name: 'Toujours fidèle!', desc: "Ouvrir l'app 100 jours consécutifs", xp: 300, icon: '📅', check: (db) => firstDateAppOpenStreakReaches(db, 100) },
+  { id: 'six-mois', name: '6 mois déjà!', desc: 'Utilise TrackPush depuis 6 mois', xp: 150, icon: '🎂', secret: true, check: (db) => firstDateAtAnniversary(db, 182) },
+  { id: 'un-an', name: 'Un an plus fort', desc: 'Utilise TrackPush depuis 1 an', xp: 400, icon: '🎂', secret: true, check: (db) => firstDateAtAnniversary(db, 365) },
+  { id: 'la-totale', name: 'La totale', desc: 'Accomplis les 5 habitudes le même jour, 10 fois au total', xp: 200, icon: '🌈', check: (db) => firstDateAtNthPerfectHabitDay(db, 10) },
 ];;
 
 function badgesUnlockedForDate(db, date) {
@@ -1416,6 +1631,15 @@ function computeMonthlySummary(db, monthKey) {
 
 // ---------- Day payload ----------
 
+function specialDayBadgeInfo(db, date) {
+  const md = date.slice(5);
+  let def = null;
+  if (md === '12-25') def = { id: 'cadeau-noel', target: 250 };
+  else if (md === '01-01') def = { id: 'resolution-nouvel-an', target: 100 };
+  if (!def) return null;
+  return { id: def.id, target: def.target, unlocked: !!db.badges[def.id] };
+}
+
 function dayPayload(db, date) {
   const entries = db.entries.filter((e) => e.date === date).sort((a, b) => a.createdAt.localeCompare(b.createdAt));
   const notes = db.notes.filter((n) => n.date === date).sort((a, b) => a.createdAt.localeCompare(b.createdAt));
@@ -1433,6 +1657,7 @@ function dayPayload(db, date) {
     totalPhotosEver: allPhotosSorted(db).length,
     isBestWeekdayEver: isBestWeekdayEver(db, date),
     isFirstEverDay: (() => { const first = earliestAnyDataDate(db); return !first || first === date; })(),
+    specialDayBadge: specialDayBadgeInfo(db, date),
   };
 }
 
