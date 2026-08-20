@@ -22,13 +22,7 @@ async function localApi(path, opts) {
 
   // ---- Settings ----
   if (path === '/api/settings' && method === 'GET') {
-    const today = todayStr();
-    if (!db.appOpenDates) db.appOpenDates = {};
-    if (!db.appOpenDates[today]) {
-      db.appOpenDates[today] = true;
-      saveDB(db);
-    }
-    return { ...db.settings, goal: currentGoal(db), today, appOpenStreak: currentAppOpenStreak(db) };
+    return { ...db.settings, goal: currentGoal(db), today: todayStr() };
   }
   if (path === '/api/settings' && method === 'PUT') {
     if (body.goalMode !== undefined) {
@@ -101,13 +95,7 @@ async function localApi(path, opts) {
   let m;
   if ((m = path.match(/^\/api\/day\/(today|[\d-]+)$/)) && method === 'GET') {
     const date = m[1] === 'today' ? todayStr() : m[1];
-    const payload = dayPayload(db, date);
-    if (date === todayStr()) {
-      const newlyUnlockedBadges = checkAndUnlockBadges(db);
-      if (newlyUnlockedBadges.length) saveDB(db);
-      payload.newlyUnlockedBadges = newlyUnlockedBadges;
-    }
-    return payload;
+    return dayPayload(db, date);
   }
   if ((m = path.match(/^\/api\/month\/([\d-]+)$/)) && method === 'GET') {
     const [y, mo] = m[1].split('-').map(Number);
@@ -155,65 +143,17 @@ async function localApi(path, opts) {
     return { points };
   }
 
-  if (path === '/api/habits-view' && method === 'GET') {
-    const streakCannabis = bestStreak(db, 'cannabis');
-    const streakCafe = bestStreak(db, 'cafe');
-    const streakAlcool = bestStreak(db, 'alcool');
-    const streakMarche = bestTrueStreak(db, 'marche');
-    const totalPushups = db.entries.reduce((sum, e) => sum + e.count, 0);
-    const datesWithEntries = [...new Set(db.entries.map((e) => e.date))];
-    const disciplinedDays = datesWithEntries.filter((d) => {
-      const total = totalForDate(db, d), goal = goalForDate(db, d);
-      return goal > 0 && total >= goal;
-    }).length;
-    const disciplinedWeeks = countPlatinumWeeks(db);
-    const totalPhotos = Object.values(db.photos).reduce((sum, arr) => sum + arr.length, 0);
-    const totalNotes = db.notes.length;
-    const startDate = datesWithEntries.length ? datesWithEntries.sort()[0] : null;
-    const daysSinceStart = startDate ? Math.floor((new Date(todayStr() + 'T00:00:00') - new Date(startDate + 'T00:00:00')) / 86400000) + 1 : 0;
-    const avgPerDay = daysSinceStart > 0 ? Math.round(totalPushups / daysSinceStart) : 0;
-    const avgPerSet = db.entries.length > 0 ? Math.round(totalPushups / db.entries.length) : 0;
-    return {
-      stats: {
-        totalPushups, bestStreakCannabis: streakCannabis, bestStreakCafe: streakCafe,
-        bestStreakAlcool: streakAlcool, bestStreakMarche: streakMarche,
-        disciplinedDays, disciplinedWeeks, totalPhotos, totalNotes, startDate, avgPerDay, avgPerSet,
-      },
-      personalRecords: {
-        bestSet: bestSetRecord(db),
-        bestDay: bestDayRecord(db),
-        bestDayByWeekday: bestDayByWeekday(db),
-        bestWeek: bestWeekRecord(db),
-        bestMonth: bestMonthRecord(db),
-        bestStreakCannabis: streakCannabis, bestStreakCafe: streakCafe,
-        bestStreakAlcool: streakAlcool, bestStreakMarche: streakMarche,
-        currentStreakCannabis: currentCleanStreak(db, 'cannabis'),
-        currentStreakCafe: currentCleanStreak(db, 'cafe'),
-        currentStreakAlcool: currentCleanStreak(db, 'alcool'),
-        currentStreakMarche: currentTrueStreak(db, 'marche'),
-        longestPlatinumStreak: longestPlatinumStreak(db),
-        bestGoalStreak: bestGoalStreak(db),
-      },
-    };
-  }
-
   if (path === '/api/personal-records' && method === 'GET') {
     return {
       bestSet: bestSetRecord(db),
       bestDay: bestDayRecord(db),
-      bestDayByWeekday: bestDayByWeekday(db),
       bestWeek: bestWeekRecord(db),
       bestMonth: bestMonthRecord(db),
       bestStreakCannabis: bestStreak(db, 'cannabis'),
       bestStreakCafe: bestStreak(db, 'cafe'),
       bestStreakAlcool: bestStreak(db, 'alcool'),
       bestStreakMarche: bestTrueStreak(db, 'marche'),
-      currentStreakCannabis: currentCleanStreak(db, 'cannabis'),
-      currentStreakCafe: currentCleanStreak(db, 'cafe'),
-      currentStreakAlcool: currentCleanStreak(db, 'alcool'),
-      currentStreakMarche: currentTrueStreak(db, 'marche'),
       longestPlatinumStreak: longestPlatinumStreak(db),
-      bestGoalStreak: bestGoalStreak(db),
     };
   }
 
@@ -230,10 +170,9 @@ async function localApi(path, opts) {
     const startDate = datesWithEntries.length ? datesWithEntries.sort()[0] : null;
     const daysSinceStart = startDate ? Math.floor((new Date(todayStr() + 'T00:00:00') - new Date(startDate + 'T00:00:00')) / 86400000) + 1 : 0;
     const avgPerDay = daysSinceStart > 0 ? Math.round(totalPushups / daysSinceStart) : 0;
-    const avgPerSet = db.entries.length > 0 ? Math.round(totalPushups / db.entries.length) : 0;
     return {
       totalPushups, bestStreakCannabis: bestStreak(db, 'cannabis'), bestStreakCafe: bestStreak(db, 'cafe'), bestStreakAlcool: bestStreak(db, 'alcool'),
-      bestStreakMarche: bestTrueStreak(db, 'marche'), disciplinedDays, disciplinedWeeks, totalPhotos, totalNotes, startDate, avgPerDay, avgPerSet,
+      bestStreakMarche: bestTrueStreak(db, 'marche'), disciplinedDays, disciplinedWeeks, totalPhotos, totalNotes, startDate, avgPerDay,
     };
   }
 
@@ -242,7 +181,6 @@ async function localApi(path, opts) {
     const date = body.date || todayStr();
     const count = parseInt(body.count, 10);
     if (!Number.isFinite(count) || count <= 0) throw new Error('nombre invalide');
-    if (count > 200) throw new Error('objectif_trop_eleve');
     ensureGoalSnapshot(db, date);
     const prevTotal = totalForDate(db, date);
     const prevGoal = goalForDate(db, date);
@@ -481,16 +419,11 @@ async function localApi(path, opts) {
     }));
     const mythicDiscoveredCount = Object.keys(db.mythicDiscovered || {}).length;
     const mythicTotalCount = MYTHIC_ITEMS.length;
-    const detecteurBreakdown = [
-      { rarity: 'rare', chance: DETECTEUR_CHANCE * DETECTEUR_RARE_SHARE },
-      { rarity: 'legendaire', chance: DETECTEUR_CHANCE * (1 - DETECTEUR_RARE_SHARE) },
-    ];
     return {
       count, rankIdx,
       dropChance, rarityBreakdown, mythicChance, perItem, perMythic,
       mythicDiscoveredCount, mythicTotalCount,
       detecteurChance: DETECTEUR_CHANCE,
-      detecteurBreakdown,
       radarChance: RADAR_PRECISION_CHANCE,
     };
   }
@@ -570,7 +503,7 @@ async function localApi(path, opts) {
       result = { effect: 'plume_legere', newGoal: reduced, usesToday: db.plumeUsesToday.count };
     } else if (inst.itemId === 'talisman_pardon') {
       const key = body.habitKey;
-      if (!['cannabis', 'cafe', 'marche', 'alcool'].includes(key)) throw new Error('habitude invalide');
+      if (!['cannabis', 'cafe', 'marche'].includes(key)) throw new Error('habitude invalide');
       const targetDate = body.date || todayStr();
       if (!db.protectedHabitDays[key]) db.protectedHabitDays[key] = [];
       if (!db.protectedHabitDays[key].includes(targetDate)) db.protectedHabitDays[key].push(targetDate);
@@ -633,22 +566,20 @@ async function localApi(path, opts) {
   }
 
   if (path === '/api/badges' && method === 'GET') {
-    if (_badgesCache) return { badges: _badgesCache };
-    const newlyUnlocked = checkAndUnlockBadges(db);
-    if (newlyUnlocked.length) saveDB(db);
-    const stats = computeAllBadgeStats(db);
-    const badgesResult = BADGES.map((b) => {
-      const unlocked = db.badges[b.id];
-      const isSecretLocked = b.secret && !unlocked;
-      const progress = (!unlocked && !b.secret) ? computeBadgeProgress(b.id, stats, db) : null;
-      return {
-        id: b.id, name: b.name, desc: isSecretLocked ? null : b.desc, xp: b.xp, icon: b.icon,
-        secret: !!b.secret, unlocked: !!unlocked, unlockedDate: unlocked ? unlocked.unlockedDate : null,
-        progress,
-      };
-    });
-    _badgesCache = badgesResult;
-    return { badges: badgesResult };
+    checkAndUnlockBadges(db);
+    saveDB(db);
+    return {
+      badges: BADGES.map((b) => {
+        const unlocked = db.badges[b.id];
+        const isSecretLocked = b.secret && !unlocked;
+        const progress = (!unlocked && !b.secret) ? computeBadgeProgress(db, b.id) : null;
+        return {
+          id: b.id, name: b.name, desc: isSecretLocked ? null : b.desc, xp: b.xp, icon: b.icon,
+          secret: !!b.secret, unlocked: !!unlocked, unlockedDate: unlocked ? unlocked.unlockedDate : null,
+          progress,
+        };
+      }),
+    };
   }
 
   // ---- Monthly summary ----
