@@ -1,4 +1,4 @@
-const APP_VERSION = '2026-08.54';
+const APP_VERSION = '2026-08.110';
 
 const state = {
   today: null,
@@ -92,6 +92,8 @@ const TRANSLATIONS = {
     xp_next_default: "Prochain rang: —",
     quickadd_title: "AJOUTER DES PUSH-UPS",
     custom_count_placeholder: "Autre nombre",
+    confirm_high_count: "{count} push-ups en une seule série, c'est exceptionnel! Es-tu certain?",
+    error_count_too_high: "Ce nombre semble trop élevé pour une seule série. Vérifie et réessaie.",
     add_button: "Ajouter",
     undo_btn: "↺ Annuler le dernier ajout",
     entries_title: "SÉRIES D'AUJOURD'HUI",
@@ -134,6 +136,8 @@ const TRANSLATIONS = {
     record_streak_alcool: "Plus long streak sans alcool",
     record_streak_marche: "Plus long streak de marche",
     record_platinum_streak: "Platine d'affilée",
+    record_gold_streak: "Jours Or d'affilée",
+    record_streak_cafe: "Plus long streak sans caféine",
     record_none: "Aucun",
     record_days_suffix: "jours",
     record_weeks_suffix: "semaines",
@@ -141,6 +145,7 @@ const TRANSLATIONS = {
     record_week_singular: "semaine",
     stat_start_date_label: "Début du suivi",
     stat_total_pushups_label: "Push-ups au total",
+    stat_avg_set_label: "Série moyenne",
     stat_avg_per_day_label: "Moyenne quotidienne",
     stat_disciplined_days_label: "Jours disciplinés (Or)",
     stat_disciplined_weeks_label: "Semaines disciplinées (Platine)",
@@ -163,7 +168,7 @@ const TRANSLATIONS = {
     sync_title_native: "SYNCHRONISATION AVEC DOCKER",
     sync_explainer_native: "Chaque série et chaque photo ajoutée envoie automatiquement une copie à ton serveur Docker (ANONPURP3). Utilise ce bouton pour forcer une synchronisation immédiate et confirmer qu'elle fonctionne.",
     backup_section_title: "SAUVEGARDE MANUELLE",
-    backup_explainer: "Tes données vivent uniquement dans ce navigateur. Télécharge une copie régulièrement pour ne rien perdre si tu changes d'appareil ou si le navigateur efface ses données.",
+    backup_explainer: "Télécharge une copie complète de tes données (progression, badges, objets, photos) dans un fichier, ou restaure-en une sur cet appareil.",
     backup_export_btn: "Exporter mes données",
     backup_import_btn: "Importer une sauvegarde",
     backup_import_confirm: "Ceci va REMPLACER toutes les données actuelles sur cet appareil par celles du fichier choisi. Cette action est irréversible. Continuer?",
@@ -184,7 +189,7 @@ const TRANSLATIONS = {
     goal_mode_auto: "Automatique",
     goal_mode_auto_sub: "(selon le rang)",
     goal_mode_manual: "Manuel",
-    goal_auto_info: "L'objectif de ton rang {rank} est actuellement de {goal} push-ups.",
+    goal_auto_info: "L'objectif du rang {rank} est de {goal} push-ups.",
     color_section_title: "COULEUR D'ACCENT",
     color_yellow: "Jaune", color_orange: "Orange", color_red: "Rouge", color_green: "Vert", color_blue: "Bleu", color_purple: "Violet",
     custom_color_label: "Couleur personnalisée",
@@ -220,6 +225,32 @@ const TRANSLATIONS = {
     item_odds_mythic_locked: "Pas encore accessible à ton rang actuel.",
     item_odds_mythic_remaining: "{found} objet(s) mythique(s) déjà trouvé(s) sur {total} — répartition ci-dessous entre les {remaining} restants.",
     item_odds_detecteur_label: "Détecteur de métal",
+    item_odds_detecteur_breakdown_label: "Détecteur de métal",
+    item_odds_independent_note: "Le Détecteur de métal et le Radar de précision ont chacun leur propre chance de tirage indépendante des autres objets.",
+    app_streak_title: "SÉRIE D'OUVERTURE",
+    app_streak_current_label: "Jours d'affilée",
+    app_streak_next_label: "Prochain badge de fidélité",
+    app_streak_next_note: "Plus que {remaining} jour(s) pour débloquer \"{name}\"!",
+    app_streak_maxed_note: "Tous les badges de fidélité sont débloqués — continue comme ça!",
+    record_detail_next_badge: "PROCHAIN BADGE",
+    record_detail_weekday_title: "Records par jour de semaine",
+    record_detail_all_unlocked: "Tous les badges liés sont débloqués — continue comme ça!",
+    record_detail_title_bestSet: "Meilleure série",
+    record_detail_title_bestDay: "Meilleure journée",
+    record_detail_title_bestWeek: "Meilleure semaine",
+    record_detail_title_bestMonth: "Meilleur mois",
+    record_detail_title_goldStreak: "Jours Or d'affilée",
+    record_detail_title_platinumStreak: "Platine d'affilée",
+    record_detail_title_cannabis: "Sans cannabis",
+    record_detail_title_cafe: "Sans caféine",
+    record_detail_title_alcool: "Sans alcool",
+    record_detail_title_marche: "Marche à l'extérieur",
+    weekday_0: "Lundi", weekday_1: "Mardi", weekday_2: "Mercredi", weekday_3: "Jeudi",
+    weekday_4: "Vendredi", weekday_5: "Samedi", weekday_6: "Dimanche",
+    record_current_streak_cannabis: "Aujourd'hui : Jour {count} sans cannabis.",
+    record_current_streak_cafe: "Aujourd'hui : Jour {count} sans caféine.",
+    record_current_streak_alcool: "Aujourd'hui : Jour {count} sans alcool.",
+    record_current_streak_marche: "Aujourd'hui : {count} jours de marche d'affilée.",
     item_odds_radar_label: "Radar de précision",
     rarity_basique: "Commun",
     rarity_rare: "Rare",
@@ -270,7 +301,7 @@ const TRANSLATIONS = {
     item_desc_don_xp_specific: "Accorde instantanément {xp} XP.",
     item_desc_graine_patience: "Multiplie l'XP des habitudes d'aujourd'hui",
     item_desc_graine_patience_specific: "Multiplie par {mult} l'XP des habitudes d'aujourd'hui",
-    item_desc_talisman_pardon: "Protège le compteur d'une habitude de se réinitialiser pour la journée",
+    item_desc_talisman_pardon: "Protège le compteur d'une habitude de se réinitialiser pour la journée. Les habitudes qui peuvent être protégées sont : Alcool, Café, Cannabis, Marche.",
     item_desc_echo_passe: "Fait ressurgir une pensée du passé et procure instantanément 20 XP.",
     item_desc_detecteur_metal: "Pendant 15 minutes, augmente tes chances de trouver un objet en faisant des séries de push-ups. L'effet de cet objet ne s'applique pas aux objets Mythiques.",
     item_desc_detecteur_metal_specific: "Pendant 15 minutes, augmente tes chances de {pct}% de trouver un objet en faisant des séries de push-ups. L'effet de cet objet ne s'applique pas aux objets Mythiques.",
@@ -291,6 +322,7 @@ const TRANSLATIONS = {
     use_item_talisman_cannabis: "Sans cannabis",
     use_item_talisman_cafe: "Sans caféine",
     use_item_talisman_marche: "Marche à l'extérieur",
+    use_item_talisman_alcool: "Sans alcool",
     use_item_talisman_result: "Ton streak est protégé pour aujourd'hui.",
     use_item_echo_result_positive: "Ce sentiment, tu peux le revivre aujourd'hui!",
     use_item_echo_result_negative: "Tu te souviens de ce jour-là? Regarde le chemin parcouru depuis.",
@@ -311,6 +343,7 @@ const TRANSLATIONS = {
     today_week_total: "Push-ups cette semaine : {n}",
     modal_entries_title: "SÉRIES",
     celebration_ok: "Merci, continue!",
+    badge_celebration_ok: "Continuer la progression!",
     item_drop_ok: "Continuer",
     rankup_title: "NOUVEAU RANG!",
     rankup_desc_prefix: "Tu es maintenant",
@@ -327,11 +360,15 @@ const TRANSLATIONS = {
     photo_skip_btn: "Plus tard",
     photo_never_today_btn: "Ne plus afficher",
     sunday_banner_text: "N'oublie pas de prendre ta photo de la semaine!",
+    special_day_banner_text: "Badge exclusif aujourd'hui seulement!",
+    special_day_progress_label: "Push-ups aujourd'hui",
+    special_day_go_btn: "C'est parti!",
     day1_photo_title: "TA PHOTO DU JOUR 1",
     day1_photo_desc: "Prends une photo de toi aujourd'hui — elle te servira de point de départ dans ton résumé mensuel, pour voir ta progression physique à chaque début de mois.",
     day1_photo_skip_btn: "Me le rappeler plus tard",
     note_edit_link: "Modifier",
     note_delete_link: "Supprimer",
+    note_delete_confirm: "Supprimer cette note? Cette action est irréversible.",
     note_cancel_link: "Annuler",
     entries_show_all: "Voir toutes les séries ({n}) ▾",
     entries_show_less: "Voir moins ▴",
@@ -381,6 +418,8 @@ const TRANSLATIONS = {
     xp_next_default: "Next rank: —",
     quickadd_title: "ADD PUSH-UPS",
     custom_count_placeholder: "Other number",
+    confirm_high_count: "{count} push-ups in one set is exceptional! Are you sure?",
+    error_count_too_high: "That number seems too high for a single set. Please check and try again.",
     add_button: "Add",
     undo_btn: "↺ Undo last add",
     entries_title: "TODAY'S SETS",
@@ -423,6 +462,8 @@ const TRANSLATIONS = {
     record_streak_alcool: "Longest alcohol-free streak",
     record_streak_marche: "Longest walking streak",
     record_platinum_streak: "Platinum in a row",
+    record_gold_streak: "Gold days in a row",
+    record_streak_cafe: "Longest caffeine-free streak",
     record_none: "None",
     record_days_suffix: "days",
     record_weeks_suffix: "weeks",
@@ -430,6 +471,7 @@ const TRANSLATIONS = {
     record_week_singular: "week",
     stat_start_date_label: "Tracking since",
     stat_total_pushups_label: "Total push-ups",
+    stat_avg_set_label: "Average set",
     stat_avg_per_day_label: "Daily average",
     stat_disciplined_days_label: "Disciplined days (Gold)",
     stat_disciplined_weeks_label: "Disciplined weeks (Platinum)",
@@ -452,7 +494,7 @@ const TRANSLATIONS = {
     sync_title_native: "SYNC WITH DOCKER",
     sync_explainer_native: "Every set and photo you add automatically sends a copy to your Docker server (ANONPURP3). Use this button to force an immediate sync and confirm it's working.",
     backup_section_title: "MANUAL BACKUP",
-    backup_explainer: "Your data lives only in this browser. Download a copy regularly so you never lose it if you switch devices or the browser clears its data.",
+    backup_explainer: "Download a full copy of your data (progress, badges, items, photos) to a file, or restore one on this device.",
     backup_export_btn: "Export my data",
     backup_import_btn: "Import a backup",
     backup_import_confirm: "This will REPLACE all current data on this device with the data from the chosen file. This action cannot be undone. Continue?",
@@ -509,6 +551,32 @@ const TRANSLATIONS = {
     item_odds_mythic_locked: "Not yet accessible at your current rank.",
     item_odds_mythic_remaining: "{found} mythic item(s) already found out of {total} — breakdown below among the {remaining} remaining.",
     item_odds_detecteur_label: "Metal detector",
+    item_odds_detecteur_breakdown_label: "Metal detector",
+    item_odds_independent_note: "Metal Detector and Precision Radar each have their own drop chance, independent of the other items.",
+    app_streak_title: "OPEN STREAK",
+    app_streak_current_label: "Days in a row",
+    app_streak_next_label: "Next loyalty badge",
+    app_streak_next_note: "{remaining} more day(s) to unlock \"{name}\"!",
+    app_streak_maxed_note: "All loyalty badges unlocked — keep it up!",
+    record_detail_next_badge: "NEXT BADGE",
+    record_detail_weekday_title: "Records by day of week",
+    record_detail_all_unlocked: "All related badges unlocked — keep it up!",
+    record_detail_title_bestSet: "Best set",
+    record_detail_title_bestDay: "Best day",
+    record_detail_title_bestWeek: "Best week",
+    record_detail_title_bestMonth: "Best month",
+    record_detail_title_goldStreak: "Gold days in a row",
+    record_detail_title_platinumStreak: "Platinum in a row",
+    record_detail_title_cannabis: "Cannabis-free",
+    record_detail_title_cafe: "Caffeine-free",
+    record_detail_title_alcool: "Alcohol-free",
+    record_detail_title_marche: "Walking outside",
+    weekday_0: "Monday", weekday_1: "Tuesday", weekday_2: "Wednesday", weekday_3: "Thursday",
+    weekday_4: "Friday", weekday_5: "Saturday", weekday_6: "Sunday",
+    record_current_streak_cannabis: "Today: Day {count} cannabis-free.",
+    record_current_streak_cafe: "Today: Day {count} caffeine-free.",
+    record_current_streak_alcool: "Today: Day {count} alcohol-free.",
+    record_current_streak_marche: "Today: {count} days of walking in a row.",
     item_odds_radar_label: "Precision radar",
     rarity_basique: "Common",
     rarity_rare: "Rare",
@@ -559,7 +627,7 @@ const TRANSLATIONS = {
     item_desc_don_xp_specific: "Instantly grants {xp} XP.",
     item_desc_graine_patience: "Multiplies today's habit XP",
     item_desc_graine_patience_specific: "Multiplies today's habit XP by {mult}",
-    item_desc_talisman_pardon: "Protects a habit's streak counter from resetting for the day",
+    item_desc_talisman_pardon: "Protects a habit's streak counter from resetting for the day. Habits that can be protected: Alcohol, Coffee, Cannabis, Walking.",
     item_desc_echo_passe: "Brings back a memory from the past and instantly grants 20 XP.",
     item_desc_detecteur_metal: "For 15 minutes, increases your chances of finding an item from push-up sets. This item's effect doesn't apply to Mythic items.",
     item_desc_detecteur_metal_specific: "For 15 minutes, increases your chances by {pct}% of finding an item from push-up sets. This item's effect doesn't apply to Mythic items.",
@@ -580,6 +648,7 @@ const TRANSLATIONS = {
     use_item_talisman_cannabis: "Cannabis-free",
     use_item_talisman_cafe: "Caffeine-free",
     use_item_talisman_marche: "Walk outside",
+    use_item_talisman_alcool: "Alcohol-free",
     use_item_talisman_result: "Your streak is protected for today.",
     use_item_echo_result_positive: "You can relive this feeling today!",
     use_item_echo_result_negative: "Remember that day? Look how far you've come since.",
@@ -600,6 +669,7 @@ const TRANSLATIONS = {
     today_week_total: "Push-ups this week: {n}",
     modal_entries_title: "SETS",
     celebration_ok: "Thanks, keep going!",
+    badge_celebration_ok: "Keep going!",
     item_drop_ok: "Continue",
     rankup_title: "NEW RANK!",
     rankup_desc_prefix: "You are now",
@@ -616,11 +686,15 @@ const TRANSLATIONS = {
     photo_skip_btn: "Later",
     photo_never_today_btn: "Don't show again",
     sunday_banner_text: "Don't forget your weekly photo!",
+    special_day_banner_text: "Exclusive badge today only!",
+    special_day_progress_label: "Push-ups today",
+    special_day_go_btn: "Let's go!",
     day1_photo_title: "YOUR DAY ONE PHOTO",
     day1_photo_desc: "Take a photo of yourself today — it'll be your starting point in your monthly summary, so you can see your physical progress at the start of every month.",
     day1_photo_skip_btn: "Remind me later",
     note_edit_link: "Edit",
     note_delete_link: "Delete",
+    note_delete_confirm: "Delete this note? This action can't be undone.",
     note_cancel_link: "Cancel",
     entries_show_all: "Show all sets ({n}) ▾",
     entries_show_less: "Show less ▴",
@@ -673,8 +747,8 @@ function t(key, vars){
   return str;
 }
 
-const RANK_NAMES_EN = ['Beginner','Disciplined','Professional','Elite','Legend','Unbeatable','Immortal','Divine'];
-const RANK_NAMES_FR = ['Débutant','Discipliné','Professionnel','Élite','Légende','Imbattable','Immortel','Divin'];
+const RANK_NAMES_EN = ['Beginner','Disciplined','Determined','Expert','Professional','Master','Elite','Champion','Legend','Unbeatable','Invincible','Immortal','Divine'];
+const RANK_NAMES_FR = ['Débutant','Discipliné','Déterminé','Expert','Professionnel','Maître','Élite','Champion','Légende','Imbattable','Invincible','Immortel','Divin'];
 function translateRankName(frName){
   if (state.lang !== 'en') return frName;
   const idx = RANK_NAMES_FR.indexOf(frName);
@@ -691,13 +765,18 @@ const BADGE_TRANSLATIONS_EN = {
   motivation100: { name: '100 Motivation?', desc: 'Reach Gold for 100 days total' },
   'cadeau-noel': { name: 'A Big Gift for the Pecs', desc: '250 push-ups on December 25th' },
   consistance: { name: 'Consistency Pays Off', desc: '50 push-ups in a single set' },
-  'rank-discipline': { name: 'Disciplined Rank', desc: 'Reach the Disciplined rank' },
-  'rank-pro': { name: 'Professional Rank', desc: 'Reach the Professional rank' },
-  'rank-elite': { name: 'Elite Rank', desc: 'Reach the Elite rank' },
-  'rank-legende': { name: 'Legend Rank', desc: 'Reach the Legend rank' },
-  'rank-imbattable': { name: 'Unbeatable Rank', desc: 'Reach the Unbeatable rank' },
-  'rank-immortel': { name: 'Immortal Rank', desc: 'Reach the Immortal rank' },
-  'rank-divin': { name: 'Divine Rank', desc: 'Reach the Divine rank' },
+  'rank-discipline': { name: 'Disciplined', desc: 'Reach the Disciplined rank' },
+  'rank-determine': { name: 'Determined', desc: 'Reach the Determined rank' },
+  'rank-expert': { name: 'Expert', desc: 'Reach the Expert rank' },
+  'rank-pro': { name: 'Professional', desc: 'Reach the Professional rank' },
+  'rank-maitre': { name: 'Master', desc: 'Reach the Master rank' },
+  'rank-elite': { name: 'Elite', desc: 'Reach the Elite rank' },
+  'rank-champion': { name: 'Champion', desc: 'Reach the Champion rank' },
+  'rank-legende': { name: 'Legend', desc: 'Reach the Legend rank' },
+  'rank-imbattable': { name: 'Unbeatable', desc: 'Reach the Unbeatable rank' },
+  'rank-invincible': { name: 'Invincible', desc: 'Reach the Invincible rank' },
+  'rank-immortel': { name: 'Immortal', desc: 'Reach the Immortal rank' },
+  'rank-divin': { name: 'Divine', desc: 'Reach the Divine rank' },
   'or-streak-5': { name: 'Worth Its Weight in Gold', desc: 'Reach Gold 5 days in a row' },
   'cent-mille': { name: '100k!', desc: 'Reach 100,000 total XP' },
   'force-tot': { name: 'Early Bird!', desc: '150 push-ups between 6am and noon, same day' },
@@ -705,12 +784,27 @@ const BADGE_TRANSLATIONS_EN = {
   'soiree-motivante': { name: 'Motivated Evening', desc: '150 push-ups between 6pm and 10pm, same evening' },
   'resolution-nouvel-an': { name: "New Year's Resolution", desc: '100 push-ups on January 1st' },
   'encore-plus': { name: 'Even More!', desc: '200 push-ups in the same day' },
+  'journee-chargee': { name: 'Big Day', desc: '300 push-ups in the same day' },
   'mille-en-cinq': { name: '1000 in 7', desc: 'Do 1000 total push-ups over 7 consecutive days' },
+  'deux-mille-en-7': { name: '2000 in 7', desc: 'Do 2000 total push-ups over 7 consecutive days' },
   'semaine-promenades': { name: 'Walking Week', desc: 'Take a walk outside for 7 consecutive days' },
   'go-abdo': { name: 'Go Abs Go', desc: 'Complete the 100 sit-ups habit 25 times' },
-  'je-note': { name: 'I NOTE!', desc: '100 notes added in total' },
+  'je-note': { name: 'I note!', desc: '50 notes added in total' },
+  'je-note-encore': { name: 'I note more!', desc: '100 notes added in total' },
+  'je-note-encore-plus': { name: 'I note even more!', desc: '250 notes added in total' },
+  'je-note-toujours-plus': { name: 'I note forever!', desc: '500 notes added in total' },
   'look-debutant': { name: 'Day One Look', desc: 'Take your very first photo' },
   'top-modele': { name: 'Top Model', desc: '10 photos added in total' },
+  'album-complet': { name: 'Photo Album', desc: '50 photos added in total' },
+  'decafeine90': { name: 'Decaf for Good', desc: 'A full 3 months (90 consecutive days) caffeine-free' },
+  'sans-alcool90': { name: 'Iron Sobriety', desc: 'A full 3 months (90 consecutive days) alcohol-free' },
+  'clarte90': { name: 'Lasting Clarity', desc: 'A full 3 months (90 consecutive days) cannabis-free' },
+  'bonne-habitude': { name: 'Good Habit!', desc: 'Open the app 7 consecutive days' },
+  'fidele-au-poste': { name: 'On Duty', desc: 'Open the app 30 consecutive days' },
+  'toujours-fidele': { name: 'Always Faithful!', desc: 'Open the app 100 consecutive days' },
+  'six-mois': { name: '6 Months Already!', desc: "Using TrackPush for 6 months" },
+  'un-an': { name: 'A Year Stronger', desc: "Using TrackPush for 1 year" },
+  'la-totale': { name: 'The Full Set', desc: 'Complete all 5 habits in the same day, 10 times total' },
   'premier-tresor': { name: 'First Treasure', desc: 'Find your very first item (other than the Metal Detector)' },
   'petit-coffre': { name: 'Small Chest', desc: 'Discover 3 different items' },
   'grand-collectionneur': { name: 'Great Collector', desc: 'Discover every existing item' },
@@ -880,14 +974,15 @@ function updateRing(total, goal, trophy){
   const ring = $('#ring-progress');
   ring.style.strokeDasharray = RING_CIRC;
 
-  const rainbowActive = !!(state.mythicActive && state.mythicActive.mode_arcenciel && !state.mythicActive.toucher_divin);
   if (trophy === 'platine') ring.style.stroke = 'var(--platine-a)';
-  else if (rainbowActive) { /* leave stroke to the rainbow interval */ }
   else if (pct >= 1) ring.style.stroke = 'var(--or)';
   else if (pct >= 0.8) ring.style.stroke = 'var(--argent)';
+  else if (ringShouldFollowRainbow()) { /* laisser la couleur à l'intervalle arc-en-ciel */ }
   else ring.style.stroke = 'var(--fire)';
   ring.classList.toggle('ring-complete', pct >= 1 && trophy !== 'platine');
   ring.classList.toggle('ring-platine', trophy === 'platine');
+  const stars = $('#platinum-stars');
+  if (stars) stars.hidden = trophy !== 'platine';
 
   const from = state.ringVisualPct || 0;
   const to = pct;
@@ -958,6 +1053,132 @@ function pulseRing(){
 function punchNumber(){
   const n = $('#today-total');
   n.classList.remove('punch'); void n.offsetWidth; n.classList.add('punch');
+}
+
+function streakAnimEmber(x, y){
+  const e = document.createElement('div');
+  e.className = 'streak-anim-ember';
+  const s = 4 + Math.random() * 5;
+  e.style.width = s + 'px';
+  e.style.height = s + 'px';
+  e.style.left = x + 'px';
+  e.style.top = y + 'px';
+  document.body.appendChild(e);
+  const dx = (Math.random() - 0.5) * 160;
+  const dy = -90 - Math.random() * 100;
+  e.animate([
+    { transform: 'translate(0,0) scale(1)', opacity: 0.9 },
+    { transform: `translate(${dx}px,${dy}px) scale(0)`, opacity: 0 },
+  ], { duration: 850 + Math.random() * 350, easing: 'cubic-bezier(.2,.7,.3,1)' });
+  setTimeout(() => e.remove(), 1300);
+}
+
+function buildStreakAnimDigits(oldVal, newVal){
+  const oldStr = String(oldVal), newStr = String(newVal);
+  const len = Math.max(oldStr.length, newStr.length);
+  const oldPadded = oldStr.padStart(len, ' ');
+  const newPadded = newStr.padStart(len, ' ');
+  const wrap = $('#streak-anim-digits');
+  wrap.innerHTML = '';
+  const cols = [];
+  for (let i = 0; i < len; i++){
+    const col = document.createElement('div');
+    col.className = 'streak-anim-col';
+    const oldD = oldPadded[i], newD = newPadded[i];
+    const changed = oldD !== newD;
+    const oldSpan = document.createElement('div');
+    oldSpan.className = 'streak-anim-digit';
+    oldSpan.textContent = oldD.trim();
+    const newSpan = document.createElement('div');
+    newSpan.className = 'streak-anim-digit';
+    newSpan.textContent = newD.trim();
+    newSpan.style.transform = 'translateY(-100%)';
+    col.appendChild(oldSpan);
+    col.appendChild(newSpan);
+    wrap.appendChild(col);
+    cols.push({ oldSpan, newSpan, changed });
+  }
+  return cols;
+}
+
+// Animation "flamme qui s'allume" + streak qui roule façon odomètre, jouée
+// une seule fois par jour à la première ouverture de l'app si le streak a
+// augmenté. Retourne une promesse qui se résout une fois l'animation
+// terminée, pour pouvoir y accrocher les célébrations de badges APRÈS.
+async function playStreakIncrementAnimation(oldVal, newVal){
+  const dimmer = $('#streak-anim-dimmer');
+  const overlay = $('#streak-anim-overlay');
+  const flame = $('#streak-anim-flame');
+  const label = $('#streak-anim-label');
+  const cols = buildStreakAnimDigits(oldVal, newVal);
+
+  dimmer.style.background = 'rgba(0,0,0,0.85)';
+  overlay.style.transition = 'opacity 0.25s ease';
+  overlay.style.opacity = '1';
+  await new Promise((r) => setTimeout(r, 120));
+
+  flame.animate([
+    { transform: 'scale(0) rotate(-10deg)', offset: 0 },
+    { transform: 'scale(1.3) rotate(5deg)', offset: 0.5 },
+    { transform: 'scale(0.92) rotate(-3deg)', offset: 0.72 },
+    { transform: 'scale(1.08) rotate(2deg)', offset: 1 },
+  ], { duration: 600, easing: 'cubic-bezier(.34,1.56,.64,1)', fill: 'forwards' });
+
+  const rect = flame.getBoundingClientRect();
+  const cx = rect.left + rect.width / 2, cy = rect.top + rect.height / 2 + 30;
+  for (let i = 0; i < 12; i++){
+    setTimeout(() => streakAnimEmber(cx + (Math.random() - 0.5) * 70, cy + (Math.random() - 0.5) * 50), 260 + i * 55);
+  }
+  await new Promise((r) => setTimeout(r, 600));
+
+  flame.animate([
+    { transform: 'scale(1.08) rotate(2deg) translateY(0px)', offset: 0 },
+    { transform: 'scale(1.1) rotate(-3deg) translateY(-4px)', offset: 0.25 },
+    { transform: 'scale(1.06) rotate(3deg) translateY(2px)', offset: 0.5 },
+    { transform: 'scale(1.1) rotate(-2deg) translateY(-3px)', offset: 0.75 },
+    { transform: 'scale(1.08) rotate(2deg) translateY(0px)', offset: 1 },
+  ], { duration: 1400, iterations: 2, easing: 'ease-in-out' });
+
+  label.style.opacity = '1';
+
+  cols.forEach(({ oldSpan, newSpan, changed }, idx) => {
+    if (!changed) return;
+    setTimeout(() => {
+      oldSpan.animate([
+        { transform: 'translateY(0)' },
+        { transform: 'translateY(100%)' },
+      ], { duration: 1280, easing: 'cubic-bezier(.4,0,.6,1)', fill: 'forwards' });
+      newSpan.animate([
+        { transform: 'translateY(-100%)' },
+        { transform: 'translateY(0)' },
+      ], { duration: 1280, easing: 'cubic-bezier(.4,0,.6,1)', fill: 'forwards' });
+    }, idx * 150);
+  });
+
+  await new Promise((r) => setTimeout(r, 1900));
+  dimmer.style.transition = 'background 0.45s ease';
+  overlay.style.transition = 'opacity 0.45s ease';
+  dimmer.style.background = 'rgba(0,0,0,0)';
+  overlay.style.opacity = '0';
+  await new Promise((r) => setTimeout(r, 450));
+  label.style.opacity = '0';
+}
+
+// Détecte s'il faut jouer l'animation (streak augmenté depuis la dernière
+// fois ET pas déjà jouée aujourd'hui), et si oui la joue. Retourne true si
+// l'animation a été jouée, pour permettre de retarder les célébrations de
+// badges jusqu'à sa fin.
+async function maybeShowStreakIncrementAnim(newStreak, today){
+  const lastShownDate = localStorage.getItem('trackpush_streak_anim_date');
+  const lastKnownStreak = parseInt(localStorage.getItem('trackpush_last_streak') || '0', 10);
+  let played = false;
+  if (lastShownDate !== today && newStreak > lastKnownStreak && lastKnownStreak > 0){
+    await playStreakIncrementAnimation(lastKnownStreak, newStreak);
+    played = true;
+  }
+  localStorage.setItem('trackpush_last_streak', String(newStreak));
+  localStorage.setItem('trackpush_streak_anim_date', today);
+  return played;
 }
 
 function burstConfetti(colors){
@@ -1130,6 +1351,17 @@ function hexFromHue(hue){
   const b = Math.round(hue2rgb(p, q, h - 1/3) * 255);
   return '#' + [r, g, b].map((v) => v.toString(16).padStart(2, '0')).join('');
 }
+// Source unique de vérité pour "le cercle doit-il suivre l'arc-en-ciel en ce
+// moment" — utilisée à la fois par l'intervalle et par updateRing, pour ne
+// jamais risquer que les deux logiques dérivent l'une de l'autre. Un trophée
+// déjà atteint (Or/Argent/Platine) a toujours priorité sur l'arc-en-ciel.
+function ringShouldFollowRainbow(){
+  if (!(state.mythicActive && state.mythicActive.mode_arcenciel)) return false;
+  if (state.ringTrophy === 'platine') return false;
+  const pct = state.ringGoal > 0 ? (state.ringTotal || 0) / state.ringGoal : 0;
+  return pct < 0.8;
+}
+
 function startRainbowMode(){
   if (_rainbowInterval) return;
   let hue = 0;
@@ -1138,11 +1370,9 @@ function startRainbowMode(){
     hue = (hue + 1) % 360;
     const hex = hexFromHue(hue);
     applyAccent(hex, true);
-    if (!(state.mythicActive && state.mythicActive.toucher_divin)) {
-      const ring = $('#ring-progress');
-      if (ring && !ring.classList.contains('ring-platine')) {
-        ring.style.stroke = hex;
-      }
+    const ring = $('#ring-progress');
+    if (ring && ringShouldFollowRainbow()) {
+      ring.style.stroke = hex;
     }
   }, 120);
   _rainbowInterval = myInterval;
@@ -1197,8 +1427,9 @@ function showTrophyModal(trophy){
 }
 
 function trophyXPTableClient(rankIdx){
-  const growth = 1.15;
-  const g = Math.pow(growth, rankIdx);
+  const growth = 1.079215;
+  const rankMult = 1.065589;
+  const g = rankMult * Math.pow(growth, rankIdx);
   return {
     bronze: Math.round(2 * g),
     argent: Math.round(7 * g),
@@ -1284,7 +1515,10 @@ function restartShimmer(){
 }
 
 async function loadToday(){
-  const [settings, xp, day] = await Promise.all([api('/api/settings'), api('/api/xp'), api('/api/day/today')]);
+  const [settings, xp, day, customHabitsData, invData] = await Promise.all([
+    api('/api/settings'), api('/api/xp'), api('/api/day/today'),
+    api('/api/custom-habits'), api('/api/inventory'),
+  ]);
   state.goal = settings.goal;
   state.today = settings.today;
   state.accentColor = settings.accentColor || '#FFC800';
@@ -1292,11 +1526,16 @@ async function loadToday(){
   state.lang = settings.language || 'fr';
   state.timeFormat = settings.timeFormat || '24h';
   state.soundEnabled = settings.soundEnabled !== false;
+  state.appOpenStreak = settings.appOpenStreak || 0;
   applyAccent(state.accentColor);
   applyTranslations();
   $('#goal-echo').textContent = settings.goal;
   cacheDisplaySnapshot({ goal: settings.goal });
   $('#custom-color-input').value = state.accentColor;
+  if (state.appOpenStreak > 0){
+    $('#app-streak-count').textContent = state.appOpenStreak;
+    $('#app-streak-btn').hidden = false;
+  }
   updateSwatchSelection();
   updateGoalModeUI(settings, xp);
   renderXPBar(xp);
@@ -1308,16 +1547,25 @@ async function loadToday(){
 
   renderDay(day);
   checkEveningReminder(day);
-  maybeShowSundayPhotoPrompt(day);
-  maybeShowDay1PhotoPrompt(day);
   loadMonthlySummary(true);
+  if (state.appOpenStreak > 0){
+    maybeShowStreakIncrementAnim(state.appOpenStreak, state.today).then((played) => {
+      maybeShowSundayPhotoPrompt(day);
+      maybeShowSpecialDayBanner(day);
+      maybeShowDay1PhotoPrompt(day);
+      (day.newlyUnlockedBadges || []).forEach((b) => enqueueCelebration({ type:'badge', badge:b }));
+    });
+  } else {
+    maybeShowSundayPhotoPrompt(day);
+    maybeShowSpecialDayBanner(day);
+    maybeShowDay1PhotoPrompt(day);
+    (day.newlyUnlockedBadges || []).forEach((b) => enqueueCelebration({ type:'badge', badge:b }));
+  }
 
   state.habitOrder = settings.habitOrder || Object.keys(HABIT_META());
-  const customHabitsData = await api('/api/custom-habits');
   state.customHabits = customHabitsData.customHabits || [];
   renderHabitsList(day.habits || {});
 
-  const invData = await api('/api/inventory');
   state.lastInventoryData = invData;
   updateActiveBoostDisplay(invData.activeBoosts, invData.dailyItemEffects);
   invData.mythicItems.forEach((it) => {
@@ -1334,10 +1582,17 @@ async function loadToday(){
 // one-time text-layout cost before the user ever taps that tab.
 async function prewarmOtherViews(){
   if (state.prewarmed) return;
+  // Si l'utilisateur navigue déjà activement (a quitté "Aujourd'hui" avant
+  // que ce délai se déclenche), le préchargement en arrière-plan ne fait
+  // qu'entrer en contention avec sa vraie navigation — inutile de continuer,
+  // chaque page qu'il visite récupère de toute façon ses propres données
+  // fraîches. Évite le ralentissement mesuré (une simple requête pouvant
+  // passer de ~20ms à ~350ms quand plusieurs routes se marchent dessus).
+  if (state.view !== 'today') { state.prewarmed = true; return; }
   state.prewarmed = true;
   const ids = ['view-calendar','view-habits','view-badges','view-settings'];
   try {
-    await Promise.all([loadCalendar(), loadHabits(), loadBadges(), loadRanks()]);
+    await Promise.all([loadCalendar(), loadHabits(true), loadBadges(), loadRanks()]);
   } catch (err) { /* ignore prewarm failures, real navigation will just fetch again */ }
   ids.forEach((id) => $(`#${id}`).classList.add('view-prewarm'));
   requestAnimationFrame(() => {
@@ -1430,6 +1685,7 @@ async function refreshDay(){
   renderDay(day);
   checkEveningReminder(day);
   updateBestdayBanner(day);
+  maybeShowSpecialDayBanner(day);
   return day;
 }
 
@@ -1556,6 +1812,7 @@ function renderNotes(notes, listEl, emptyEl, date, onUpdate){
       if (onUpdate) onUpdate(updated);
     });
     li.querySelector('.note-delete-link').addEventListener('click', async () => {
+      if (!confirm(t('note_delete_confirm'))) return;
       const updated = await api(`/api/notes/${date}/${n.id}`, { method:'DELETE' });
       if (onUpdate) onUpdate(updated);
     });
@@ -1652,7 +1909,8 @@ async function addNote(text){
 // les particularités de police/rendu du navigateur puisqu'elle vérifie le
 // résultat réel à chaque étape plutôt qu'une valeur fixe devinée à l'avance.
 function fitTextToOneLine(containerEl, maxSize, minSize, step){
-  const span = containerEl.querySelector('span');
+  const spans = containerEl.querySelectorAll('span');
+  const span = spans[spans.length - 1];
   if (!span) return;
   const isWrapped = () => {
     const range = document.createRange();
@@ -1665,6 +1923,36 @@ function fitTextToOneLine(containerEl, maxSize, minSize, step){
     size -= step;
     span.style.fontSize = size + 'px';
   }
+}
+
+const SPECIAL_DAY_BADGES = {
+  'cadeau-noel': { name: 'Un gros cadeau pour les pectoraux', desc: '250 push-ups le 25 décembre', icon: '🎄' },
+  'resolution-nouvel-an': { name: 'Résolution du Nouvel An', desc: '100 push-ups le 1er janvier', icon: '🎉' },
+};
+
+function maybeShowSpecialDayBanner(day){
+  const banner = $('#special-day-banner');
+  const info = day.specialDayBadge;
+  if (!info || info.unlocked){
+    banner.hidden = true;
+    return;
+  }
+  const def = SPECIAL_DAY_BADGES[info.id];
+  $('#special-day-banner-icon').textContent = def.icon;
+  $('#special-day-banner-text').textContent = t('special_day_banner_text');
+  banner.hidden = false;
+  fitTextToOneLine(banner, 13.5, 10, 0.5);
+
+  banner.onclick = () => {
+    const tr = translateBadge(info.id, def.name, def.desc);
+    $('#special-day-modal-icon').textContent = def.icon;
+    $('#special-day-modal-title').textContent = tr.name;
+    $('#special-day-modal-desc').textContent = tr.desc;
+    const pct = Math.min(100, Math.round((day.total / info.target) * 100));
+    $('#special-day-progress-value').textContent = `${formatNumber(Math.min(day.total, info.target))} / ${formatNumber(info.target)}`;
+    $('#special-day-progress-fill').style.width = pct + '%';
+    $('#special-day-modal').hidden = false;
+  };
 }
 
 function maybeShowSundayPhotoPrompt(day){
@@ -1804,10 +2092,6 @@ async function loadCalendar(){
     grid.appendChild(cell);
   }
 
-  $('#streak-cannabis-text').innerHTML = t('streak_cannabis', { n: `<span id="streak-cannabis">${streaks.cannabis}</span>` });
-  $('#streak-cafe-text').innerHTML = t('streak_cafe', { n: `<span id="streak-cafe">${streaks.cafe}</span>` });
-  $('#streak-alcool-text').innerHTML = t('streak_alcool', { n: `<span id="streak-alcool">${streaks.alcool}</span>` });
-
   requestAnimationFrame(() => requestAnimationFrame(() => {
     if (myToken !== state.calendarLoadToken) return;
     renderTrendChart(trendData.points);
@@ -1859,38 +2143,111 @@ function renderTrendChart(points){
 }
 
 // ---------- Habits page ----------
-async function loadHabits(){
-  const stats = await api('/api/stats');
+async function loadHabits(isPrewarm){
+  const { stats, personalRecords } = await api('/api/habits-view');
   renderStats(stats);
+  renderPersonalRecordsCards(personalRecords);
+  if (!isPrewarm) playCascade($('#view-habits'));
   loadMonthlySummary(false);
   loadMonthlySummaryMonths();
-  loadPersonalRecords();
 }
 
 function pluralSuffix(n, singularKey, pluralKey){
   return n === 1 ? t(singularKey) : t(pluralKey);
 }
 
-async function loadPersonalRecords(){
-  const r = await api('/api/personal-records');
+const RECORD_BADGE_CHAINS = {
+  bestSet: ['trente-en-un', 'consistance'],
+  bestDay: ['encore-plus', 'journee-chargee'],
+  bestWeek: ['mille-en-cinq', 'deux-mille-en-7'],
+  bestMonth: ['objectif-mensuel'],
+  goldStreak: ['or-streak-5'],
+  platinumStreak: ['mois-brillant'],
+  cannabis: ['clarte', 'clarte90'],
+  cafe: ['decafeine', 'decafeine90'],
+  alcool: ['sans-alcool', 'sans-alcool90'],
+  marche: ['semaine-promenades'],
+};
+
+const RECORD_STREAK_FIELD = {
+  cannabis: 'currentStreakCannabis',
+  cafe: 'currentStreakCafe',
+  alcool: 'currentStreakAlcool',
+  marche: 'currentStreakMarche',
+};
+
+async function openRecordDetail(key){
+  const r = state.lastRecords;
+  if (!r) return;
+  const body = $('#record-detail-body');
+  const titleEl = $('#record-detail-title');
+  titleEl.hidden = key !== 'bestDay';
+
+  if (key === 'bestDay'){
+    titleEl.textContent = t('record_detail_weekday_title');
+    const rows = (r.bestDayByWeekday || []).map((d, idx) => {
+      const dayName = t(`weekday_${idx}`);
+      if (!d.date){
+        return `<div class="stat-row"><span class="stat-label">${dayName}</span><span class="stat-value-number"></span><span class="stat-date-inline">${t('record_none')}</span></div>`;
+      }
+      return `<div class="stat-row"><span class="stat-label">${dayName}</span><span class="stat-value-number">${renderTabularNumber(d.total)}</span><span class="stat-date-inline">(${formatFullDate(d.date)})</span></div>`;
+    }).join('');
+    body.innerHTML = rows;
+  } else if (RECORD_STREAK_FIELD[key]){
+    const current = r[RECORD_STREAK_FIELD[key]] || 0;
+    body.innerHTML = `<div class="ms-empty-note record-detail-streak-text">${t(`record_current_streak_${key}`, { count: current })}</div>`;
+  } else {
+    body.innerHTML = '';
+  }
+
+  const chain = RECORD_BADGE_CHAINS[key] || [];
+  const grid = $('#record-detail-badges-grid');
+  grid.innerHTML = '';
+  if (chain.length){
+    const badgesData = state.lastBadgesData || await fetchBadgesDataDeduped();
+    const badgeList = badgesData.badges || [];
+    const lockedInChain = chain.map((id) => badgeList.find((x) => x.id === id)).filter((b) => b && !b.unlocked);
+    grid.style.gridTemplateColumns = lockedInChain.length <= 1 ? '1fr' : 'repeat(2, 1fr)';
+    if (lockedInChain.length){
+      lockedInChain.forEach((b) => {
+        const card = document.createElement('div');
+        card.className = 'badge-card locked';
+        card.innerHTML = renderBadgeCardHTML(b);
+        grid.appendChild(card);
+      });
+    } else {
+      grid.innerHTML = `<div class="ms-empty-note" style="text-align:center;grid-column:1/-1;">${t('record_detail_all_unlocked')}</div>`;
+    }
+  }
+
+  $('#record-detail-modal').hidden = false;
+}
+
+function renderPersonalRecordsCards(r){
+  state.lastRecords = r;
   const cards = [
-    { icon:'🔥', label:t('record_best_set'), value: r.bestSet ? `${r.bestSet.count}` : null, date: r.bestSet ? formatFullDate(r.bestSet.date) : null },
-    { icon:'📅', label:t('record_best_day'), value: r.bestDay ? `${r.bestDay.total}` : null, date: r.bestDay ? formatFullDate(r.bestDay.date) : null },
-    { icon:'📈', label:t('record_best_week'), value: r.bestWeek ? `${r.bestWeek.total}` : null, date: r.bestWeek ? formatFullDate(r.bestWeek.weekStart) : null },
-    { icon:'🗓️', label:t('record_best_month'), value: r.bestMonth ? `${r.bestMonth.total}` : null, date: r.bestMonth ? fmtMonth(r.bestMonth.monthKey) : null },
-    { icon:'💎', label:t('record_platinum_streak'), value: r.longestPlatinumStreak ? `${r.longestPlatinumStreak} ${pluralSuffix(r.longestPlatinumStreak, 'record_week_singular', 'record_weeks_suffix')}` : null, date: null },
-    { icon:'🚶', label:t('record_streak_marche'), value: r.bestStreakMarche ? `${r.bestStreakMarche} ${pluralSuffix(r.bestStreakMarche, 'record_day_singular', 'record_days_suffix')}` : null, date: null },
-    { icon:'🚭', label:t('record_streak_drugs'), value: r.bestStreakCannabis ? `${r.bestStreakCannabis} ${pluralSuffix(r.bestStreakCannabis, 'record_day_singular', 'record_days_suffix')}` : null, date: null },
-    { icon:'🍺', label:t('record_streak_alcool'), value: r.bestStreakAlcool ? `${r.bestStreakAlcool} ${pluralSuffix(r.bestStreakAlcool, 'record_day_singular', 'record_days_suffix')}` : null, date: null },
+    { key:'bestSet', icon:'💪', label:t('record_best_set'), value: r.bestSet ? `${r.bestSet.count}` : null, date: r.bestSet ? formatFullDate(r.bestSet.date) : null },
+    { key:'bestDay', icon:'📅', label:t('record_best_day'), value: r.bestDay ? `${r.bestDay.total}` : null, date: r.bestDay ? formatFullDate(r.bestDay.date) : null },
+    { key:'bestWeek', icon:'📈', label:t('record_best_week'), value: r.bestWeek ? `${r.bestWeek.total}` : null, date: r.bestWeek ? formatFullDate(r.bestWeek.weekStart) : null },
+    { key:'bestMonth', icon:'🗓️', label:t('record_best_month'), value: r.bestMonth ? `${r.bestMonth.total}` : null, date: r.bestMonth ? fmtMonth(r.bestMonth.monthKey) : null },
+    { key:'goldStreak', icon:'🥇', label:t('record_gold_streak'), value: r.bestGoalStreak ? `${r.bestGoalStreak} ${pluralSuffix(r.bestGoalStreak, 'record_day_singular', 'record_days_suffix')}` : null, date: null },
+    { key:'platinumStreak', icon:'💎', label:t('record_platinum_streak'), value: r.longestPlatinumStreak ? `${r.longestPlatinumStreak} ${pluralSuffix(r.longestPlatinumStreak, 'record_week_singular', 'record_weeks_suffix')}` : null, date: null },
+    { key:'cannabis', icon:'🚭', label:t('record_streak_drugs'), value: r.bestStreakCannabis ? `${r.bestStreakCannabis} ${pluralSuffix(r.bestStreakCannabis, 'record_day_singular', 'record_days_suffix')}` : null, date: null },
+    { key:'cafe', icon:'☕', label:t('record_streak_cafe'), value: r.bestStreakCafe ? `${r.bestStreakCafe} ${pluralSuffix(r.bestStreakCafe, 'record_day_singular', 'record_days_suffix')}` : null, date: null },
+    { key:'alcool', icon:'🍺', label:t('record_streak_alcool'), value: r.bestStreakAlcool ? `${r.bestStreakAlcool} ${pluralSuffix(r.bestStreakAlcool, 'record_day_singular', 'record_days_suffix')}` : null, date: null },
+    { key:'marche', icon:'🚶', label:t('record_streak_marche'), value: r.bestStreakMarche ? `${r.bestStreakMarche} ${pluralSuffix(r.bestStreakMarche, 'record_day_singular', 'record_days_suffix')}` : null, date: null },
   ];
   $('#records-grid').innerHTML = cards.map((c) => `
-    <div class="record-card${c.value ? '' : ' empty'}">
+    <div class="record-card${c.value ? '' : ' empty'}" data-key="${c.key}">
       <div class="record-icon">${c.icon}</div>
       <div class="record-value">${c.value || t('record_none')}</div>
       <div class="record-label">${c.label}</div>
       ${c.date ? `<div class="record-date">${c.date}</div>` : ''}
     </div>
   `).join('');
+  $$('#records-grid .record-card').forEach((el) => {
+    el.addEventListener('click', () => openRecordDetail(el.dataset.key));
+  });
 }
 
 function renderHabitsList(habitState){
@@ -1972,7 +2329,26 @@ async function saveHabit(key, value){
   (day.newlyUnlockedBadges || []).forEach((b) => enqueueCelebration({ type:'badge', badge:b }));
 }
 
+// Empêche le défilement de la page en arrière-plan pendant que la fenêtre de
+// jour est ouverte — overscroll-behavior:contain seul n'est pas fiable sur
+// Safari iOS, donc on verrouille explicitement le body en JS.
+function lockBodyScroll(){
+  state.scrollLockY = window.scrollY;
+  document.body.style.position = 'fixed';
+  document.body.style.top = `-${state.scrollLockY}px`;
+  document.body.style.left = '0';
+  document.body.style.right = '0';
+}
+function unlockBodyScroll(){
+  document.body.style.position = '';
+  document.body.style.top = '';
+  document.body.style.left = '';
+  document.body.style.right = '';
+  window.scrollTo(0, state.scrollLockY || 0);
+}
+
 async function openDayModal(date){
+  lockBodyScroll();
   const day = await api(`/api/day/${date}`);
   const d = new Date(date + 'T00:00:00');
   $('#modal-date').textContent = formatDayHeader(date);
@@ -2293,9 +2669,40 @@ function renderPhotoGrid(photos, date){
   });
 }
 
+function renderBadgeCardHTML(b){
+  const dateLabel = b.unlockedDate ? formatFullDate(b.unlockedDate) : '';
+  const tr = translateBadge(b.id, b.name, b.desc);
+  const descText = tr.desc === null ? t('badge_secret_placeholder') : tr.desc;
+  const isSecretLocked = b.secret && !b.unlocked;
+  const pct = b.progress ? Math.min(100, Math.round((b.progress.current / b.progress.target) * 100)) : null;
+  const progressUnit = b.progress ? (BADGE_PROGRESS_UNIT[b.id] || '') : '';
+  const progressText = b.progress ? `${formatNumber(Math.min(b.progress.current, b.progress.target))} / ${formatNumber(b.progress.target)} ${progressUnit}` : '';
+  return `
+    <div class="badge-icon">${b.unlocked ? b.icon : '🔒'}</div>
+    <div class="badge-name">${tr.name}</div>
+    <div class="badge-desc${b.desc === null ? ' secret-desc' : ''}">${descText}</div>
+    ${isSecretLocked ? '' : `<div class="badge-xp-tag">+${b.xp} XP</div>`}
+    ${b.unlocked ? `<div class="badge-date">${dateLabel}</div>` : ''}
+    ${pct !== null ? `<div class="badge-progress-label">${progressText}</div><div class="badge-progress-track"><div class="badge-progress-fill" style="width:${pct}%"></div></div>` : ''}
+  `;
+}
+
 // ---------- View switching ----------
+// Évite que deux appels concurrents à /api/badges se marchent dessus (ex.
+// le préchargement en arrière-plan d'Historique ET le chargement de la page
+// Badges elle-même, qui peuvent se déclencher au même moment pendant le
+// préchauffage de l'app) — le second appelant réutilise simplement la même
+// requête déjà en vol plutôt que d'en déclencher une redondante.
+let _badgesFetchPromise = null;
+function fetchBadgesDataDeduped(){
+  if (_badgesFetchPromise) return _badgesFetchPromise;
+  _badgesFetchPromise = api('/api/badges').finally(() => { _badgesFetchPromise = null; });
+  return _badgesFetchPromise;
+}
+
 async function loadBadges(){
-  const data = await api('/api/badges');
+  const data = await fetchBadgesDataDeduped();
+  state.lastBadgesData = data;
   const unlocked = data.badges.filter((b) => b.unlocked);
   const locked = data.badges.filter((b) => !b.unlocked).sort((a, b) => (a.secret ? 1 : 0) - (b.secret ? 1 : 0));
 
@@ -2307,18 +2714,7 @@ async function loadBadges(){
     list.forEach((b) => {
       const card = document.createElement('div');
       card.className = 'badge-card' + (b.unlocked ? '' : ' locked');
-      const dateLabel = b.unlockedDate ? formatFullDate(b.unlockedDate) : '';
-      const tr = translateBadge(b.id, b.name, b.desc);
-      const descText = tr.desc === null ? t('badge_secret_placeholder') : tr.desc;
-      const pct = b.progress ? Math.min(100, Math.round((b.progress.current / b.progress.target) * 100)) : null;
-      card.innerHTML = `
-        <div class="badge-icon">${b.unlocked ? b.icon : '🔒'}</div>
-        <div class="badge-name">${tr.name}</div>
-        <div class="badge-desc${b.desc === null ? ' secret-desc' : ''}">${descText}</div>
-        <div class="badge-xp-tag">+${b.xp} XP</div>
-        ${b.unlocked ? `<div class="badge-date">${dateLabel}</div>` : ''}
-        ${pct !== null ? `<div class="badge-progress-track"><div class="badge-progress-fill" style="width:${pct}%"></div></div>` : ''}
-      `;
+      card.innerHTML = renderBadgeCardHTML(b);
       gridEl.appendChild(card);
     });
   };
@@ -2330,13 +2726,19 @@ async function loadBadges(){
 }
 
 const BADGE_PROGRESS_UNIT = {
-  'rank-discipline': 'XP', 'rank-pro': 'XP', 'rank-elite': 'XP', 'rank-legende': 'XP',
-  'rank-imbattable': 'XP', 'rank-immortel': 'XP', 'rank-divin': 'XP',
+  'rank-discipline': 'XP', 'rank-determine': 'XP', 'rank-expert': 'XP', 'rank-pro': 'XP',
+  'rank-maitre': 'XP', 'rank-elite': 'XP', 'rank-champion': 'XP', 'rank-legende': 'XP',
+  'rank-imbattable': 'XP', 'rank-invincible': 'XP', 'rank-immortel': 'XP', 'rank-divin': 'XP',
   'or-streak-5': 'jours', 'mois-brillant': 'semaines',
   'decafeine': 'jours', 'sans-alcool': 'jours', 'clarte': 'jours', 'go-abdo': 'jours',
-  'consistance': 'push-ups', 'trente-en-un': 'push-ups', 'encore-plus': 'push-ups',
+  'consistance': 'push-ups', 'trente-en-un': 'push-ups', 'encore-plus': 'push-ups', 'journee-chargee': 'push-ups',
   'objectif-mensuel': 'push-ups', 'over-9000': 'push-ups', 'mille-en-cinq': 'push-ups',
   'force-tot': 'push-ups', 'oiseau-nuit': 'push-ups', 'soiree-motivante': 'push-ups',
+  'decafeine90': 'jours', 'sans-alcool90': 'jours', 'clarte90': 'jours',
+  'deux-mille-en-7': 'push-ups', 'album-complet': 'photos',
+  'je-note-encore': 'notes', 'je-note-encore-plus': 'notes', 'je-note-toujours-plus': 'notes',
+  'fidele-au-poste': 'jours', 'six-mois': 'jours', 'un-an': 'jours', 'la-totale': 'fois',
+  'bonne-habitude': 'jours', 'toujours-fidele': 'jours',
 };
 
 function updateNudgeCard(locked){
@@ -2365,6 +2767,15 @@ function updateNudgeCard(locked){
 function formatShortDate(dateStr){
   const d = new Date(dateStr + 'T00:00:00');
   return `${d.getDate()} ${MONTH_NAMES()[d.getMonth()].slice(0,3)} ${d.getFullYear()}`;
+}
+
+// Enveloppe chaque chiffre dans sa propre case de largeur fixe — garantit un
+// alignement parfait en colonne peu importe si la police (Manrope) supporte
+// ou non la fonctionnalité OpenType "tabular-nums". Plus robuste qu'une
+// dépendance à une fonctionnalité de police qui peut ne pas être supportée
+// sur certains navigateurs/appareils.
+function renderTabularNumber(num){
+  return String(num).split('').map((ch) => `<span class="tabular-digit">${ch}</span>`).join('');
 }
 
 function formatFullDate(dateStr){
@@ -2407,20 +2818,35 @@ function switchView(view){
     window.scrollTo(0, 0);
     return;
   }
+  // Toute vraie navigation de l'utilisateur annule le préchargement en
+  // arrière-plan, peu importe s'il n'a pas encore démarré ou est déjà en
+  // vol — évite qu'il entre en contention avec cette vraie requête.
+  state.prewarmed = true;
   state.view = view;
   window.scrollTo(0, 0);
+  // Mettre l'arc-en-ciel en pause brièvement pendant la transition — évite
+  // que ses coups d'horloge (toutes les 120ms) entrent en contention avec le
+  // rendu de la nouvelle page (surtout Badges, qui construit ~37 cartes).
+  // Reprend automatiquement une fois la page installée si toujours actif.
+  const rainbowWasRunning = !!_rainbowInterval;
+  if (rainbowWasRunning){ clearInterval(_rainbowInterval); _rainbowInterval = null; }
   $('#view-today').hidden = view !== 'today';
   $('#view-calendar').hidden = view !== 'calendar';
   $('#view-habits').hidden = view !== 'habits';
   $('#view-badges').hidden = view !== 'badges';
   $('#view-settings').hidden = view !== 'settings';
   $$('.tab').forEach((t) => t.classList.toggle('active', t.dataset.view === view));
-  playCascade($(`#view-${view}`));
+  if (view !== 'habits') playCascade($(`#view-${view}`));
   if (view === 'calendar') loadCalendar();
   if (view === 'habits') loadHabits();
   if (view === 'today') updateActiveBoostDisplay();
   if (view === 'badges') loadBadges();
   if (view === 'settings') loadRanks();
+  if (rainbowWasRunning){
+    setTimeout(() => {
+      if (state.mythicActive && state.mythicActive.mode_arcenciel) startRainbowMode();
+    }, 500);
+  }
 }
 
 const XP_LOG_REASON_ICONS = {
@@ -2467,6 +2893,10 @@ async function loadXPLog(){
 
 function openInventory(){
   $('#inventory-modal').hidden = false;
+  $('#inventory-pager').scrollLeft = 0;
+  $$('#inventory-page-dots .page-dot').forEach((d, i) => d.classList.toggle('active', i === 0));
+  $('#inventory-header-icon').src = 'icons/inventory-icon-medium.png';
+  $('#inventory-header-title').textContent = t('inventory_title');
   loadInventory();
 }
 function closeInventory(){
@@ -2554,6 +2984,7 @@ function applyMythicCosmetic(itemId, active){
   if (itemId === 'toucher_divin'){
     $('#ring-wrap').classList.toggle('divine-halo-active', !!active);
     $('.xp-card').classList.toggle('aura-active', !!active);
+    $('.xp-bar-wrap').classList.toggle('divine-halo-active', !!active);
     if (!active && !(state.mythicActive && state.mythicActive.mode_arcenciel) && state.ringGoal !== undefined) {
       updateRing(state.ringTotal, state.ringGoal, state.ringTrophy);
     }
@@ -2715,6 +3146,7 @@ function openUseItemPicker(itemId, instanceId, rarity){
         <button type="button" class="mode-btn" data-key="cannabis">${t('use_item_talisman_cannabis')}</button>
         <button type="button" class="mode-btn" data-key="cafe">${t('use_item_talisman_cafe')}</button>
         <button type="button" class="mode-btn" data-key="marche">${t('use_item_talisman_marche')}</button>
+        <button type="button" class="mode-btn" data-key="alcool">${t('use_item_talisman_alcool')}</button>
       </div>
     `;
     $('#use-item-icon').textContent = ITEM_META[itemId].icon;
@@ -2936,11 +3368,23 @@ function init(){
   $$('.qbtn[data-add]').forEach((b) => {
     b.addEventListener('click', () => addReps(parseInt(b.dataset.add,10)));
   });
-  $('#custom-form').addEventListener('submit', (e) => {
+  $('#custom-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     const input = $('#custom-count');
-    addReps(parseInt(input.value,10));
-    input.value = '';
+    const count = parseInt(input.value,10);
+    if (!count || count <= 0) return;
+    if (count > 120){
+      const ok = confirm(t('confirm_high_count', { count }));
+      if (!ok) return;
+    }
+    try {
+      await addReps(count);
+      input.value = '';
+    } catch (err) {
+      if (String(err && err.message || err).includes('objectif_trop_eleve')){
+        alert(t('error_count_too_high'));
+      }
+    }
   });
   $('#undo-btn').addEventListener('click', undoLast);
 
@@ -2967,6 +3411,7 @@ function init(){
       if (e.target !== backdrop) return;
       const closeBtn = backdrop.querySelector('.modal-close');
       if (closeBtn) closeBtn.click();
+      else backdrop.hidden = true;
     });
   });
   $('#mood-picker-confirm').addEventListener('click', () => {
@@ -3015,7 +3460,7 @@ function init(){
     loadCalendar();
   });
 
-  $('#day-modal-close').addEventListener('click', () => { $('#day-modal').hidden = true; });
+  $('#day-modal-close').addEventListener('click', () => { $('#day-modal').hidden = true; unlockBodyScroll(); });
   $('#active-item-detail-close-x').addEventListener('click', () => { $('#active-item-detail-modal').hidden = true; });
   $('#trophy-modal-close-x').addEventListener('click', () => dismissCelebration('#trophy-modal'));
   $('#rankup-modal-close-x').addEventListener('click', () => dismissCelebration('#rankup-modal'));
@@ -3041,7 +3486,7 @@ function init(){
     $('#monthly-summary-modal').hidden = true;
     try { await api('/api/monthly-summary/acknowledge', { method:'POST' }); } catch (err) { /* ignore */ }
   });
-  $('#day-modal').addEventListener('click', (e) => { if (e.target.id === 'day-modal') $('#day-modal').hidden = true; });
+  $('#day-modal').addEventListener('click', (e) => { if (e.target.id === 'day-modal') { $('#day-modal').hidden = true; unlockBodyScroll(); } });
 
   $('#trophy-ok').addEventListener('click', () => dismissCelebration('#trophy-modal'));
   $('#rankup-ok').addEventListener('click', () => dismissCelebration('#rankup-modal'));
@@ -3061,10 +3506,49 @@ function init(){
   $('#item-detail-use-btn').addEventListener('click', confirmUseSelectedItem);
   $('#plume-max-ok').addEventListener('click', () => { $('#plume-max-modal').hidden = true; });
   $('#inventory-header-btn').addEventListener('click', openInventory);
+
+  const APP_STREAK_TIERS = [
+    { days: 7, id: 'bonne-habitude', name: 'Bonne habitude!' },
+    { days: 30, id: 'fidele-au-poste', name: 'Fidèle au poste' },
+    { days: 100, id: 'toujours-fidele', name: 'Toujours fidèle!' },
+  ];
+  $('#app-streak-btn').addEventListener('click', async () => {
+    const current = state.appOpenStreak || 0;
+    $('#app-streak-current-value').textContent = current;
+    const next = APP_STREAK_TIERS.find((tier) => current < tier.days);
+    const grid = $('#app-streak-badge-grid');
+    grid.innerHTML = '';
+    if (next){
+      const badgesData = state.lastBadgesData || await fetchBadgesDataDeduped();
+      const b = (badgesData.badges || []).find((x) => x.id === next.id);
+      if (b){
+        grid.style.gridTemplateColumns = '1fr';
+        const card = document.createElement('div');
+        card.className = 'badge-card locked';
+        card.innerHTML = renderBadgeCardHTML(b);
+        grid.appendChild(card);
+      }
+    } else {
+      grid.innerHTML = `<div class="ms-empty-note" style="text-align:center;">${t('app_streak_maxed_note')}</div>`;
+    }
+    $('#app-streak-modal').hidden = false;
+  });
+  const closeSpecialDay = () => { $('#special-day-modal').hidden = true; };
+  $('#special-day-close-x').addEventListener('click', closeSpecialDay);
+  $('#special-day-go-btn').addEventListener('click', closeSpecialDay);
+  const closeAppStreak = () => { $('#app-streak-modal').hidden = true; };
+  $('#app-streak-close-x').addEventListener('click', closeAppStreak);
   $('#app-wordmark').addEventListener('click', () => {
     if (state.echoDoreActive) playEchoDoreMelody();
   });
-  $('#inventory-back-btn').addEventListener('click', closeInventory);
+  const inventoryPager = $('#inventory-pager');
+  const inventoryDots = $$('#inventory-page-dots .page-dot');
+  inventoryPager.addEventListener('scroll', () => {
+    const idx = Math.round(inventoryPager.scrollLeft / inventoryPager.clientWidth);
+    inventoryDots.forEach((d, i) => d.classList.toggle('active', i === idx));
+    $('#inventory-header-icon').src = idx === 1 ? 'icons/inventory-mythic-icon-medium.png' : 'icons/inventory-icon-medium.png';
+    $('#inventory-header-title').textContent = t(idx === 1 ? 'inventory_mythic_title' : 'inventory_title');
+  });
   $('#inventory-close-x').addEventListener('click', closeInventory);
 
   let itemOddsIsMythic = false;
@@ -3091,6 +3575,14 @@ function init(){
       const tr = t(`item_name_${it.id}`);
       const pct = Math.round(it.chance * 1000) / 10;
       return `<div class="item-odds-detail-row"><span class="item-odds-detail-name">${tr} (${t('rarity_' + it.rarity)})</span><span class="item-odds-detail-value">${pct}%</span></div>`;
+    }).join('');
+  }
+
+  function renderDetecteurBreakdown(detecteurBreakdown){
+    const el = $('#item-odds-detecteur-list');
+    el.innerHTML = detecteurBreakdown.map((d) => {
+      const pct = Math.round(d.chance * 1000) / 10;
+      return `<div class="item-odds-detail-row"><span class="item-odds-detail-name">${t('item_odds_detecteur_label')} (${t('rarity_' + d.rarity)})</span><span class="item-odds-detail-value">${pct}%</span></div>`;
     }).join('');
   }
 
@@ -3130,6 +3622,7 @@ function init(){
     } else {
       renderRarityBars(data.rarityBreakdown);
       renderPerItemDetails(data.perItem);
+      renderDetecteurBreakdown(data.detecteurBreakdown);
       $('#item-odds-detecteur-value').textContent = Math.round(data.detecteurChance * 1000) / 10 + '%';
       $('#item-odds-radar-value').textContent = Math.round(data.radarChance * 1000) / 10 + '%';
     }
@@ -3143,19 +3636,27 @@ function init(){
     $('#item-odds-mythic-block').hidden = !isMythic;
     $('#item-odds-other-row').hidden = isMythic;
     $('#item-odds-details-list').hidden = true;
+    $('#item-odds-detecteur-subtitle').hidden = true;
+    $('#item-odds-detecteur-list').hidden = true;
+    $('#item-odds-independent-note').hidden = true;
     $('#item-odds-details-chevron').classList.remove('is-expanded');
     $('#item-odds-modal').hidden = false;
     refreshItemOdds();
   }
 
-  $('#item-odds-trigger').addEventListener('click', () => openItemOddsModal(false));
-  $('#mythic-odds-trigger').addEventListener('click', () => openItemOddsModal(true));
+  $('#inventory-header-icon').addEventListener('click', () => {
+    const idx = Math.round(inventoryPager.scrollLeft / inventoryPager.clientWidth);
+    openItemOddsModal(idx === 1);
+  });
   $('#item-odds-slider').addEventListener('input', refreshItemOdds);
   $('#item-odds-details-toggle').addEventListener('click', () => {
     const list = $('#item-odds-details-list');
     const chevron = $('#item-odds-details-chevron');
     list.hidden = !list.hidden;
     chevron.classList.toggle('is-expanded', !list.hidden);
+    $('#item-odds-detecteur-subtitle').hidden = list.hidden;
+    $('#item-odds-detecteur-list').hidden = list.hidden;
+    $('#item-odds-independent-note').hidden = list.hidden;
   });
   const closeItemOdds = () => { $('#item-odds-modal').hidden = true; };
   $('#item-odds-back-btn').addEventListener('click', closeItemOdds);
@@ -3168,16 +3669,22 @@ function init(){
   $('#xp-log-close-x').addEventListener('click', () => { $('#xp-log-modal').hidden = true; });
   $('#xp-log-back-btn').addEventListener('click', () => { $('#xp-log-modal').hidden = true; });
 
-  const setupBadgesSectionToggle = (toggleId, chevronId, gridId) => {
+  const setupBadgesSectionToggle = (toggleId, chevronId, gridId, storageKey) => {
+    const grid = $(gridId);
+    if (localStorage.getItem(storageKey) === 'true'){
+      grid.hidden = true;
+      $(chevronId).classList.remove('is-expanded');
+      $(toggleId).closest('.card').classList.add('is-collapsed');
+    }
     $(toggleId).addEventListener('click', () => {
-      const grid = $(gridId);
       grid.hidden = !grid.hidden;
       $(chevronId).classList.toggle('is-expanded', !grid.hidden);
       $(toggleId).closest('.card').classList.toggle('is-collapsed', grid.hidden);
+      localStorage.setItem(storageKey, String(grid.hidden));
     });
   };
-  setupBadgesSectionToggle('#badges-unlocked-toggle', '#badges-unlocked-chevron', '#badges-grid-unlocked');
-  setupBadgesSectionToggle('#badges-locked-toggle', '#badges-locked-chevron', '#badges-grid-locked');
+  setupBadgesSectionToggle('#badges-unlocked-toggle', '#badges-unlocked-chevron', '#badges-grid-unlocked', 'trackpush_badges_unlocked_collapsed');
+  setupBadgesSectionToggle('#badges-locked-toggle', '#badges-locked-chevron', '#badges-grid-locked', 'trackpush_badges_locked_collapsed');
 
   $('#ms-modal-close').addEventListener('click', async () => {
     $('#monthly-summary-modal').hidden = true;
@@ -3189,6 +3696,7 @@ function init(){
     if (e.target.files[0]){
       await uploadPhoto(e.target.files[0], state.today);
       $('#photo-modal').hidden = true;
+      $('#sunday-photo-banner').hidden = true;
     }
   });
   $('#cal-camera-input').addEventListener('change', async (e) => {
@@ -3205,6 +3713,7 @@ function init(){
         await uploadPhoto(file, state.today);
       }
       $('#photo-modal').hidden = true;
+      $('#sunday-photo-banner').hidden = true;
     }
   });
   $('#day1-photo-camera-input').addEventListener('change', async (e) => {

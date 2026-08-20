@@ -64,11 +64,16 @@ body{
    restarts the animation each time a page becomes visible. */
 .topbar{opacity:0;}
 .view > .card{opacity:0;}
+.view > .nudge-card{opacity:0;}
 body.app-ready .topbar{
   animation:app-fade-in-topbar 0.45s cubic-bezier(.16,.8,.3,1) forwards;
 }
-.view.cascade-play > .card{
+.view.cascade-play > .nudge-card{
   animation:app-fade-in-card 0.55s cubic-bezier(.16,.8,.3,1) forwards;
+  animation-delay:0.05s;
+}
+.view.cascade-play > .card{
+  animation:app-fade-in-card 0.4s cubic-bezier(.16,.8,.3,1) forwards;
 }
 .view.cascade-play > .card:nth-of-type(1){animation-delay:0.05s;}
 .view.cascade-play > .card:nth-of-type(2){animation-delay:0.13s;}
@@ -79,11 +84,11 @@ body.app-ready .topbar{
 .view.cascade-play > .card:nth-of-type(7){animation-delay:0.53s;}
 .view.cascade-play > .card:nth-of-type(8){animation-delay:0.61s;}
 
-/* Calendar: few but large cards — the default pace makes each one
-   feel like it's crawling in given its size, so both the duration
-   and the stagger are tightened up. */
+/* Calendar: few but large cards — le décalage entre cartes est resserré
+   pour que ça ne traîne pas, mais la DURÉE de transition reste la même
+   partout (0.4s) pour un effet cohérent d'une page à l'autre. */
 #view-calendar.cascade-play > .card{
-  animation-duration:0.35s;
+  animation-duration:0.4s;
 }
 #view-calendar.cascade-play > .card:nth-of-type(1){animation-delay:0.02s;}
 #view-calendar.cascade-play > .card:nth-of-type(2){animation-delay:0.07s;}
@@ -105,13 +110,29 @@ body.app-ready .topbar{
 #view-settings.cascade-play > .card:nth-of-type(7){animation-delay:0.26s;}
 #view-settings.cascade-play > .card:nth-of-type(8){animation-delay:0.30s;}
 
-/* Historique: only 3 cards, so the generic per-step delay finishes the
-   whole cascade in barely 160ms — noticeably quicker and less visible
-   than pages with more cards. Spread the same 3 steps out further so
-   the reveal feels just as deliberate as everywhere else. */
-#view-habits.cascade-play > .card:nth-of-type(1){animation-delay:0.05s;}
-#view-habits.cascade-play > .card:nth-of-type(2){animation-delay:0.20s;}
-#view-habits.cascade-play > .card:nth-of-type(3){animation-delay:0.35s;}
+/* Historique: 3 cards, mais leur contenu a grossi depuis le réglage
+   d'origine (records personnels + statistiques étendues) — délais
+   resserrés pour compenser le peu de cartes, DURÉE alignée avec les
+   autres pages (0.4s) pour un effet vraiment cohérent partout. */
+#view-habits.cascade-play > .card{
+  animation-duration:0.4s;
+}
+#view-habits.cascade-play > .card:nth-of-type(1){animation-delay:0.02s;}
+#view-habits.cascade-play > .card:nth-of-type(2){animation-delay:0.09s;}
+#view-habits.cascade-play > .card:nth-of-type(3){animation-delay:0.16s;}
+
+/* Badges: n'avait jamais eu son propre réglage, restait donc sur la
+   durée générique (0.55s) — décalée par rapport aux autres pages
+   resserrées cette session. Alignée à 0.4s comme partout ailleurs,
+   délais adaptés à ses 2-3 blocs (presque là/débloqués/non débloqués). */
+#view-badges.cascade-play > .card{
+  animation-duration:0.4s;
+}
+#view-badges.cascade-play > .nudge-card{
+  animation-duration:0.4s;
+}
+#view-badges.cascade-play > .card:nth-of-type(1){animation-delay:0.05s;}
+#view-badges.cascade-play > .card:nth-of-type(2){animation-delay:0.13s;}
 @keyframes app-fade-in-topbar{
   from{opacity:0;transform:translateY(-6px);}
   to{opacity:1;transform:translateY(0);}
@@ -281,12 +302,12 @@ body.echo-dore-active .wordmark:active{opacity:0.75;}
 /* ---------- Quick add ---------- */
 .quickadd-title,.section-title,.modal-label{
   font-family:'Manrope',sans-serif;font-weight:600;font-size:12px;
-  letter-spacing:1.5px;color:var(--text-muted);margin-bottom:12px;
+  letter-spacing:1.5px;color:var(--text-muted);margin-bottom:12px;margin-top:-5px;
 }
 .quickadd-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:12px;}
 .badges-section-toggle{
   display:flex;justify-content:flex-start;align-items:center;gap:8px;width:100%;
-  background:none;border:none;padding:0;margin:0;cursor:pointer;text-align:left;
+  background:none;border:none;padding:0;margin:-5px 0 0 0;cursor:pointer;text-align:left;
   -webkit-appearance:none;appearance:none;font:inherit;line-height:normal;
 }
 .badges-section-toggle .section-title{margin:0;line-height:normal;}
@@ -514,10 +535,13 @@ body.calendrier-celeste-active .cal-day.tr-or{
 .modal-note{background:var(--surface);border-radius:10px;padding:12px;font-size:14px;line-height:1.5;margin-bottom:14px;white-space:pre-wrap;}
 
 /* Trophy celebration modal */
-.trophy-modal{text-align:center;align-items:center;display:flex;flex-direction:column;border-radius:22px;margin:auto;}
+.trophy-modal{text-align:center;align-items:center;display:flex;flex-direction:column;border-radius:22px;margin:auto;padding-top:52px;}
+.record-detail-modal-inner{padding-top:26px;}
 .trophy-big{font-size:72px;margin-bottom:6px;animation:trophy-pop 0.6s cubic-bezier(.2,.8,.3,1.4);}
 @keyframes trophy-pop{0%{transform:scale(0) rotate(-15deg);}70%{transform:scale(1.15) rotate(4deg);}100%{transform:scale(1) rotate(0);}}
 .trophy-title{font-family:'Manrope',sans-serif;font-weight:700;font-size:22px;letter-spacing:1px;margin-bottom:6px;text-align:center;}
+.info-modal-title{font-family:'Manrope',sans-serif;font-weight:600;font-size:17px;color:var(--text);margin-bottom:6px;text-align:center;}
+.day-modal-inner{border-radius:22px;}
 .trophy-desc{color:var(--text-muted);font-size:14px;margin-bottom:20px;text-align:center;}
 #trophy-ok{width:100%;}
 #inventory-back-btn,#item-odds-back-btn{width:100%;}
@@ -529,6 +553,34 @@ body.calendrier-celeste-active .cal-day.tr-or{
 
 /* Confetti layer */
 #confetti-layer{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:90;}
+
+#streak-anim-dimmer{
+  position:fixed;inset:0;background:rgba(0,0,0,0);pointer-events:none;
+  transition:background 0.35s ease;z-index:94;
+}
+#streak-anim-overlay{
+  position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  z-index:95;opacity:0;pointer-events:none;
+}
+#streak-anim-flame{
+  font-size:110px;transform:scale(0);
+  filter:drop-shadow(0 0 34px rgba(var(--fire-r),var(--fire-g),var(--fire-b),0.75));
+}
+#streak-anim-digits{display:flex;margin-top:8px;height:100px;}
+.streak-anim-col{position:relative;width:54px;height:100px;overflow:hidden;}
+.streak-anim-digit{
+  position:absolute;left:0;top:0;width:100%;height:100%;
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Manrope',sans-serif;font-size:80px;font-weight:800;color:var(--fire);
+}
+#streak-anim-label{
+  margin-top:6px;font-family:'Manrope',sans-serif;font-size:15px;
+  color:var(--text-muted);letter-spacing:0.5px;opacity:0;transition:opacity 0.3s ease;
+}
+.streak-anim-ember{
+  position:fixed;border-radius:50%;background:var(--fire);opacity:0;
+  pointer-events:none;z-index:96;
+}
 .confetti-piece{
   position:absolute;top:-20px;width:8px;height:14px;opacity:0.95;
   animation:confetti-fall linear forwards;
@@ -695,6 +747,12 @@ body.calendrier-celeste-active .cal-day.tr-or{
 .ms-delta-down{color:#FF5A5A;font-size:12px;margin-left:6px;}
 .ms-delta-same{color:var(--text-muted);font-size:12px;margin-left:6px;}
 .ms-empty-note{font-size:13px;color:var(--text-muted);font-style:italic;}
+.record-detail-streak-text{font-size:16px;color:var(--text);font-style:normal;text-align:center;font-weight:600;margin:14px 0 4px;padding:0 24px;}
+.record-detail-badge-name{font-family:'Manrope',sans-serif;font-size:14px;color:var(--text-muted);text-align:center;margin-top:6px;}
+.record-detail-badge-value{font-family:'Manrope',sans-serif;font-weight:700;font-size:19px;color:var(--fire);text-align:center;margin:4px 0 10px;}
+.stat-date-inline{color:var(--text-muted);font-weight:400;font-size:12px;}
+.stat-value-number{display:inline-block;text-align:right;min-width:33px;}
+.tabular-digit{display:inline-block;width:11px;text-align:center;}
 .sync-status-row{flex-direction:column;align-items:flex-start;gap:4px;}
 .sync-status-row .ms-stat-value{text-align:left;}
 #sync-now-btn{width:100%;margin:10px 0 8px;}
@@ -762,6 +820,17 @@ body.calendrier-celeste-active .cal-day.tr-or{
 .stat-row:last-child{border-bottom:none;}
 .stat-label{font-size:14px;color:var(--text-muted);}
 .stat-value{font-family:'Manrope',sans-serif;font-weight:600;font-size:18px;color:var(--fire);}
+
+/* Détail par jour de semaine (Meilleure journée) : grille à 3 colonnes
+   distinctes plutôt que le flex générique ci-dessus — la date (largeur
+   variable selon 1 ou 2 chiffres pour le jour du mois) ne doit JAMAIS
+   pouvoir décaler la position du nombre de push-ups. Scopé à ce contexte
+   précis pour ne pas affecter les autres usages de .stat-row (ex. carte
+   Statistiques). */
+#record-detail-body .stat-row{
+  display:grid;grid-template-columns:1fr auto 112px;align-items:center;gap:8px;
+}
+#record-detail-body .stat-value-number{font-family:'Manrope',sans-serif;font-weight:600;font-size:18px;color:var(--fire);}
 
 .build-tag{
   text-align:center;color:var(--text-muted);font-size:11px;
@@ -842,11 +911,11 @@ body.calendrier-celeste-active .cal-day.tr-or{
 .active-item-timer-value{font-size:22px;font-weight:700;color:var(--corner-color, var(--text));font-variant-numeric:tabular-nums;font-family:'Manrope',sans-serif;}
 
 #ring-wrap.divine-halo-active .ring{
-  animation:ring-divine-halo 2.6s ease-in-out infinite;
+  animation:ring-divine-halo 3.6s ease-in-out infinite;
 }
 @keyframes ring-divine-halo{
-  0%,100%{filter:drop-shadow(0 0 6px rgba(245,185,66,0.45));}
-  50%{filter:drop-shadow(0 0 18px rgba(255,215,120,0.9));}
+  0%,100%{filter:drop-shadow(0 0 4px rgba(245,185,66,0.4));}
+  50%{filter:drop-shadow(0 0 10px rgba(255,215,120,0.75));}
 }
 .xp-card.aura-active{
   animation:xp-card-aura 2.6s ease-in-out infinite;
@@ -854,6 +923,25 @@ body.calendrier-celeste-active .cal-day.tr-or{
 @keyframes xp-card-aura{
   0%,100%{box-shadow:0 0 6px rgba(245,185,66,0.25);border-color:rgba(245,185,66,0.4);}
   50%{box-shadow:0 0 18px rgba(245,185,66,0.6);border-color:rgba(255,215,120,0.9);}
+}
+.xp-bar-wrap.divine-halo-active{
+  animation:xp-bar-divine-halo 3.6s ease-in-out infinite;
+  border-radius:6px;
+}
+@keyframes xp-bar-divine-halo{
+  0%,100%{box-shadow:0 0 4px rgba(245,185,66,0.4);}
+  50%{box-shadow:0 0 10px rgba(255,215,120,0.75);}
+}
+.platinum-stars{position:absolute;inset:0;pointer-events:none;}
+.platinum-stars[hidden]{display:none;}
+.platinum-star{
+  position:absolute;font-size:15px;transform:translate(-50%,-50%);
+  opacity:0;animation:platinum-star-twinkle 5.5s ease-in-out infinite;
+  filter:drop-shadow(0 0 3px rgba(231,243,255,0.8));
+}
+@keyframes platinum-star-twinkle{
+  0%,100%{opacity:0;transform:translate(-50%,-50%) scale(0.6);}
+  50%{opacity:0.9;transform:translate(-50%,-50%) scale(1);}
 }
 
 .inventory-grid{
@@ -893,13 +981,30 @@ body.calendrier-celeste-active .cal-day.tr-or{
   100%{background-position:100% 50%;}
 }
 
-.inventory-header-btn-img{padding:2px 8px;}
+.inventory-header-btn-img{
+  height:40px;width:40px;padding:0;
+  display:flex;align-items:center;justify-content:center;
+  border:1.5px solid rgba(var(--fire-r),var(--fire-g),var(--fire-b),0.5);
+  box-shadow:0 0 8px rgba(var(--fire-r),var(--fire-g),var(--fire-b),0.3);
+  box-sizing:border-box;
+}
+.topbar-icons{display:flex;align-items:center;gap:10px;}
+.app-streak-btn{
+  display:flex;align-items:center;justify-content:center;gap:4px;
+  background:var(--steel-dim);color:var(--fire);
+  border:1.5px solid rgba(255,255,255,0.08);border-radius:999px;
+  height:34px;padding:0 11px;font-family:'Manrope',sans-serif;font-weight:700;font-size:13px;
+  cursor:pointer;box-sizing:border-box;line-height:1;
+}
+.app-streak-btn[hidden]{display:none;}
 .inventory-header-btn-img img{width:28px;height:28px;display:block;object-fit:contain;}
 
 .inventory-section-icon{
   display:block;width:72px;height:72px;object-fit:contain;
   margin:0 auto 4px;filter:drop-shadow(0 2px 8px rgba(0,0,0,0.4));
 }
+.inventory-page .section-title{text-align:center;margin-top:0;margin-bottom:14px;}
+#inventory-header-title{text-align:center;margin-top:0;margin-bottom:14px;}
 
 
 .inventory-modal-inner{
@@ -908,6 +1013,16 @@ body.calendrier-celeste-active .cal-day.tr-or{
   border-radius:22px;
 }
 #inventory-modal{align-items:center;}
+.inventory-pager{
+  display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scroll-snap-stop:always;
+  -webkit-overflow-scrolling:touch;overscroll-behavior-x:contain;width:100%;
+  scrollbar-width:none;-ms-overflow-style:none;
+}
+.inventory-pager::-webkit-scrollbar{display:none;height:0;}
+.inventory-page{flex:0 0 100%;min-width:0;scroll-snap-align:start;}
+.inventory-page-dots{display:flex;justify-content:center;gap:8px;margin-top:16px;}
+.page-dot{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,0.2);transition:background 0.2s,transform 0.2s;flex:none;}
+.page-dot.active{background:var(--fire);transform:scale(1.3);}
 .inventory-odds-trigger{cursor:pointer;}
 
 .item-odds-modal-inner{border-radius:22px;}
@@ -918,7 +1033,7 @@ body.calendrier-celeste-active .cal-day.tr-or{
 .item-odds-slider-label{text-align:center;font-family:'Manrope',sans-serif;font-size:13px;color:var(--text-muted);margin-top:4px;}
 .item-odds-headline{
   background:rgba(255,255,255,0.04);border-radius:14px;padding:14px 16px;
-  display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;
+  display:flex;justify-content:space-between;align-items:center;gap:14px;margin-bottom:16px;
 }
 .item-odds-headline-label{font-family:'Manrope',sans-serif;font-size:13.5px;color:var(--text-muted);}
 .item-odds-headline-value{font-family:'Manrope',sans-serif;font-weight:700;font-size:20px;color:var(--fire);}
@@ -1045,6 +1160,7 @@ body.calendrier-celeste-active .cal-day.tr-or{
   display:flex;align-items:center;gap:8px;
 }
 .evening-banner span{flex:1;min-width:0;}
+#special-day-banner-icon{flex:none !important;min-width:auto !important;}
 .evening-banner[hidden]{display:none;}
 .sunday-photo-banner{
   width:calc(100% - 32px);border:1px solid rgba(var(--fire-r),var(--fire-g),var(--fire-b),0.4);cursor:pointer;
@@ -1116,7 +1232,8 @@ body.calendrier-celeste-active .cal-day.tr-or{
 }
 .badge-card.locked .badge-xp-tag{color:var(--text-muted);}
 .badge-date{font-size:9.5px;color:var(--text-muted);}
-.badge-progress-track{background:rgba(255,255,255,0.08);border-radius:5px;height:5px;overflow:hidden;margin-top:8px;width:100%;}
+.badge-progress-label{font-family:'Manrope',sans-serif;font-size:10px;color:var(--text-muted);margin-top:8px;text-align:right;}
+.badge-progress-track{background:rgba(255,255,255,0.08);border-radius:5px;height:5px;overflow:hidden;margin-top:3px;width:100%;}
 .badge-progress-fill{background:var(--fire);height:100%;border-radius:5px;}
 
 .nudge-card{

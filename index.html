@@ -26,16 +26,23 @@
     }
   } catch (err) { /* ignore */ }
 </script>
-<link rel="manifest" href="./manifest.json" />
-<link rel="icon" type="image/png" href="./icon-192.png" />
-<link rel="apple-touch-icon" href="./icon-192.png" />
+<link rel="manifest" href="manifest.json" />
+<link rel="icon" type="image/png" href="icons/icon-192.png" />
+<link rel="apple-touch-icon" href="icons/icon-192.png" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-<link rel="stylesheet" href="./styles.css" />
+<link rel="stylesheet" href="styles.css" />
 </head>
 <body>
 
 <div id="confetti-layer"></div>
+
+<div id="streak-anim-dimmer"></div>
+<div id="streak-anim-overlay">
+  <div id="streak-anim-flame">🔥</div>
+  <div id="streak-anim-digits"></div>
+  <div id="streak-anim-label" data-i18n="app_streak_current_label">Jours d'affilée</div>
+</div>
 
 <header class="topbar">
   <div class="wordmark" id="app-wordmark">
@@ -57,7 +64,10 @@
     </svg>
     Track<span class="accent">Push</span>
   </div>
-  <button id="inventory-header-btn" class="goal-pill inventory-header-btn-img" data-i18n-title="inventory_btn" title="Inventaire"><img src="./inventory-icon-small.png" alt="Inventaire" /></button>
+  <div class="topbar-icons">
+    <button id="app-streak-btn" class="app-streak-btn" hidden>🔥 <span id="app-streak-count">0</span></button>
+    <button id="inventory-header-btn" class="goal-pill inventory-header-btn-img" data-i18n-title="inventory_btn" title="Inventaire"><img src="icons/inventory-icon-small.png" alt="Inventaire" /></button>
+  </div>
 </header>
 
 <main id="view-today" class="view">
@@ -68,6 +78,10 @@
 
   <button type="button" id="sunday-photo-banner" class="evening-banner sunday-photo-banner" hidden>
     📸 <span data-i18n="sunday_banner_text">N'oublie pas de prendre ta photo de la semaine!</span>
+  </button>
+
+  <button type="button" id="special-day-banner" class="evening-banner sunday-photo-banner" hidden>
+    <span id="special-day-banner-icon">🎄</span> <span id="special-day-banner-text"></span>
   </button>
 
   <section class="hero card">
@@ -84,6 +98,14 @@
         <div class="big-number" id="today-total">0</div>
         <div class="ring-sub">/ <span id="goal-echo">100</span> <span data-i18n="pushups_word">push-ups</span></div>
         <div class="trophy-chip" id="today-trophy" hidden></div>
+      </div>
+      <div class="platinum-stars" id="platinum-stars" hidden>
+        <span class="platinum-star" style="top:4%;left:50%;animation-delay:0s;">✨</span>
+        <span class="platinum-star" style="top:22%;left:90%;animation-delay:0.9s;">✨</span>
+        <span class="platinum-star" style="top:74%;left:94%;animation-delay:1.8s;">✨</span>
+        <span class="platinum-star" style="top:94%;left:50%;animation-delay:2.7s;">✨</span>
+        <span class="platinum-star" style="top:74%;left:6%;animation-delay:3.6s;">✨</span>
+        <span class="platinum-star" style="top:22%;left:10%;animation-delay:4.5s;">✨</span>
       </div>
     </div>
     <div class="today-date" id="today-date">—</div>
@@ -162,13 +184,55 @@
 <div class="modal-backdrop" id="inventory-modal" hidden>
   <div class="modal inventory-modal-inner">
     <button class="modal-close" id="inventory-close-x">×</button>
-    <img src="./inventory-icon-medium.png" alt="" class="inventory-section-icon inventory-odds-trigger" id="item-odds-trigger" />
-    <div class="section-title" data-i18n="inventory_title">INVENTAIRE</div>
-    <div id="inventory-grid" class="inventory-grid"></div>
-    <img src="./inventory-mythic-icon-medium.png" alt="" class="inventory-section-icon inventory-odds-trigger" id="mythic-odds-trigger" />
-    <div class="section-title" id="mythic-section" data-i18n="inventory_mythic_title" style="margin-top:4px;">OBJETS MYTHIQUES</div>
-    <div id="mythic-grid" class="inventory-grid"></div>
-    <button type="button" class="qbtn qbtn-primary" id="inventory-back-btn" data-i18n="inventory_back_btn">Retour</button>
+    <img src="icons/inventory-icon-medium.png" alt="" class="inventory-section-icon inventory-odds-trigger" id="inventory-header-icon" />
+    <div class="section-title" id="inventory-header-title" data-i18n="inventory_title">OBJETS COMMUNS</div>
+    <div class="inventory-pager" id="inventory-pager">
+      <div class="inventory-page">
+        <div id="inventory-grid" class="inventory-grid"></div>
+      </div>
+      <div class="inventory-page">
+        <div id="mythic-grid" class="inventory-grid"></div>
+      </div>
+    </div>
+    <div class="inventory-page-dots" id="inventory-page-dots">
+      <span class="page-dot active"></span>
+      <span class="page-dot"></span>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop modal-backdrop-centered" id="special-day-modal" hidden>
+  <div class="modal trophy-modal">
+    <button class="modal-close" id="special-day-close-x">×</button>
+    <div class="trophy-big" id="special-day-modal-icon">🎄</div>
+    <div class="info-modal-title" id="special-day-modal-title"></div>
+    <div class="ms-empty-note" id="special-day-modal-desc" style="margin-bottom:14px;"></div>
+    <div class="item-odds-headline">
+      <div class="item-odds-headline-label" data-i18n="special_day_progress_label">Push-ups aujourd'hui</div>
+      <div class="item-odds-headline-value" id="special-day-progress-value">—</div>
+    </div>
+    <div class="badge-progress-track"><div class="badge-progress-fill" id="special-day-progress-fill" style="width:0%"></div></div>
+    <button type="button" class="qbtn qbtn-primary" id="special-day-go-btn" style="width:100%;" data-i18n="special_day_go_btn">C'est parti!</button>
+  </div>
+</div>
+
+<div class="modal-backdrop modal-backdrop-centered" id="record-detail-modal" hidden>
+  <div class="modal trophy-modal record-detail-modal-inner">
+    <div class="info-modal-title" id="record-detail-title" hidden></div>
+    <div id="record-detail-body" style="width:100%;"></div>
+    <div id="record-detail-badges-grid" class="badges-grid" style="width:100%;margin-top:14px;"></div>
+  </div>
+</div>
+
+<div class="modal-backdrop modal-backdrop-centered" id="app-streak-modal" hidden>
+  <div class="modal trophy-modal">
+    <button class="modal-close" id="app-streak-close-x">×</button>
+    <div class="info-modal-title" data-i18n="app_streak_title">SÉRIE D'OUVERTURE</div>
+    <div class="item-odds-headline">
+      <div class="item-odds-headline-label" data-i18n="app_streak_current_label">Jours d'affilée</div>
+      <div class="item-odds-headline-value" id="app-streak-current-value">—</div>
+    </div>
+    <div id="app-streak-badge-grid" class="badges-grid" style="width:100%;margin-top:14px;"></div>
   </div>
 </div>
 
@@ -197,6 +261,8 @@
         <span class="badges-section-chevron" id="item-odds-details-chevron"></span>
       </button>
       <div id="item-odds-details-list" class="item-odds-details-list" hidden></div>
+      <div class="item-odds-subtitle" id="item-odds-detecteur-subtitle" style="margin-top:14px;" hidden data-i18n="item_odds_detecteur_breakdown_label">Détecteur de métal</div>
+      <div id="item-odds-detecteur-list" class="item-odds-details-list" hidden></div>
     </div>
 
     <div id="item-odds-mythic-block" hidden>
@@ -213,6 +279,7 @@
       <div><span data-i18n="item_odds_detecteur_label">Détecteur de métal</span> <strong id="item-odds-detecteur-value">—</strong></div>
       <div><span data-i18n="item_odds_radar_label">Radar de précision</span> <strong id="item-odds-radar-value">—</strong></div>
     </div>
+    <div class="ms-empty-note" id="item-odds-independent-note" style="margin-top:-8px;margin-bottom:18px;" hidden data-i18n="item_odds_independent_note">Le Détecteur de métal et le Radar de précision ont chacun leur propre chance de tirage indépendante des autres objets.</div>
 
     <button type="button" class="qbtn qbtn-primary" id="item-odds-back-btn" data-i18n="inventory_back_btn">Retour</button>
   </div>
@@ -267,20 +334,6 @@
       <span class="legend-item"><i class="dot or"></i><span data-i18n="trend_legend_or">Or</span></span>
       <span class="legend-item"><i class="dot platine"></i><span data-i18n="trend_legend_platine">Platine</span></span>
       <span class="legend-item"><i class="trend-goal-swatch"></i><span data-i18n="trend_legend_goal">Objectif</span></span>
-    </div>
-  </section>
-  <section class="card streaks-card">
-    <div class="streak-row">
-      <span class="streak-icon">🚭</span>
-      <span class="streak-text" id="streak-cannabis-text">Jour <span id="streak-cannabis">0</span> sans cannabis</span>
-    </div>
-    <div class="streak-row">
-      <span class="streak-icon">🍺</span>
-      <span class="streak-text" id="streak-alcool-text">Jour <span id="streak-alcool">0</span> sans alcool</span>
-    </div>
-    <div class="streak-row">
-      <span class="streak-icon">☕</span>
-      <span class="streak-text" id="streak-cafe-text">Jour <span id="streak-cafe">0</span> sans caféine</span>
     </div>
   </section>
 </main>
@@ -393,7 +446,7 @@
     </div>
   </section>
 
-  <section class="card" id="offline-primary-section" hidden>
+  <section class="card" id="offline-primary-section">
     <div class="section-title" id="offline-primary-title" data-i18n="offline_primary_title">MODE HORS-LIGNE (CET APPAREIL)</div>
     <div id="offline-primary-toggle-block">
       <div class="reminder-row">
@@ -410,9 +463,9 @@
     </div>
   </section>
 
-  <section class="card">
+  <section class="card" hidden>
     <div class="section-title" data-i18n="backup_section_title">SAUVEGARDE MANUELLE</div>
-    <div class="ms-empty-note" data-i18n="backup_explainer">Tes données vivent uniquement dans ce navigateur. Télécharge une copie régulièrement pour ne rien perdre si tu changes d'appareil ou si le navigateur efface ses données.</div>
+    <div class="ms-empty-note" data-i18n="backup_explainer" hidden>Télécharge une copie complète de tes données (progression, badges, objets, photos) dans un fichier, ou restaure-en une sur cet appareil.</div>
     <button type="button" class="qbtn" id="backup-export-btn" data-i18n="backup_export_btn">Exporter mes données</button>
     <button type="button" class="qbtn" id="backup-import-btn" data-i18n="backup_import_btn">Importer une sauvegarde</button>
     <input type="file" id="backup-import-input" accept="application/json,.json" hidden />
@@ -461,8 +514,8 @@
 </nav>
 
 <!-- Day detail modal -->
-<div class="modal-backdrop" id="day-modal" hidden>
-  <div class="modal">
+<div class="modal-backdrop modal-backdrop-centered" id="day-modal" hidden>
+  <div class="modal day-modal-inner">
     <button class="modal-close" id="day-modal-close">×</button>
     <div class="modal-date" id="modal-date">—</div>
     <div class="modal-trophy" id="modal-trophy" hidden></div>
@@ -534,7 +587,7 @@
     <div class="trophy-desc"><span id="badge-modal-name" class="rankup-name">—</span></div>
     <div class="trophy-desc" id="badge-modal-desc"></div>
     <div class="trophy-desc badge-modal-xp">+<span id="badge-modal-xp">0</span> XP</div>
-    <button class="qbtn qbtn-primary" id="badge-modal-ok" data-i18n="celebration_ok">Merci, continue!</button>
+    <button class="qbtn qbtn-primary" id="badge-modal-ok" data-i18n="badge_celebration_ok">Continuer la progression!</button>
   </div>
 </div>
 
@@ -753,9 +806,9 @@
     } catch (err) { /* ignore, real data will load normally */ }
   })();
 </script>
-<script src="./store.js"></script>
-<script src="./local-api.js"></script>
-<script src="./sync.js"></script>
-<script src="./app.js"></script>
+<script src="store.js"></script>
+<script src="local-api.js"></script>
+<script src="sync.js"></script>
+<script src="app.js"></script>
 </body>
 </html>
