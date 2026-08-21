@@ -1,8 +1,8 @@
-const CACHE = 'trackpush-web-v5';
+const CACHE = 'pushup-tracker-v145';
 const SHELL = [
-  './', './styles.css', './app.js', './manifest.json', './store.js', './local-api.js', './sync.js',
-  './inventory-icon-medium.png', './inventory-icon-small.png',
-  './inventory-mythic-icon-medium.png', './icon-192.png', './icon-512.png',
+  './', 'styles.css', 'app.js', 'manifest.json', 'store.js', 'local-api.js', 'sync.js',
+  'inventory-icon-medium.png', 'inventory-icon-small.png',
+  'inventory-mythic-icon-medium.png', 'icon-192.png', 'icon-512.png',
 ];
 
 self.addEventListener('install', (e) => {
